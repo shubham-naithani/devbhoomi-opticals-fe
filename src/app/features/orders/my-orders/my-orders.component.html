@@ -1,0 +1,44 @@
+<div class="page-header">
+  <div>
+    <h1>Your orders</h1>
+    <p class="subtitle">Track the status of everything you've ordered.</p>
+  </div>
+</div>
+
+@if (isLoading()) {
+  <div class="state-msg">Loading your orders…</div>
+} @else if (orders().length === 0) {
+  <div class="card empty-state">
+    <h3>No orders yet</h3>
+    <p>Once you place an order, it'll show up here.</p>
+    <a routerLink="/catalog" class="btn btn-primary">Browse catalog</a>
+  </div>
+} @else {
+  <div class="order-list">
+    @for (order of orders(); track order._id) {
+      <div class="card order-card">
+        <div class="order-head">
+          <div>
+            <div class="order-id">Order #{{ order._id.slice(-6).toUpperCase() }}</div>
+            <div class="order-date">{{ order.createdAt | date: 'medium' }}</div>
+          </div>
+          <span class="badge status-badge" [class]="'status-' + order.status">{{ order.status }}</span>
+        </div>
+
+        <div class="order-items">
+          @for (item of order.items; track item.inventoryItem) {
+            <div class="order-item-row">
+              <span>{{ item.name }} &times; {{ item.quantity }}</span>
+              <span>₹{{ item.price * item.quantity }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="order-footer">
+          <span>Cash on delivery</span>
+          <span class="total">Total: ₹{{ order.totalAmount }}</span>
+        </div>
+      </div>
+    }
+  </div>
+}

@@ -1,0 +1,140 @@
+<div class="page-header">
+  <div>
+    <h1>Inventory</h1>
+    <p class="subtitle">{{ totalItems() }} items in catalog</p>
+  </div>
+  <button class="btn btn-accent" (click)="openCreatePanel()">+ Add item</button>
+</div>
+
+<div class="toolbar">
+  <input
+    type="text"
+    placeholder="Search by name or brand…"
+    [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)"
+  />
+</div>
+
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading inventory…</div>
+  } @else if (items().length === 0) {
+    <div class="state-msg">No items found. Add your first frame to get started.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Brand</th>
+          <th>Category</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of items(); track item._id) {
+          <tr>
+            <td>{{ item.name }}</td>
+            <td>{{ item.brand || '—' }}</td>
+            <td>{{ item.category }}</td>
+            <td>₹{{ item.price }}</td>
+            <td [class.low-stock]="item.stock <= 5">{{ item.stock }}</td>
+            <td><span class="badge" [class.badge-active]="item.isActive" [class.badge-inactive]="!item.isActive">{{ item.isActive ? 'Active' : 'Hidden' }}</span></td>
+            <td class="actions">
+              <button class="btn btn-ghost" (click)="openEditPanel(item)">Edit</button>
+              <button class="btn btn-danger" (click)="remove(item)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+@if (isPanelOpen()) {
+  <div class="overlay" (click)="closePanel()"></div>
+  <div class="side-panel card">
+    <h2>{{ editingItem() ? 'Edit item' : 'Add item' }}</h2>
+
+    <form [formGroup]="form" (ngSubmit)="save()">
+      <div class="field">
+        <label for="name">Product name</label>
+        <input id="name" type="text" formControlName="name" />
+      </div>
+
+      <div class="field">
+        <label for="brand">Brand</label>
+        <input id="brand" type="text" formControlName="brand" />
+      </div>
+
+      <div class="two-col">
+        <div class="field">
+          <label for="category">Category</label>
+          <select id="category" formControlName="category">
+            <option value="eyeglasses">Eyeglasses</option>
+            <option value="sunglasses">Sunglasses</option>
+            <option value="lens">Lens</option>
+            <option value="contact_lens">Contact lens</option>
+            <option value="accessory">Accessory</option>
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="gender">Gender</label>
+          <select id="gender" formControlName="gender">
+            <option value="unisex">Unisex</option>
+            <option value="men">Men</option>
+            <option value="women">Women</option>
+            <option value="kids">Kids</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="frameType">Frame type</label>
+        <input id="frameType" type="text" formControlName="frameType" placeholder="Full-rim, half-rim, rimless…" />
+      </div>
+
+      <div class="two-col">
+        <div class="field">
+          <label for="price">Price (₹)</label>
+          <input id="price" type="number" formControlName="price" min="0" />
+        </div>
+
+        <div class="field">
+          <label for="stock">Stock</label>
+          <input id="stock" type="number" formControlName="stock" min="0" />
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="sku">SKU</label>
+        <input id="sku" type="text" formControlName="sku" />
+      </div>
+
+      <div class="field">
+        <label for="imageUrl">Image URL</label>
+        <input id="imageUrl" type="text" formControlName="imageUrl" placeholder="https://…" />
+      </div>
+
+      <div class="field">
+        <label for="description">Description</label>
+        <textarea id="description" rows="3" formControlName="description"></textarea>
+      </div>
+
+      <label class="checkbox-field">
+        <input type="checkbox" formControlName="isActive" />
+        Visible in catalog
+      </label>
+
+      <div class="panel-actions">
+        <button type="button" class="btn btn-ghost" (click)="closePanel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
+          {{ isSaving() ? 'Saving…' : 'Save' }}
+        </button>
+      </div>
+    </form>
+  </div>
+}

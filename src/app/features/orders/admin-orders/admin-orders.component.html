@@ -1,0 +1,68 @@
+<div class="page-header">
+  <div>
+    <h1>Orders</h1>
+    <p class="subtitle">All customer orders across the store.</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+    <option value="">All statuses</option>
+    <option value="pending">Pending</option>
+    <option value="confirmed">Confirmed</option>
+    <option value="delivered">Delivered</option>
+    <option value="cancelled">Cancelled</option>
+  </select>
+</div>
+
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading orders…</div>
+  } @else if (orders().length === 0) {
+    <div class="state-msg">No orders found.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders(); track order._id) {
+          <tr>
+            <td>
+              <div class="order-id">#{{ order._id.slice(-6).toUpperCase() }}</div>
+              <div class="order-date">{{ order.createdAt | date: 'short' }}</div>
+            </td>
+            <td>
+              <div>{{ customerName(order) }}</div>
+              <div class="contact">{{ customerContact(order) }}</div>
+            </td>
+            <td>
+              @for (item of order.items; track item.inventoryItem) {
+                <div class="item-line">{{ item.name }} &times; {{ item.quantity }}</div>
+              }
+            </td>
+            <td class="total-cell">₹{{ order.totalAmount }}</td>
+            <td>
+              <select
+                [ngModel]="order.status"
+                (ngModelChange)="changeStatus(order, $event)"
+                [disabled]="updatingId() === order._id"
+                [class]="'status-select status-' + order.status"
+              >
+                @for (opt of statusOptions; track opt) {
+                  <option [value]="opt">{{ opt }}</option>
+                }
+              </select>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

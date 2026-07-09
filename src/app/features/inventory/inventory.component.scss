@@ -1,0 +1,111 @@
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 22px;
+
+  h1 { font-size: 26px; }
+
+  .subtitle {
+    margin: 6px 0 0;
+    color: var(--color-text-muted);
+    font-size: 14px;
+  }
+}
+
+.toolbar {
+  margin-bottom: 16px;
+
+  input {
+    width: 320px;
+    max-width: 100%;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    background: #fff;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(31, 78, 92, 0.12);
+    }
+  }
+}
+
+.table-card {
+  overflow-x: auto;
+}
+
+.state-msg {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+// ---- Slide-over panel -----------------------------------------------------
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(18, 49, 56, 0.35);
+  z-index: 40;
+}
+
+.side-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  height: 100vh;
+  width: 380px;
+  max-width: 92vw;
+  z-index: 50;
+  padding: 32px 28px;
+  overflow-y: auto;
+  border-radius: 0;
+  animation: slide-in-panel 0.2s ease-out;
+
+  h2 { font-size: 20px; margin-bottom: 22px; }
+}
+
+@keyframes slide-in-panel {
+  from { transform: translateX(24px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.checkbox-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 4px 0 22px;
+
+  input { width: 16px; height: 16px; }
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  border-top: 1px solid var(--color-border);
+  padding-top: 20px;
+  margin-top: 6px;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.low-stock {
+  color: var(--color-danger);
+  font-weight: 600;
+}
