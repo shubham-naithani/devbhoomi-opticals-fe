@@ -1,0 +1,56 @@
+.page-header {
+  margin-bottom: 22px;
+
+  h1 { font-size: 26px; }
+
+  .subtitle {
+    margin: 6px 0 0;
+    color: var(--color-text-muted);
+    font-size: 14px;
+  }
+}
+
+.toolbar {
+  margin-bottom: 16px;
+
+  select {
+    padding: 9px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    background: #fff;
+  }
+}
+
+.table-card {
+  overflow-x: auto;
+}
+
+.state-msg {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.order-id { font-weight: 600; font-size: 13px; }
+.order-date { font-size: 12px; color: var(--color-text-muted); }
+.contact { font-size: 12px; color: var(--color-text-muted); }
+.item-line { font-size: 13px; }
+.total-cell { font-weight: 600; color: var(--color-primary-dark); }
+.payment-cell { font-size: 12px; font-weight: 600; color: var(--color-text-muted); }
+.created-by { font-size: 11px; color: var(--color-text-muted); margin-top: 3px; }
+
+.status-select {
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: capitalize;
+
+  &.status-pending { background: rgba(192, 138, 30, 0.12); color: var(--color-warning); }
+  &.status-confirmed { background: rgba(31, 78, 92, 0.10); color: var(--color-primary); }
+  &.status-delivered { background: rgba(47, 122, 82, 0.12); color: var(--color-success); }
+  &.status-cancelled { background: rgba(179, 73, 46, 0.10); color: var(--color-danger); }
+}

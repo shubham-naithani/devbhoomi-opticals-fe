@@ -1,0 +1,39 @@
+<div class="page-header">
+  <div>
+    <h1>Welcome, {{ auth.currentUser()?.name }}</h1>
+    <p class="subtitle">Here's what's happening at the store today.</p>
+  </div>
+</div>
+
+@if (auth.isAdmin()) {
+  <div class="stat-grid">
+    <div class="stat-card card">
+      <div class="stat-label">Total users</div>
+      <div class="stat-value">{{ totalUsers() ?? '—' }}</div>
+    </div>
+    <div class="stat-card card">
+      <div class="stat-label">Inventory items</div>
+      <div class="stat-value">{{ totalInventory() ?? '—' }}</div>
+    </div>
+    <div class="stat-card card accent">
+      <div class="stat-label">Low stock (≤ 5 units)</div>
+      <div class="stat-value">{{ lowStockCount() ?? '—' }}</div>
+    </div>
+  </div>
+
+  <div class="quick-links card">
+    <h3>Quick actions</h3>
+    <div class="links">
+      <a routerLink="/inventory" class="btn btn-primary">Manage inventory</a>
+      <a routerLink="/users" class="btn btn-ghost">Manage users</a>
+    </div>
+  </div>
+} @else {
+  <div class="quick-links card">
+    <h3>Get started</h3>
+    <div class="links">
+      <a routerLink="/catalog" class="btn btn-primary">Browse frames</a>
+      <a routerLink="/orders" class="btn btn-ghost">View my orders</a>
+    </div>
+  </div>
+}

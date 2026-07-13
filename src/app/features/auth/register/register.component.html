@@ -1,0 +1,68 @@
+<div class="auth-screen">
+  <div class="brand-panel">
+    <div class="brand-mark">
+      <svg width="52" height="32" viewBox="0 0 52 32" fill="none">
+        <circle cx="14" cy="16" r="12" stroke="currentColor" stroke-width="2.5"/>
+        <circle cx="38" cy="16" r="12" stroke="currentColor" stroke-width="2.5"/>
+        <path d="M22 13c1.5-1.5 2.5-1.5 4 0" stroke="currentColor" stroke-width="2.5" fill="none"/>
+      </svg>
+      <span>Devbhoomi Opticals</span>
+    </div>
+
+    <h1>Your next pair<br>starts here.</h1>
+    <p class="tagline">
+      Create an account to save your prescription, track orders, and try on frames
+      before you visit the store.
+    </p>
+
+    <div class="brand-footnote">Dehradun &middot; Customer Sign-up</div>
+  </div>
+
+  <div class="form-panel">
+    <form class="auth-card card" [formGroup]="form" (ngSubmit)="submit()">
+      <h2>Create account</h2>
+      <p class="sub">Takes less than a minute.</p>
+
+      <div class="field">
+        <label for="name">Full name</label>
+        <input id="name" type="text" formControlName="name" placeholder="Your name" autocomplete="name" />
+        @if (form.get('name')?.touched && form.get('name')?.invalid) {
+          <span class="error-text">Name is required</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email" placeholder="you@example.com" autocomplete="email" />
+        @if (form.get('email')?.touched && form.get('email')?.invalid) {
+          <span class="error-text">Enter a valid email address</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="phone">Phone (optional)</label>
+        <input id="phone" type="tel" formControlName="phone" placeholder="98765 43210" autocomplete="tel" />
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" formControlName="password" placeholder="At least 6 characters" autocomplete="new-password" />
+        @if (form.get('password')?.touched && form.get('password')?.invalid) {
+          <span class="error-text">Password must be at least 6 characters</span>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <div class="form-error">{{ errorMessage() }}</div>
+      }
+
+      <button class="btn btn-primary submit-btn" type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Creating account…' : 'Create account' }}
+      </button>
+
+      <p class="switch-link">
+        Already have an account? <a routerLink="/login">Sign in</a>
+      </p>
+    </form>
+  </div>
+</div>

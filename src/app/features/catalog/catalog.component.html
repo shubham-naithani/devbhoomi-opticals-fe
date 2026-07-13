@@ -1,0 +1,68 @@
+<div class="page-header">
+  <div>
+    <h1>Browse frames</h1>
+    <p class="subtitle">Find your next pair — filter by category or gender.</p>
+  </div>
+</div>
+
+<div class="filters card">
+  <input
+    type="text"
+    placeholder="Search by name or brand…"
+    [(ngModel)]="searchTerm"
+    (ngModelChange)="onFilterChange()"
+  />
+
+  <select [(ngModel)]="category" (ngModelChange)="onFilterChange()">
+    <option value="">All categories</option>
+    <option value="eyeglasses">Eyeglasses</option>
+    <option value="sunglasses">Sunglasses</option>
+    <option value="lens">Lens</option>
+    <option value="contact_lens">Contact lens</option>
+    <option value="accessory">Accessory</option>
+  </select>
+
+  <select [(ngModel)]="gender" (ngModelChange)="onFilterChange()">
+    <option value="">Everyone</option>
+    <option value="men">Men</option>
+    <option value="women">Women</option>
+    <option value="unisex">Unisex</option>
+    <option value="kids">Kids</option>
+  </select>
+</div>
+
+@if (isLoading()) {
+  <div class="state-msg">Loading frames…</div>
+} @else if (items().length === 0) {
+  <div class="state-msg">No frames match your filters yet.</div>
+} @else {
+  <div class="grid">
+    @for (item of items(); track item._id) {
+      <div class="product-card card">
+        <div class="thumb">
+          @if (item.imageUrl) {
+            <img [src]="item.imageUrl" [alt]="item.name" />
+          } @else {
+            <div class="thumb-placeholder">{{ item.name.charAt(0) }}</div>
+          }
+        </div>
+        <div class="product-body">
+          <div class="brand">{{ item.brand || 'Unbranded' }}</div>
+          <h3>{{ item.name }}</h3>
+          <div class="meta">{{ item.category }} &middot; {{ item.gender }}</div>
+          <div class="price-row">
+            <span class="price">₹{{ item.price }}</span>
+            @if (item.stock <= 5 && item.stock > 0) {
+              <span class="stock-flag">Only {{ item.stock }} left</span>
+            } @else if (item.stock <= 0) {
+              <span class="stock-flag out">Out of stock</span>
+            }
+          </div>
+          <button class="btn btn-accent add-btn" [disabled]="item.stock <= 0" (click)="addToCart(item)">
+            Add to cart
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+}

@@ -1,0 +1,44 @@
+.page-header {
+  margin-bottom: 22px;
+
+  h1 { font-size: 26px; }
+
+  .subtitle {
+    margin: 6px 0 0;
+    color: var(--color-text-muted);
+    font-size: 14px;
+  }
+}
+
+.toolbar {
+  margin-bottom: 16px;
+
+  select {
+    padding: 9px 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    background: #fff;
+  }
+}
+
+.table-card { overflow-x: auto; }
+
+.state-msg {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.when {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+.badge {
+  &.action-create { background: rgba(47, 122, 82, 0.12); color: var(--color-success); }
+  &.action-update { background: rgba(192, 138, 30, 0.12); color: var(--color-warning); }
+  &.action-delete { background: rgba(179, 73, 46, 0.10); color: var(--color-danger); }
+}

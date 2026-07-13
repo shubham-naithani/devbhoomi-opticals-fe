@@ -1,0 +1,45 @@
+<div class="page-header">
+  <div>
+    <h1>Activity log</h1>
+    <p class="subtitle">Who created, edited, or deleted what — across orders, inventory, and accounts.</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <select [(ngModel)]="entityFilter" (ngModelChange)="onFilterChange()">
+    <option value="">All activity</option>
+    <option value="Order">Orders</option>
+    <option value="Inventory">Inventory</option>
+    <option value="User">Users</option>
+    <option value="EyeTest">Eye tests</option>
+  </select>
+</div>
+
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading activity…</div>
+  } @else if (logs().length === 0) {
+    <div class="state-msg">No activity recorded yet.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>When</th>
+          <th>Who</th>
+          <th>Action</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (log of logs(); track log._id) {
+          <tr>
+            <td class="when">{{ log.createdAt | date: 'medium' }}</td>
+            <td>{{ log.performedByName }}</td>
+            <td><span class="badge" [class]="'action-' + log.action">{{ log.action }}</span></td>
+            <td>{{ log.summary }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>

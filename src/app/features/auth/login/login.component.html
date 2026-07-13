@@ -1,0 +1,58 @@
+<div class="auth-screen">
+  <div class="brand-panel">
+    <div class="brand-mark">
+      <svg width="52" height="32" viewBox="0 0 52 32" fill="none">
+        <circle cx="14" cy="16" r="12" stroke="currentColor" stroke-width="2.5"/>
+        <circle cx="38" cy="16" r="12" stroke="currentColor" stroke-width="2.5"/>
+        <line x1="26" y1="16" x2="26" y2="16" stroke="currentColor" stroke-width="2.5"/>
+        <path d="M26 16 h0" stroke="currentColor" stroke-width="2.5"/>
+        <path d="M2 16 h0" stroke="currentColor" stroke-width="2.5"/>
+        <path d="M22 13c1.5-1.5 2.5-1.5 4 0" stroke="currentColor" stroke-width="2.5" fill="none"/>
+      </svg>
+      <span>Devbhoomi Opticals</span>
+    </div>
+
+    <h1>See your store,<br>clearly.</h1>
+    <p class="tagline">
+      One place to manage inventory, staff, and every customer who walks through the door —
+      built for the store, not just the sale.
+    </p>
+
+    <div class="brand-footnote">Dehradun &middot; Admin Console</div>
+  </div>
+
+  <div class="form-panel">
+    <form class="auth-card card" [formGroup]="form" (ngSubmit)="submit()">
+      <h2>Sign in</h2>
+      <p class="sub">Use your store account to continue.</p>
+
+      <div class="field">
+        <label for="email">Email</label>
+        <input id="email" type="email" formControlName="email" placeholder="you@devbhoomiopticals.com" autocomplete="email" />
+        @if (form.get('email')?.touched && form.get('email')?.invalid) {
+          <span class="error-text">Enter a valid email address</span>
+        }
+      </div>
+
+      <div class="field">
+        <label for="password">Password</label>
+        <input id="password" type="password" formControlName="password" placeholder="••••••••" autocomplete="current-password" />
+        @if (form.get('password')?.touched && form.get('password')?.invalid) {
+          <span class="error-text">Password must be at least 6 characters</span>
+        }
+      </div>
+
+      @if (errorMessage()) {
+        <div class="form-error">{{ errorMessage() }}</div>
+      }
+
+      <button class="btn btn-primary submit-btn" type="submit" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Signing in…' : 'Sign in' }}
+      </button>
+
+      <p class="switch-link">
+        New customer? <a routerLink="/register">Create an account</a>
+      </p>
+    </form>
+  </div>
+</div>

@@ -1,0 +1,76 @@
+<div class="page-header">
+  <div>
+    <h1>Your cart</h1>
+    <p class="subtitle">{{ cart.itemCount() }} item(s)</p>
+  </div>
+</div>
+
+@if (cart.lines().length === 0) {
+  <div class="card empty-state">
+    <h3>Your cart is empty</h3>
+    <p>Browse the catalog and add a few frames to get started.</p>
+    <a routerLink="/catalog" class="btn btn-primary">Browse catalog</a>
+  </div>
+} @else {
+  <div class="cart-layout">
+    <div class="card cart-lines">
+      @for (line of cart.lines(); track line.inventoryItem) {
+        <div class="cart-line">
+          <div class="thumb">
+            @if (line.imageUrl) {
+              <img [src]="line.imageUrl" [alt]="line.name" />
+            } @else {
+              <div class="thumb-placeholder">{{ line.name.charAt(0) }}</div>
+            }
+          </div>
+
+          <div class="line-info">
+            <div class="name">{{ line.name }}</div>
+            <div class="unit-price">₹{{ line.price }} each</div>
+          </div>
+
+          <div class="qty-control">
+            <button type="button" (click)="decrement(line)">−</button>
+            <span>{{ line.quantity }}</span>
+            <button type="button" [disabled]="line.quantity >= line.stock" (click)="increment(line)">+</button>
+          </div>
+
+          <div class="line-total">₹{{ line.price * line.quantity }}</div>
+
+          <button class="btn btn-danger remove-btn" (click)="cart.remove(line.inventoryItem)">Remove</button>
+        </div>
+      }
+    </div>
+
+    <div class="card checkout-panel">
+      <h3>Checkout</h3>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>₹{{ cart.total() }}</span>
+      </div>
+      <div class="summary-row muted">
+        <span>Payment</span>
+        <span>Cash on delivery</span>
+      </div>
+
+      <div class="field">
+        <label for="address">Delivery address</label>
+        <textarea id="address" rows="3" [(ngModel)]="shippingAddress" placeholder="House no, street, area, Dehradun"></textarea>
+      </div>
+
+      <div class="field">
+        <label for="phone">Contact phone</label>
+        <input id="phone" type="tel" [(ngModel)]="contactPhone" placeholder="98765 43210" />
+      </div>
+
+      <div class="field">
+        <label for="notes">Notes (optional)</label>
+        <textarea id="notes" rows="2" [(ngModel)]="notes" placeholder="Prescription details, preferred delivery time…"></textarea>
+      </div>
+
+      <button class="btn btn-primary place-order-btn" [disabled]="isPlacingOrder()" (click)="placeOrder()">
+        {{ isPlacingOrder() ? 'Placing order…' : 'Place order (COD)' }}
+      </button>
+    </div>
+  </div>
+}
