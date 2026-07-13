@@ -13,9 +13,9 @@
       <span class="dot"></span> Dashboard
     </a>
 
-    @if (auth.isAdmin()) {
-      <a routerLink="/users" routerLinkActive="active" class="nav-link">
-        <span class="dot"></span> Users
+    @if (auth.isStaffOrAdmin()) {
+      <a routerLink="/walk-in-order" routerLinkActive="active" class="nav-link highlight">
+        <span class="dot"></span> New in-store order
       </a>
       <a routerLink="/inventory" routerLinkActive="active" class="nav-link">
         <span class="dot"></span> Inventory
@@ -23,7 +23,18 @@
       <a routerLink="/admin-orders" routerLinkActive="active" class="nav-link">
         <span class="dot"></span> Orders
       </a>
-    } @else {
+    }
+
+    @if (auth.isAdmin()) {
+      <a routerLink="/users" routerLinkActive="active" class="nav-link">
+        <span class="dot"></span> Users
+      </a>
+      <a routerLink="/audit-log" routerLinkActive="active" class="nav-link">
+        <span class="dot"></span> Activity log
+      </a>
+    }
+
+    @if (!auth.isStaffOrAdmin()) {
       <a routerLink="/catalog" routerLinkActive="active" class="nav-link">
         <span class="dot"></span> Browse frames
       </a>

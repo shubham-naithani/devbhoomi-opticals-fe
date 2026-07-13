@@ -2,6 +2,7 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InventoryService } from '../../core/services/inventory.service';
 import { ToastService } from '../../core/services/toast.service';
+import { AuthService } from '../../core/services/auth.service';
 import { InventoryItem } from '../../core/models/inventory.model';
 
 @Component({
@@ -15,6 +16,7 @@ export class InventoryComponent {
   private inventoryService = inject(InventoryService);
   private toast = inject(ToastService);
   private fb = inject(FormBuilder);
+  auth = inject(AuthService);
 
   items = signal<InventoryItem[]>([]);
   totalItems = signal(0);

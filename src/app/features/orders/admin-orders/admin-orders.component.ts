@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, UpperCasePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../core/services/order.service';
@@ -8,7 +8,7 @@ import { Order, OrderStatus } from '../../../core/models/order.model';
 @Component({
   selector: 'app-admin-orders',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, UpperCasePipe],
   templateUrl: './admin-orders.component.html',
   styleUrl: './admin-orders.component.scss',
 })
@@ -51,7 +51,14 @@ export class AdminOrdersComponent {
 
   customerContact(order: Order): string {
     if (typeof order.customer === 'object') {
-      return order.customer.phone || order.customer.email;
+      return order.customer.phone || order.customer.email || '';
+    }
+    return '';
+  }
+
+  createdByName(order: Order): string {
+    if (order.createdBy && typeof order.createdBy === 'object') {
+      return order.createdBy.name;
     }
     return '';
   }

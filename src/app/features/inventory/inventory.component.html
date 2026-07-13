@@ -3,7 +3,9 @@
     <h1>Inventory</h1>
     <p class="subtitle">{{ totalItems() }} items in catalog</p>
   </div>
-  <button class="btn btn-accent" (click)="openCreatePanel()">+ Add item</button>
+  @if (auth.isAdmin()) {
+    <button class="btn btn-accent" (click)="openCreatePanel()">+ Add item</button>
+  }
 </div>
 
 <div class="toolbar">
@@ -43,8 +45,12 @@
             <td [class.low-stock]="item.stock <= 5">{{ item.stock }}</td>
             <td><span class="badge" [class.badge-active]="item.isActive" [class.badge-inactive]="!item.isActive">{{ item.isActive ? 'Active' : 'Hidden' }}</span></td>
             <td class="actions">
-              <button class="btn btn-ghost" (click)="openEditPanel(item)">Edit</button>
-              <button class="btn btn-danger" (click)="remove(item)">Delete</button>
+              @if (auth.isAdmin()) {
+                <button class="btn btn-ghost" (click)="openEditPanel(item)">Edit</button>
+                <button class="btn btn-danger" (click)="remove(item)">Delete</button>
+              } @else {
+                <span class="view-only">View only</span>
+              }
             </td>
           </tr>
         }
@@ -109,10 +115,17 @@
         </div>
       </div>
 
-      <div class="field">
-        <label for="sku">SKU</label>
-        <input id="sku" type="text" formControlName="sku" />
-      </div>
+      @if (editingItem()) {
+        <div class="field">
+          <label>SKU (auto-generated)</label>
+          <input type="text" [value]="editingItem()!.sku" disabled />
+        </div>
+      } @else {
+        <div class="field">
+          <label>SKU</label>
+          <input type="text" value="Assigned automatically on save" disabled />
+        </div>
+      }
 
       <div class="field">
         <label for="imageUrl">Image URL</label>

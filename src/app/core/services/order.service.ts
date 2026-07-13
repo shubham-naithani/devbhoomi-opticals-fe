@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { CreateOrderPayload, Order, OrderStatus } from '../models/order.model';
+import { CreateOrderPayload, CreateWalkInOrderPayload, Order, OrderStatus } from '../models/order.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrderService {
@@ -13,13 +13,20 @@ export class OrderService {
     return this.http.post<{ order: Order }>(this.base, payload);
   }
 
+  createWalkIn(payload: CreateWalkInOrderPayload) {
+    return this.http.post<{ order: Order }>(`${this.base}/walk-in`, payload);
+  }
+
   myOrders() {
     return this.http.get<{ orders: Order[] }>(`${this.base}/my`);
   }
 
-  all(params: { status?: string; page?: number; limit?: number } = {}) {
+  all(params: { status?: string; source?: string; page?: number; limit?: number } = {}) {
+    const cleaned = Object.fromEntries(
+      Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
+    );
     return this.http.get<{ orders: Order[]; total: number; page: number; pages: number }>(this.base, {
-      params: params as any,
+      params: cleaned as any,
     });
   }
 

@@ -20,6 +20,8 @@ export class AuthService {
   readonly currentUser = computed(() => this.currentUserSignal());
   readonly isLoggedIn = computed(() => !!this.currentUserSignal());
   readonly isAdmin = computed(() => this.currentUserSignal()?.role === 'admin');
+  readonly isStaff = computed(() => this.currentUserSignal()?.role === 'staff');
+  readonly isStaffOrAdmin = computed(() => this.isAdmin() || this.isStaff());
 
   constructor(private http: HttpClient, private router: Router) {}
 

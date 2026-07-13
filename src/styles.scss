@@ -149,6 +149,7 @@ button {
   font-weight: 600;
 
   &.badge-admin { background: rgba(201, 123, 74, 0.14); color: var(--color-accent); }
+  &.badge-staff { background: rgba(58, 107, 117, 0.14); color: var(--color-primary-light); }
   &.badge-customer { background: rgba(31, 78, 92, 0.10); color: var(--color-primary); }
   &.badge-active { background: rgba(47, 122, 82, 0.12); color: var(--color-success); }
   &.badge-inactive { background: rgba(179, 73, 46, 0.10); color: var(--color-danger); }

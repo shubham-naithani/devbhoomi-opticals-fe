@@ -25,7 +25,7 @@ import { CartService } from '../../../core/services/cart.service';
           <span>Devbhoomi</span>
         </div>
 
-        @if (!auth.isAdmin()) {
+        @if (!auth.isStaffOrAdmin()) {
           <a routerLink="/cart" class="mobile-cart">
             <span>🛒</span>
             @if (cart.itemCount() > 0) {

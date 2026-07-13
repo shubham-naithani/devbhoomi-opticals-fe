@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 import { adminGuard } from './core/guards/admin.guard';
+import { staffGuard } from './core/guards/staff.guard';
 
 export const routes: Routes = [
   {
@@ -29,15 +30,28 @@ export const routes: Routes = [
         loadComponent: () => import('./features/users/users.component').then((m) => m.UsersComponent),
       },
       {
-        path: 'inventory',
+        path: 'audit-log',
         canActivate: [adminGuard],
+        loadComponent: () => import('./features/audit-log/audit-log.component').then((m) => m.AuditLogComponent),
+      },
+
+      // Staff or admin (store-counter functionality)
+      {
+        path: 'inventory',
+        canActivate: [staffGuard],
         loadComponent: () => import('./features/inventory/inventory.component').then((m) => m.InventoryComponent),
       },
       {
         path: 'admin-orders',
-        canActivate: [adminGuard],
+        canActivate: [staffGuard],
         loadComponent: () =>
           import('./features/orders/admin-orders/admin-orders.component').then((m) => m.AdminOrdersComponent),
+      },
+      {
+        path: 'walk-in-order',
+        canActivate: [staffGuard],
+        loadComponent: () =>
+          import('./features/walk-in-order/walk-in-order.component').then((m) => m.WalkInOrderComponent),
       },
 
       // Customer-facing

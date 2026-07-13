@@ -38,7 +38,7 @@
             <td>{{ user.name }}</td>
             <td>{{ user.email }}</td>
             <td>{{ user.phone || '—' }}</td>
-            <td><span class="badge" [class.badge-admin]="user.role === 'admin'" [class.badge-customer]="user.role === 'customer'">{{ user.role }}</span></td>
+            <td><span class="badge" [class.badge-admin]="user.role === 'admin'" [class.badge-staff]="user.role === 'staff'" [class.badge-customer]="user.role === 'customer'">{{ user.role }}</span></td>
             <td><span class="badge" [class.badge-active]="user.isActive" [class.badge-inactive]="!user.isActive">{{ user.isActive ? 'Active' : 'Inactive' }}</span></td>
             <td class="actions">
               <button class="btn btn-ghost" (click)="openEditPanel(user)">Edit</button>
@@ -76,6 +76,7 @@
         <label for="role">Role</label>
         <select id="role" formControlName="role">
           <option value="customer">Customer</option>
+          <option value="staff">Staff</option>
           <option value="admin">Admin</option>
         </select>
       </div>

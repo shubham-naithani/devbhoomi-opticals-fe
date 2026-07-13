@@ -90,6 +90,12 @@ nav {
 
     .dot { opacity: 1; }
   }
+
+  &.highlight:not(.active) {
+    background: rgba(201, 123, 74, 0.16);
+    color: #fff;
+    font-weight: 600;
+  }
 }
 
 .sidebar-footer {

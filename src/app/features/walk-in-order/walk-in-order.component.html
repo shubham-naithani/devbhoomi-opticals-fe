@@ -1,0 +1,213 @@
+<div class="page-header">
+  <div>
+    <h1>New in-store order</h1>
+    <p class="subtitle">For a customer at the counter — find or create them, record an eye test if needed, then build the order.</p>
+  </div>
+</div>
+
+<!-- Step 1: Customer -->
+<div class="card step-card">
+  <div class="step-title">1. Customer</div>
+
+  @if (!selectedCustomer()) {
+    <div class="search-row">
+      <input
+        type="tel"
+        placeholder="Search by phone number…"
+        [(ngModel)]="phoneQuery"
+        (keyup.enter)="searchCustomer()"
+      />
+      <button class="btn btn-primary" [disabled]="isSearching()" (click)="searchCustomer()">
+        {{ isSearching() ? 'Searching…' : 'Search' }}
+      </button>
+    </div>
+
+    @if (searchResults().length > 0) {
+      <div class="result-list">
+        @for (c of searchResults(); track c._id) {
+          <div class="result-row" (click)="selectCustomer(c)">
+            <div>
+              <div class="name">{{ c.name }}</div>
+              <div class="meta">{{ c.phone }} @if (c.email) { &middot; {{ c.email }} }</div>
+            </div>
+            <button class="btn btn-ghost">Use this customer</button>
+          </div>
+        }
+      </div>
+    }
+
+    @if (showNewCustomerForm()) {
+      <div class="new-customer-form">
+        <div class="hint">No match found — create a new customer record:</div>
+        <div class="two-col">
+          <div class="field">
+            <label>Full name</label>
+            <input type="text" [(ngModel)]="newCustomerName" placeholder="Customer name" />
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input type="tel" [(ngModel)]="newCustomerPhone" placeholder="98765 43210" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Email (optional)</label>
+          <input type="email" [(ngModel)]="newCustomerEmail" placeholder="Leave blank if not given" />
+        </div>
+        <button class="btn btn-accent" [disabled]="isCreatingCustomer()" (click)="createNewCustomer()">
+          {{ isCreatingCustomer() ? 'Creating…' : 'Create customer' }}
+        </button>
+      </div>
+    }
+  } @else {
+    <div class="selected-customer">
+      <div>
+        <div class="name">{{ selectedCustomer()!.name }}</div>
+        <div class="meta">
+          {{ selectedCustomer()!.phone }}
+          @if (selectedCustomer()!.email) { &middot; {{ selectedCustomer()!.email }} }
+        </div>
+      </div>
+      <button class="btn btn-ghost" (click)="changeCustomer()">Change</button>
+    </div>
+  }
+</div>
+
+<!-- Step 2: Eye test -->
+@if (selectedCustomer()) {
+  <div class="card step-card">
+    <div class="step-title">2. Eye test</div>
+
+    @if (isLoadingEyeTest()) {
+      <div class="hint">Checking for an existing prescription…</div>
+    } @else if (latestEyeTest() && !showEyeTestForm()) {
+      <div class="existing-test">
+        <div class="hint">Last tested {{ latestEyeTest()!.testedAt | date: 'mediumDate' }}:</div>
+        <div class="eye-readings">
+          <div>R: SPH {{ latestEyeTest()!.rightEye.sphere ?? '—' }} / CYL {{ latestEyeTest()!.rightEye.cylinder ?? '—' }} / AXIS {{ latestEyeTest()!.rightEye.axis ?? '—' }}</div>
+          <div>L: SPH {{ latestEyeTest()!.leftEye.sphere ?? '—' }} / CYL {{ latestEyeTest()!.leftEye.cylinder ?? '—' }} / AXIS {{ latestEyeTest()!.leftEye.axis ?? '—' }}</div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-primary" (click)="useExistingEyeTest()">Use this prescription</button>
+          <button class="btn btn-ghost" (click)="showEyeTestForm.set(true)">Record a new test instead</button>
+        </div>
+        @if (linkedEyeTestId()) {
+          <div class="linked-flag">✓ Linked to this order</div>
+        }
+      </div>
+    } @else {
+      <div class="eye-test-form">
+        @if (!latestEyeTest()) {
+          <div class="hint">No prescription on file yet — record the free eyesight checkup:</div>
+        }
+        <div class="eye-grid">
+          <div class="eye-col">
+            <div class="eye-label">Right eye</div>
+            <input type="number" step="0.25" placeholder="Sphere" [(ngModel)]="rightSphere" />
+            <input type="number" step="0.25" placeholder="Cylinder" [(ngModel)]="rightCylinder" />
+            <input type="number" placeholder="Axis" [(ngModel)]="rightAxis" />
+            <input type="number" step="0.25" placeholder="Add" [(ngModel)]="rightAdd" />
+          </div>
+          <div class="eye-col">
+            <div class="eye-label">Left eye</div>
+            <input type="number" step="0.25" placeholder="Sphere" [(ngModel)]="leftSphere" />
+            <input type="number" step="0.25" placeholder="Cylinder" [(ngModel)]="leftCylinder" />
+            <input type="number" placeholder="Axis" [(ngModel)]="leftAxis" />
+            <input type="number" step="0.25" placeholder="Add" [(ngModel)]="leftAdd" />
+          </div>
+        </div>
+        <div class="field pd-field">
+          <label>Pupillary distance (mm)</label>
+          <input type="number" [(ngModel)]="pd" placeholder="e.g. 62" />
+        </div>
+        <div class="field">
+          <label>Notes</label>
+          <textarea rows="2" [(ngModel)]="eyeTestNotes" placeholder="Any observations…"></textarea>
+        </div>
+        <button class="btn btn-accent" [disabled]="isSavingEyeTest()" (click)="saveNewEyeTest()">
+          {{ isSavingEyeTest() ? 'Saving…' : 'Save eye test' }}
+        </button>
+      </div>
+    }
+  </div>
+}
+
+<!-- Step 3: Items -->
+@if (selectedCustomer()) {
+  <div class="card step-card">
+    <div class="step-title">3. Items</div>
+
+    <div class="search-row">
+      <input
+        type="text"
+        placeholder="Search frames by name or brand…"
+        [(ngModel)]="itemQuery"
+        (keyup.enter)="searchItems()"
+      />
+      <button class="btn btn-primary" [disabled]="isSearchingItems()" (click)="searchItems()">
+        {{ isSearchingItems() ? 'Searching…' : 'Search' }}
+      </button>
+    </div>
+
+    @if (itemResults().length > 0) {
+      <div class="item-result-list">
+        @for (item of itemResults(); track item._id) {
+          <div class="item-result-row">
+            <div>
+              <div class="name">{{ item.name }} <span class="sku">{{ item.sku }}</span></div>
+              <div class="meta">{{ item.brand }} &middot; ₹{{ item.price }} &middot; {{ item.stock }} in stock</div>
+            </div>
+            <button class="btn btn-ghost" [disabled]="item.stock <= 0" (click)="addItem(item)">Add</button>
+          </div>
+        }
+      </div>
+    }
+
+    @if (orderLines().length > 0) {
+      <div class="order-lines">
+        @for (line of orderLines(); track line.inventoryItem) {
+          <div class="order-line-row">
+            <span class="line-name">{{ line.name }}</span>
+            <div class="qty-control">
+              <button type="button" (click)="updateQuantity(line.inventoryItem, line.quantity - 1)">−</button>
+              <span>{{ line.quantity }}</span>
+              <button type="button" [disabled]="line.quantity >= line.stock" (click)="updateQuantity(line.inventoryItem, line.quantity + 1)">+</button>
+            </div>
+            <span class="line-total">₹{{ line.price * line.quantity }}</span>
+            <button class="btn btn-danger remove-btn" (click)="removeItem(line.inventoryItem)">Remove</button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}
+
+<!-- Step 4: Payment + confirm -->
+@if (selectedCustomer() && orderLines().length > 0) {
+  <div class="card step-card">
+    <div class="step-title">4. Payment &amp; confirm</div>
+
+    <div class="total-row">
+      <span>Total</span>
+      <span class="total-amount">₹{{ orderTotal }}</span>
+    </div>
+
+    <div class="field">
+      <label>Payment method</label>
+      <select [(ngModel)]="paymentMethod">
+        <option value="cash">Cash</option>
+        <option value="card">Card</option>
+        <option value="upi">UPI</option>
+        <option value="cod">Cash on delivery (for later pickup)</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label>Notes (optional)</label>
+      <textarea rows="2" [(ngModel)]="orderNotes" placeholder="Anything worth noting for this order…"></textarea>
+    </div>
+
+    <button class="btn btn-primary confirm-btn" [disabled]="isPlacingOrder()" (click)="placeOrder()">
+      {{ isPlacingOrder() ? 'Placing order…' : 'Confirm order' }}
+    </button>
+  </div>
+}

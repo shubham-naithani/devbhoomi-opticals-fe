@@ -19,7 +19,7 @@
       <div class="card order-card">
         <div class="order-head">
           <div>
-            <div class="order-id">Order #{{ order._id.slice(-6).toUpperCase() }}</div>
+            <div class="order-id">Order {{ order.orderId }}</div>
             <div class="order-date">{{ order.createdAt | date: 'medium' }}</div>
           </div>
           <span class="badge status-badge" [class]="'status-' + order.status">{{ order.status }}</span>

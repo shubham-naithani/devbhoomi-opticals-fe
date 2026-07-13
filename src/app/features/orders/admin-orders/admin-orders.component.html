@@ -1,7 +1,7 @@
 <div class="page-header">
   <div>
     <h1>Orders</h1>
-    <p class="subtitle">All customer orders across the store.</p>
+    <p class="subtitle">All customer orders across the store — online and in-store.</p>
   </div>
 </div>
 
@@ -28,6 +28,8 @@
           <th>Customer</th>
           <th>Items</th>
           <th>Total</th>
+          <th>Payment</th>
+          <th>Source</th>
           <th>Status</th>
         </tr>
       </thead>
@@ -35,7 +37,7 @@
         @for (order of orders(); track order._id) {
           <tr>
             <td>
-              <div class="order-id">#{{ order._id.slice(-6).toUpperCase() }}</div>
+              <div class="order-id">{{ order.orderId }}</div>
               <div class="order-date">{{ order.createdAt | date: 'short' }}</div>
             </td>
             <td>
@@ -48,6 +50,15 @@
               }
             </td>
             <td class="total-cell">₹{{ order.totalAmount }}</td>
+            <td class="payment-cell">{{ order.paymentMethod | uppercase }}</td>
+            <td>
+              <span class="badge" [class.badge-admin]="order.source === 'in_store'" [class.badge-customer]="order.source === 'online'">
+                {{ order.source === 'in_store' ? 'In-store' : 'Online' }}
+              </span>
+              @if (order.source === 'in_store' && createdByName(order)) {
+                <div class="created-by">by {{ createdByName(order) }}</div>
+              }
+            </td>
             <td>
               <select
                 [ngModel]="order.status"
