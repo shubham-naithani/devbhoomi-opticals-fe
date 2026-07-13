@@ -1,4 +1,4 @@
 export const environment = {
   production: true,
-  apiUrl: '/api',
+  apiUrl: 'https://devbhoomi-opticals-api.azurewebsites.net/api',
 };
