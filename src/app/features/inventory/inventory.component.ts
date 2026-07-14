@@ -27,16 +27,24 @@ export class InventoryComponent {
   editingItem = signal<InventoryItem | null>(null);
   isSaving = signal(false);
 
+  // Images: existing (already-uploaded URLs, kept on edit) + newly picked
+  // local files (not yet uploaded — previewed via object URLs, uploaded only
+  // when the form is actually saved).
+  existingImages = signal<string[]>([]);
+  pendingFiles = signal<File[]>([]);
+  pendingPreviews = signal<string[]>([]);
+  isUploadingImages = signal(false);
+
   form = this.fb.group({
     name: ['', Validators.required],
     brand: [''],
     category: ['eyeglasses', Validators.required],
     frameType: [''],
+    frameShape: [''],
     gender: ['unisex', Validators.required],
+    costPrice: [null as number | null],
     price: [0, [Validators.required, Validators.min(0)]],
     stock: [0, [Validators.required, Validators.min(0)]],
-    sku: [''],
-    imageUrl: [''],
     description: [''],
     isActive: [true],
   });
@@ -68,9 +76,11 @@ export class InventoryComponent {
   openCreatePanel(): void {
     this.editingItem.set(null);
     this.form.reset({
-      name: '', brand: '', category: 'eyeglasses', frameType: '', gender: 'unisex',
-      price: 0, stock: 0, sku: '', imageUrl: '', description: '', isActive: true,
+      name: '', brand: '', category: 'eyeglasses', frameType: '', frameShape: '', gender: 'unisex',
+      costPrice: null, price: 0, stock: 0, description: '', isActive: true,
     });
+    this.existingImages.set([]);
+    this.clearPendingFiles();
     this.isPanelOpen.set(true);
   }
 
@@ -81,19 +91,54 @@ export class InventoryComponent {
       brand: item.brand || '',
       category: item.category,
       frameType: item.frameType || '',
+      frameShape: item.frameShape || '',
       gender: item.gender,
+      costPrice: item.costPrice ?? null,
       price: item.price,
       stock: item.stock,
-      sku: item.sku || '',
-      imageUrl: item.imageUrl || '',
       description: item.description || '',
       isActive: item.isActive,
     });
+    this.existingImages.set(item.images || []);
+    this.clearPendingFiles();
     this.isPanelOpen.set(true);
   }
 
   closePanel(): void {
     this.isPanelOpen.set(false);
+    this.clearPendingFiles();
+  }
+
+  onFilesSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const files = input.files ? Array.from(input.files) : [];
+    if (files.length === 0) return;
+
+    const totalCount = this.existingImages().length + this.pendingFiles().length + files.length;
+    if (totalCount > 6) {
+      this.toast.error('Maximum 6 images per item');
+      return;
+    }
+
+    this.pendingFiles.update((list) => [...list, ...files]);
+    this.pendingPreviews.update((list) => [...list, ...files.map((f) => URL.createObjectURL(f))]);
+    input.value = ''; // allow re-selecting the same file later if removed
+  }
+
+  removeExistingImage(url: string): void {
+    this.existingImages.update((list) => list.filter((u) => u !== url));
+  }
+
+  removePendingFile(index: number): void {
+    URL.revokeObjectURL(this.pendingPreviews()[index]);
+    this.pendingFiles.update((list) => list.filter((_, i) => i !== index));
+    this.pendingPreviews.update((list) => list.filter((_, i) => i !== index));
+  }
+
+  private clearPendingFiles(): void {
+    this.pendingPreviews().forEach((url) => URL.revokeObjectURL(url));
+    this.pendingFiles.set([]);
+    this.pendingPreviews.set([]);
   }
 
   save(): void {
@@ -102,26 +147,54 @@ export class InventoryComponent {
       return;
     }
 
-    const value = this.form.getRawValue();
-    const editing = this.editingItem();
     this.isSaving.set(true);
 
-    const request = editing
-      ? this.inventoryService.update(editing._id, value as any)
-      : this.inventoryService.create(value as any);
+    // Upload any newly picked files first (if there are none, this resolves
+    // immediately with an empty array), then save the item with the combined
+    // image list — existing (kept) URLs plus the freshly uploaded ones.
+    const uploadStep = this.pendingFiles().length
+      ? (this.isUploadingImages.set(true), this.inventoryService.uploadImages(this.pendingFiles()))
+      : null;
 
-    request.subscribe({
-      next: () => {
-        this.toast.success(editing ? 'Item updated' : 'Item added');
-        this.isSaving.set(false);
-        this.isPanelOpen.set(false);
-        this.fetchItems();
-      },
-      error: (err) => {
-        this.isSaving.set(false);
-        this.toast.error(err?.error?.message || 'Could not save item');
-      },
-    });
+    const proceedWithSave = (newUrls: string[]) => {
+      this.isUploadingImages.set(false);
+      const value = this.form.getRawValue();
+      const editing = this.editingItem();
+      const images = [...this.existingImages(), ...newUrls];
+
+      const payload = { ...value, images };
+
+      const request = editing
+        ? this.inventoryService.update(editing._id, payload as any)
+        : this.inventoryService.create(payload as any);
+
+      request.subscribe({
+        next: () => {
+          this.toast.success(editing ? 'Item updated' : 'Item added');
+          this.isSaving.set(false);
+          this.isPanelOpen.set(false);
+          this.clearPendingFiles();
+          this.fetchItems();
+        },
+        error: (err) => {
+          this.isSaving.set(false);
+          this.toast.error(err?.error?.message || 'Could not save item');
+        },
+      });
+    };
+
+    if (uploadStep) {
+      uploadStep.subscribe({
+        next: (res) => proceedWithSave(res.urls),
+        error: (err) => {
+          this.isSaving.set(false);
+          this.isUploadingImages.set(false);
+          this.toast.error(err?.error?.message || 'Could not upload images');
+        },
+      });
+    } else {
+      proceedWithSave([]);
+    }
   }
 
   remove(item: InventoryItem): void {

@@ -3,7 +3,8 @@ import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../core/services/order.service';
 import { ToastService } from '../../../core/services/toast.service';
-import { Order, OrderStatus } from '../../../core/models/order.model';
+import { AuthService } from '../../../core/services/auth.service';
+import { Order, OrderStatus, PaymentMethod } from '../../../core/models/order.model';
 
 @Component({
   selector: 'app-admin-orders',
@@ -15,6 +16,7 @@ import { Order, OrderStatus } from '../../../core/models/order.model';
 export class AdminOrdersComponent {
   private orderService = inject(OrderService);
   private toast = inject(ToastService);
+  auth = inject(AuthService);
 
   orders = signal<Order[]>([]);
   isLoading = signal(true);
@@ -22,6 +24,20 @@ export class AdminOrdersComponent {
   updatingId = signal<string | null>(null);
 
   statusOptions: OrderStatus[] = ['pending', 'confirmed', 'delivered', 'cancelled'];
+  paymentMethodOptions: PaymentMethod[] = ['cash', 'card', 'upi', 'cod'];
+
+  // Detail panel state (view + edit combined)
+  selectedOrder = signal<Order | null>(null);
+  isPanelLoading = signal(false);
+  isEditMode = signal(false);
+  editNotes = signal('');
+  editShippingAddress = signal('');
+  editContactPhone = signal('');
+  editPaymentMethod = signal<PaymentMethod>('cash');
+  isSavingEdit = signal(false);
+
+  paymentAmount = signal<number | null>(null);
+  isRecordingPayment = signal(false);
 
   constructor() {
     this.fetch();
@@ -63,6 +79,10 @@ export class AdminOrdersComponent {
     return '';
   }
 
+  balanceDue(order: Order): number {
+    return Math.max(order.totalAmount - order.amountPaid, 0);
+  }
+
   changeStatus(order: Order, status: OrderStatus): void {
     if (status === order.status) return;
     this.updatingId.set(order._id);
@@ -77,6 +97,111 @@ export class AdminOrdersComponent {
         this.updatingId.set(null);
         this.toast.error(err?.error?.message || 'Could not update status');
       },
+    });
+  }
+
+  // ---- Detail panel: view / edit / payment / delete ----------------------
+
+  openDetail(order: Order): void {
+    this.isPanelLoading.set(true);
+    this.isEditMode.set(false);
+    this.paymentAmount.set(null);
+    this.selectedOrder.set(order); // show cached data immediately
+
+    this.orderService.getById(order._id).subscribe({
+      next: (res) => {
+        this.selectedOrder.set(res.order);
+        this.resetEditFields(res.order);
+        this.isPanelLoading.set(false);
+      },
+      error: () => {
+        this.isPanelLoading.set(false);
+        this.toast.error('Could not load full order details');
+      },
+    });
+  }
+
+  closeDetail(): void {
+    this.selectedOrder.set(null);
+    this.isEditMode.set(false);
+  }
+
+  private resetEditFields(order: Order): void {
+    this.editNotes.set(order.notes || '');
+    this.editShippingAddress.set(order.shippingAddress || '');
+    this.editContactPhone.set(order.contactPhone || '');
+    this.editPaymentMethod.set(order.paymentMethod);
+  }
+
+  enterEditMode(): void {
+    const order = this.selectedOrder();
+    if (order) this.resetEditFields(order);
+    this.isEditMode.set(true);
+  }
+
+  saveEdit(): void {
+    const order = this.selectedOrder();
+    if (!order) return;
+
+    this.isSavingEdit.set(true);
+    this.orderService
+      .update(order._id, {
+        notes: this.editNotes(),
+        shippingAddress: this.editShippingAddress(),
+        contactPhone: this.editContactPhone(),
+        paymentMethod: this.editPaymentMethod(),
+      })
+      .subscribe({
+        next: (res) => {
+          this.isSavingEdit.set(false);
+          this.isEditMode.set(false);
+          this.selectedOrder.set(res.order);
+          this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
+          this.toast.success('Order updated');
+        },
+        error: (err) => {
+          this.isSavingEdit.set(false);
+          this.toast.error(err?.error?.message || 'Could not update order');
+        },
+      });
+  }
+
+  recordPayment(): void {
+    const order = this.selectedOrder();
+    const amount = this.paymentAmount();
+    if (!order || !amount || amount <= 0) {
+      this.toast.error('Enter a valid amount');
+      return;
+    }
+
+    this.isRecordingPayment.set(true);
+    this.orderService.recordPayment(order._id, amount).subscribe({
+      next: (res) => {
+        this.isRecordingPayment.set(false);
+        this.paymentAmount.set(null);
+        this.selectedOrder.set(res.order);
+        this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
+        this.toast.success('Payment recorded');
+      },
+      error: (err) => {
+        this.isRecordingPayment.set(false);
+        this.toast.error(err?.error?.message || 'Could not record payment');
+      },
+    });
+  }
+
+  deleteOrder(order: Order): void {
+    if (!confirm(`Delete order ${order.orderId}? Its items will be returned to stock. This cannot be undone.`)) {
+      return;
+    }
+
+    this.orderService.remove(order._id).subscribe({
+      next: () => {
+        this.toast.success('Order deleted');
+        this.orders.update((list) => list.filter((o) => o._id !== order._id));
+        if (this.selectedOrder()?._id === order._id) this.closeDetail();
+      },
+      error: (err) => this.toast.error(err?.error?.message || 'Could not delete order'),
     });
   }
 }

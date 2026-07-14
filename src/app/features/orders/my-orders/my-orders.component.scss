@@ -87,5 +87,10 @@
   .total {
     font-weight: 600;
     color: var(--color-primary-dark);
+
+    .balance-due {
+      color: var(--color-warning);
+      font-weight: 600;
+    }
   }
 }

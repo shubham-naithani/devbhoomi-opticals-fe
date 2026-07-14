@@ -29,6 +29,18 @@
     <option value="unisex">Unisex</option>
     <option value="kids">Kids</option>
   </select>
+
+  <select [(ngModel)]="frameShape" (ngModelChange)="onFilterChange()">
+    <option value="">Any shape</option>
+    <option value="aviator">Aviator</option>
+    <option value="wayfarer">Wayfarer</option>
+    <option value="round">Round</option>
+    <option value="square">Square</option>
+    <option value="rectangle">Rectangle</option>
+    <option value="cat_eye">Cat-eye</option>
+    <option value="oval">Oval</option>
+    <option value="geometric">Geometric</option>
+  </select>
 </div>
 
 @if (isLoading()) {
@@ -40,8 +52,8 @@
     @for (item of items(); track item._id) {
       <div class="product-card card">
         <div class="thumb">
-          @if (item.imageUrl) {
-            <img [src]="item.imageUrl" [alt]="item.name" />
+          @if (item.images && item.images.length > 0) {
+            <img [src]="item.images[0]" [alt]="item.name" />
           } @else {
             <div class="thumb-placeholder">{{ item.name.charAt(0) }}</div>
           }

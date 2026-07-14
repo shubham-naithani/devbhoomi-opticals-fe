@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, UpperCasePipe } from '@angular/common';
 import { Component, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { OrderService } from '../../../core/services/order.service';
@@ -8,7 +8,7 @@ import { Order } from '../../../core/models/order.model';
 @Component({
   selector: 'app-my-orders',
   standalone: true,
-  imports: [RouterLink, DatePipe],
+  imports: [RouterLink, DatePipe, UpperCasePipe],
   templateUrl: './my-orders.component.html',
   styleUrl: './my-orders.component.scss',
 })

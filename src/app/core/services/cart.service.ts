@@ -35,7 +35,7 @@ export class CartService {
       name: item.name,
       price: item.price,
       stock: item.stock,
-      imageUrl: item.imageUrl,
+      imageUrl: item.images && item.images.length > 0 ? item.images[0] : undefined,
       quantity: Math.min(quantity, item.stock),
     };
     this.persist([...current, line]);

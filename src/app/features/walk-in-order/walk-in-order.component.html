@@ -202,6 +202,24 @@
     </div>
 
     <div class="field">
+      <label>Amount received now (₹)</label>
+      <input
+        type="number"
+        min="0"
+        [max]="orderTotal"
+        [ngModel]="effectiveAmountReceived"
+        (ngModelChange)="amountReceived.set($event)"
+      />
+      <div class="hint">Leave as the full total for a complete payment, or lower it to record an advance/deposit.</div>
+    </div>
+
+    @if (balanceDue > 0) {
+      <div class="balance-flag">
+        Balance due: ₹{{ balanceDue }} — the customer will be notified of the remaining amount.
+      </div>
+    }
+
+    <div class="field">
       <label>Notes (optional)</label>
       <textarea rows="2" [(ngModel)]="orderNotes" placeholder="Anything worth noting for this order…"></textarea>
     </div>

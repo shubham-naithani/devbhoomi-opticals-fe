@@ -35,8 +35,13 @@
         </div>
 
         <div class="order-footer">
-          <span>Cash on delivery</span>
-          <span class="total">Total: ₹{{ order.totalAmount }}</span>
+          <span>{{ order.paymentMethod === 'cod' ? 'Cash on delivery' : (order.paymentMethod | uppercase) }}</span>
+          <span class="total">
+            Total: ₹{{ order.totalAmount }}
+            @if (order.paymentStatus === 'partial') {
+              <span class="balance-due"> — ₹{{ order.totalAmount - order.amountPaid }} due</span>
+            }
+          </span>
         </div>
       </div>
     }

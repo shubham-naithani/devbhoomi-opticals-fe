@@ -1,7 +1,13 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { CreateOrderPayload, CreateWalkInOrderPayload, Order, OrderStatus } from '../models/order.model';
+import {
+  CreateOrderPayload,
+  CreateWalkInOrderPayload,
+  Order,
+  OrderStatus,
+  UpdateOrderPayload,
+} from '../models/order.model';
 
 @Injectable({ providedIn: 'root' })
 export class OrderService {
@@ -30,7 +36,23 @@ export class OrderService {
     });
   }
 
+  getById(id: string) {
+    return this.http.get<{ order: Order }>(`${this.base}/${id}`);
+  }
+
+  update(id: string, payload: UpdateOrderPayload) {
+    return this.http.put<{ order: Order }>(`${this.base}/${id}`, payload);
+  }
+
   updateStatus(id: string, status: OrderStatus) {
     return this.http.put<{ order: Order }>(`${this.base}/${id}/status`, { status });
+  }
+
+  recordPayment(id: string, amount: number) {
+    return this.http.put<{ order: Order }>(`${this.base}/${id}/payment`, { amount });
+  }
+
+  remove(id: string) {
+    return this.http.delete<{ message: string; id: string }>(`${this.base}/${id}`);
   }
 }

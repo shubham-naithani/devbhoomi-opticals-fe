@@ -73,11 +73,23 @@ export class WalkInOrderComponent {
 
   // --- Step 4: payment -----------------------------------------------
   paymentMethod = signal<PaymentMethod>('cash');
+  // null = "full amount" (the default — most in-store sales are paid in full).
+  // Set to a smaller number to record a partial/advance payment instead.
+  amountReceived = signal<number | null>(null);
   orderNotes = signal('');
   isPlacingOrder = signal(false);
 
   get orderTotal(): number {
     return this.orderLines().reduce((sum, l) => sum + l.price * l.quantity, 0);
+  }
+
+  get effectiveAmountReceived(): number {
+    const entered = this.amountReceived();
+    return entered === null ? this.orderTotal : Math.min(Math.max(entered, 0), this.orderTotal);
+  }
+
+  get balanceDue(): number {
+    return this.orderTotal - this.effectiveAmountReceived;
   }
 
   // ---- Customer search / select ----------------------------------------
@@ -264,6 +276,7 @@ export class WalkInOrderComponent {
         customerId: customer._id,
         items: this.orderLines().map((l) => ({ inventoryItem: l.inventoryItem, quantity: l.quantity })),
         paymentMethod: this.paymentMethod(),
+        amountPaid: this.amountReceived() === null ? undefined : this.effectiveAmountReceived,
         prescriptionUsed: this.linkedEyeTestId() || undefined,
         notes: this.orderNotes() || undefined,
       })

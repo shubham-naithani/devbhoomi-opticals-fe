@@ -26,11 +26,13 @@
     <table>
       <thead>
         <tr>
+          <th></th>
           <th>Name</th>
           <th>Brand</th>
           <th>Category</th>
-          <th>Price</th>
-          <th>Stock</th>
+          <th>Cost</th>
+          <th>MRP</th>
+          <th class="stock-col">Stock</th>
           <th>Status</th>
           <th></th>
         </tr>
@@ -38,11 +40,19 @@
       <tbody>
         @for (item of items(); track item._id) {
           <tr>
+            <td class="thumb-cell">
+              @if (item.images && item.images.length > 0) {
+                <img [src]="item.images[0]" [alt]="item.name" class="row-thumb" />
+              } @else {
+                <div class="row-thumb-placeholder">{{ item.name.charAt(0) }}</div>
+              }
+            </td>
             <td>{{ item.name }}</td>
             <td>{{ item.brand || '—' }}</td>
             <td>{{ item.category }}</td>
+            <td class="cost-cell">{{ item.costPrice ? '₹' + item.costPrice : '—' }}</td>
             <td>₹{{ item.price }}</td>
-            <td [class.low-stock]="item.stock <= 5">{{ item.stock }}</td>
+            <td class="stock-col" [class.low-stock]="item.stock <= 5">{{ item.stock }}</td>
             <td><span class="badge" [class.badge-active]="item.isActive" [class.badge-inactive]="!item.isActive">{{ item.isActive ? 'Active' : 'Hidden' }}</span></td>
             <td class="actions">
               @if (auth.isAdmin()) {
@@ -72,7 +82,7 @@
 
       <div class="field">
         <label for="brand">Brand</label>
-        <input id="brand" type="text" formControlName="brand" />
+        <input id="brand" type="text" formControlName="brand" placeholder="Ray-Ban, Oakley, local brand…" />
       </div>
 
       <div class="two-col">
@@ -98,38 +108,81 @@
         </div>
       </div>
 
-      <div class="field">
-        <label for="frameType">Frame type</label>
-        <input id="frameType" type="text" formControlName="frameType" placeholder="Full-rim, half-rim, rimless…" />
+      <div class="two-col">
+        <div class="field">
+          <label for="frameType">Frame type (rim style)</label>
+          <input id="frameType" type="text" formControlName="frameType" placeholder="Full-rim, half-rim, rimless…" />
+        </div>
+
+        <div class="field">
+          <label for="frameShape">Frame shape</label>
+          <select id="frameShape" formControlName="frameShape">
+            <option value="">Not specified</option>
+            <option value="aviator">Aviator</option>
+            <option value="wayfarer">Wayfarer</option>
+            <option value="round">Round</option>
+            <option value="square">Square</option>
+            <option value="rectangle">Rectangle</option>
+            <option value="cat_eye">Cat-eye</option>
+            <option value="oval">Oval</option>
+            <option value="geometric">Geometric</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
       </div>
 
       <div class="two-col">
         <div class="field">
-          <label for="price">Price (₹)</label>
-          <input id="price" type="number" formControlName="price" min="0" />
+          <label for="costPrice">Cost price (₹) — what we pay</label>
+          <input id="costPrice" type="number" formControlName="costPrice" min="0" placeholder="Optional" />
         </div>
 
         <div class="field">
-          <label for="stock">Stock</label>
-          <input id="stock" type="number" formControlName="stock" min="0" />
+          <label for="price">MRP (₹) — what we sell for</label>
+          <input id="price" type="number" formControlName="price" min="0" />
         </div>
       </div>
 
-      @if (editingItem()) {
-        <div class="field">
-          <label>SKU (auto-generated)</label>
-          <input type="text" [value]="editingItem()!.sku" disabled />
+      <div class="two-col">
+          <div class="field stock-field">
+          <label for="stock">Stock</label>
+          <input id="stock" type="number" formControlName="stock" min="0" />
         </div>
-      } @else {
-        <div class="field">
-          <label>SKU</label>
-          <input type="text" value="Assigned automatically on save" disabled />
-        </div>
-      }
+
+        @if (editingItem()) {
+          <div class="field">
+            <label>SKU (auto-generated)</label>
+            <input type="text" [value]="editingItem()!.sku" disabled />
+          </div>
+        } @else {
+          <div class="field">
+            <label>SKU</label>
+            <input type="text" value="Assigned automatically on save" disabled />
+          </div>
+        }
+      </div>
 
       <div class="field">
-        <label for="imageUrl">Image URL</label>
-        <input id="imageUrl" type="text" formControlName="imageUrl" placeholder="https://…" />
+        <label>Photos</label>
+        <div class="image-grid">
+          @for (url of existingImages(); track url) {
+            <div class="image-thumb">
+              <img [src]="url" alt="" />
+              <button type="button" class="remove-thumb" (click)="removeExistingImage(url)">×</button>
+            </div>
+          }
+          @for (preview of pendingPreviews(); track preview; let i = $index) {
+            <div class="image-thumb pending">
+              <img [src]="preview" alt="" />
+              <button type="button" class="remove-thumb" (click)="removePendingFile(i)">×</button>
+            </div>
+          }
+          <label class="image-upload-tile">
+            <input type="file" accept="image/*" multiple (change)="onFilesSelected($event)" hidden />
+            + Add photo
+          </label>
+        </div>
+        <div class="hint">Up to 6 photos. Uploaded when you save.</div>
       </div>
 
       <div class="field">
@@ -145,7 +198,7 @@
       <div class="panel-actions">
         <button type="button" class="btn btn-ghost" (click)="closePanel()">Cancel</button>
         <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
-          {{ isSaving() ? 'Saving…' : 'Save' }}
+          {{ isUploadingImages() ? 'Uploading photos…' : isSaving() ? 'Saving…' : 'Save' }}
         </button>
       </div>
     </form>

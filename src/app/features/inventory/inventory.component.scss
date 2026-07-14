@@ -69,7 +69,7 @@
   top: 0;
   right: 0;
   height: 100vh;
-  width: 380px;
+  width: 35rem;
   max-width: 92vw;
   z-index: 50;
   padding: 32px 28px;
@@ -114,4 +114,128 @@
 .low-stock {
   color: var(--color-danger);
   font-weight: 600;
+}
+
+// Stock is just a small number — a full-width table cell/input made it
+// visually oversized and forced horizontal scroll on the input itself.
+.stock-col {
+  width: 70px;
+  max-width: 70px;
+}
+
+.cost-cell {
+  color: var(--color-text-muted);
+}
+
+.thumb-cell {
+  width: 44px;
+}
+
+.row-thumb {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.row-thumb-placeholder {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+}
+
+// ---- Image upload grid -----------------------------------------------------
+.image-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.image-thumb {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+
+  &.pending { opacity: 0.85; }
+}
+
+.remove-thumb {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(18, 49, 56, 0.75);
+  color: #fff;
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.image-upload-tile {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  border: 1.5px dashed var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  text-align: center;
+  padding: 4px;
+
+  &:hover { border-color: var(--color-primary); color: var(--color-primary); }
+}
+
+// ---- Mobile ---------------------------------------------------------------
+@media (max-width: 640px) {
+  .side-panel {
+    width: 100vw;
+    max-width: 100vw;
+    padding: 22px 18px;
+  }
+
+  .two-col {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar input {
+    width: 100%;
+  }
+
+  .image-grid {
+    grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+  }
+
+  .panel-actions {
+    flex-direction: column-reverse;
+
+    .btn {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  .table-card {
+    // the table itself still scrolls horizontally (already have overflow-x: auto
+    // on .table-card), this just gives a visual hint that there's more to scroll
+    -webkit-overflow-scrolling: touch;
+  }
 }
