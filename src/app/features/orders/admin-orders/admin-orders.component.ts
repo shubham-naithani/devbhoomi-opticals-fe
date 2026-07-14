@@ -4,21 +4,29 @@ import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../core/services/order.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
+import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { Order, OrderStatus, PaymentMethod } from '../../../core/models/order.model';
+
+const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-admin-orders',
   standalone: true,
-  imports: [FormsModule, DatePipe, UpperCasePipe],
+  imports: [FormsModule, DatePipe, UpperCasePipe, PaginationComponent],
   templateUrl: './admin-orders.component.html',
   styleUrl: './admin-orders.component.scss',
 })
 export class AdminOrdersComponent {
   private orderService = inject(OrderService);
   private toast = inject(ToastService);
+  private confirmDialog = inject(ConfirmDialogService);
   auth = inject(AuthService);
 
   orders = signal<Order[]>([]);
+  totalOrders = signal(0);
+  page = signal(1);
+  totalPages = signal(1);
   isLoading = signal(true);
   statusFilter = signal('');
   updatingId = signal<string | null>(null);
@@ -45,9 +53,11 @@ export class AdminOrdersComponent {
 
   fetch(): void {
     this.isLoading.set(true);
-    this.orderService.all({ status: this.statusFilter() || undefined, limit: 50 }).subscribe({
+    this.orderService.all({ status: this.statusFilter() || undefined, page: this.page(), limit: PAGE_SIZE }).subscribe({
       next: (res) => {
         this.orders.set(res.orders);
+        this.totalOrders.set(res.total);
+        this.totalPages.set(res.pages || 1);
         this.isLoading.set(false);
       },
       error: () => {
@@ -58,6 +68,12 @@ export class AdminOrdersComponent {
   }
 
   onFilterChange(): void {
+    this.page.set(1);
+    this.fetch();
+  }
+
+  goToPage(page: number): void {
+    this.page.set(page);
     this.fetch();
   }
 
@@ -190,10 +206,14 @@ export class AdminOrdersComponent {
     });
   }
 
-  deleteOrder(order: Order): void {
-    if (!confirm(`Delete order ${order.orderId}? Its items will be returned to stock. This cannot be undone.`)) {
-      return;
-    }
+  async deleteOrder(order: Order): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete this order?',
+      message: `Delete order ${order.orderId}? Its items will be returned to stock. This cannot be undone.`,
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!confirmed) return;
 
     this.orderService.remove(order._id).subscribe({
       next: () => {

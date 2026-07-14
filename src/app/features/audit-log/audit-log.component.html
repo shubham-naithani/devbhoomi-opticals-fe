@@ -43,3 +43,10 @@
     </table>
   }
 </div>
+
+<app-pagination
+  [page]="page()"
+  [totalPages]="totalPages()"
+  [totalItems]="totalLogs()"
+  (pageChange)="goToPage($event)"
+/>

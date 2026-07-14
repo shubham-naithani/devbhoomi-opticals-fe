@@ -34,7 +34,9 @@
           <th>MRP</th>
           <th class="stock-col">Stock</th>
           <th>Status</th>
-          <th></th>
+          @if (auth.isAdmin()) {
+            <th></th>
+          }
         </tr>
       </thead>
       <tbody>
@@ -54,20 +56,25 @@
             <td>₹{{ item.price }}</td>
             <td class="stock-col" [class.low-stock]="item.stock <= 5">{{ item.stock }}</td>
             <td><span class="badge" [class.badge-active]="item.isActive" [class.badge-inactive]="!item.isActive">{{ item.isActive ? 'Active' : 'Hidden' }}</span></td>
+             @if (auth.isAdmin()) {
             <td class="actions">
-              @if (auth.isAdmin()) {
                 <button class="btn btn-ghost" (click)="openEditPanel(item)">Edit</button>
                 <button class="btn btn-danger" (click)="remove(item)">Delete</button>
-              } @else {
-                <span class="view-only">View only</span>
-              }
             </td>
+            }
           </tr>
         }
       </tbody>
     </table>
   }
 </div>
+
+<app-pagination
+  [page]="page()"
+  [totalPages]="totalPages()"
+  [totalItems]="totalItems()"
+  (pageChange)="goToPage($event)"
+/>
 
 @if (isPanelOpen()) {
   <div class="overlay" (click)="closePanel()"></div>
@@ -144,21 +151,21 @@
       </div>
 
       <div class="two-col">
-          <div class="field stock-field">
+        <div class="field stock-field">
           <label for="stock">Stock</label>
           <input id="stock" type="number" formControlName="stock" min="0" />
         </div>
 
         @if (editingItem()) {
-          <div class="field">
-            <label>SKU (auto-generated)</label>
-            <input type="text" [value]="editingItem()!.sku" disabled />
-          </div>
+        <div class="field">
+          <label>SKU (auto-generated)</label>
+          <input id="sku-field" type="text" [value]="editingItem()!.sku" disabled />
+        </div>
         } @else {
-          <div class="field">
-            <label>SKU</label>
-            <input type="text" value="Assigned automatically on save" disabled />
-          </div>
+        <div class="field">
+          <label>SKU</label>
+          <input id="sku-field" type="text" value="Assigned automatically on save" disabled />
+        </div>
         }
       </div>
 

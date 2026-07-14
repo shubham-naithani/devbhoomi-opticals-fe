@@ -3,23 +3,30 @@ import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InventoryService } from '../../core/services/inventory.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { InventoryItem } from '../../core/models/inventory.model';
+
+const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PaginationComponent],
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.scss',
 })
 export class InventoryComponent {
   private inventoryService = inject(InventoryService);
   private toast = inject(ToastService);
+  private confirmDialog = inject(ConfirmDialogService);
   private fb = inject(FormBuilder);
   auth = inject(AuthService);
 
   items = signal<InventoryItem[]>([]);
   totalItems = signal(0);
+  page = signal(1);
+  totalPages = signal(1);
   isLoading = signal(true);
   searchTerm = signal('');
 
@@ -55,10 +62,11 @@ export class InventoryComponent {
 
   fetchItems(): void {
     this.isLoading.set(true);
-    this.inventoryService.list({ search: this.searchTerm(), limit: 50 }).subscribe({
+    this.inventoryService.list({ search: this.searchTerm(), page: this.page(), limit: PAGE_SIZE }).subscribe({
       next: (res) => {
         this.items.set(res.items || []);
         this.totalItems.set(res.total);
+        this.totalPages.set(res.pages || 1);
         this.isLoading.set(false);
       },
       error: () => {
@@ -70,6 +78,12 @@ export class InventoryComponent {
 
   onSearchChange(value: string): void {
     this.searchTerm.set(value);
+    this.page.set(1);
+    this.fetchItems();
+  }
+
+  goToPage(page: number): void {
+    this.page.set(page);
     this.fetchItems();
   }
 
@@ -197,8 +211,14 @@ export class InventoryComponent {
     }
   }
 
-  remove(item: InventoryItem): void {
-    if (!confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
+  async remove(item: InventoryItem): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete this item?',
+      message: `Delete "${item.name}"? This cannot be undone.`,
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!confirmed) return;
 
     this.inventoryService.remove(item._id).subscribe({
       next: () => {

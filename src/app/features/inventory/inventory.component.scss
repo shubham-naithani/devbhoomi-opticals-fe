@@ -116,6 +116,10 @@
   font-weight: 600;
 }
 
+#sku-field {
+  background-color: rgba(128, 128, 128, 0.225);
+}
+
 // Stock is just a small number — a full-width table cell/input made it
 // visually oversized and forced horizontal scroll on the input itself.
 .stock-col {
