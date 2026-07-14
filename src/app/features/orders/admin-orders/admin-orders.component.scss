@@ -144,6 +144,7 @@
     margin-bottom: 6px;
 
     &.due { color: var(--color-warning); font-weight: 600; }
+    &.change { color: var(--color-primary); font-weight: 600; }
   }
 }
 

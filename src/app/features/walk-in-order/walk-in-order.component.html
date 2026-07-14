@@ -207,8 +207,8 @@
         type="number"
         min="0"
         [max]="orderTotal"
-        [ngModel]="effectiveAmountReceived"
-        (ngModelChange)="amountReceived.set($event)"
+        [ngModel]="amountReceived()"
+        (ngModelChange)="onAmountReceivedChange($event)"
       />
       <div class="hint">Leave as the full total for a complete payment, or lower it to record an advance/deposit.</div>
     </div>
