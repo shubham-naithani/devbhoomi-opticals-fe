@@ -197,7 +197,11 @@ export class AdminOrdersComponent {
         this.paymentAmount.set(null);
         this.selectedOrder.set(res.order);
         this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
-        this.toast.success('Payment recorded');
+        this.toast.success(
+          res.changeDue > 0
+            ? `Payment recorded — give ₹${res.changeDue} change to the customer`
+            : 'Payment recorded'
+        );
       },
       error: (err) => {
         this.isRecordingPayment.set(false);

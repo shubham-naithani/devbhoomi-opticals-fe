@@ -18,6 +18,7 @@ export interface Order {
   items: OrderItem[];
   totalAmount: number;
   amountPaid: number;
+  changeGiven?: number;
   paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   status: OrderStatus;

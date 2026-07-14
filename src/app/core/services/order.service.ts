@@ -20,7 +20,7 @@ export class OrderService {
   }
 
   createWalkIn(payload: CreateWalkInOrderPayload) {
-    return this.http.post<{ order: Order }>(`${this.base}/walk-in`, payload);
+  return this.http.post<{ order: Order; changeDue: number }>(`${this.base}/walk-in`, payload);
   }
 
   myOrders() {
@@ -49,7 +49,7 @@ export class OrderService {
   }
 
   recordPayment(id: string, amount: number) {
-    return this.http.put<{ order: Order }>(`${this.base}/${id}/payment`, { amount });
+  return this.http.put<{ order: Order; changeDue: number }>(`${this.base}/${id}/payment`, { amount });
   }
 
   remove(id: string) {

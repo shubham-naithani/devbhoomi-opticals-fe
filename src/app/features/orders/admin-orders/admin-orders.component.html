@@ -148,6 +148,12 @@
             <span>₹{{ balanceDue(order) }}</span>
           </div>
         }
+        @if (order.changeGiven && order.changeGiven > 0) {
+          <div class="summary-row change">
+            <span>Change given</span>
+            <span>₹{{ order.changeGiven }}</span>
+          </div>
+        }
         <span class="badge payment-badge" [class]="'pay-' + order.paymentStatus">{{ order.paymentStatus }}</span>
       </div>
 

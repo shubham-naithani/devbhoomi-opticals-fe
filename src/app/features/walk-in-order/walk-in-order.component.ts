@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CustomerService } from '../../core/services/customer.service';
@@ -78,18 +78,36 @@ export class WalkInOrderComponent {
   amountReceived = signal<number | null>(null);
   orderNotes = signal('');
   isPlacingOrder = signal(false);
-
-  get orderTotal(): number {
-    return this.orderLines().reduce((sum, l) => sum + l.price * l.quantity, 0);
-  }
+  hasEditedAmount = signal(false);
 
   get effectiveAmountReceived(): number {
     const entered = this.amountReceived();
     return entered === null ? this.orderTotal : Math.min(Math.max(entered, 0), this.orderTotal);
   }
 
+  get orderTotal(): number {
+    return this.orderLines().reduce((sum, l) => sum + l.price * l.quantity, 0);
+  }
+
+  onAmountReceivedChange(value: number | null): void {
+    this.hasEditedAmount.set(true);
+    this.amountReceived.set(value);
+  }
+
   get balanceDue(): number {
-    return this.orderTotal - this.effectiveAmountReceived;
+    const paid = Math.min(Math.max(this.amountReceived() ?? 0, 0), this.orderTotal);
+    return this.orderTotal - paid;
+  }
+
+  constructor() {
+    // Keep the field auto-filled with the running total as items are added —
+    // but only until the admin/staff actually types into it themselves.
+    effect(() => {
+      const total = this.orderTotal;
+      if (!this.hasEditedAmount()) {
+        this.amountReceived.set(total);
+      }
+    });
   }
 
   // ---- Customer search / select ----------------------------------------
@@ -276,14 +294,20 @@ export class WalkInOrderComponent {
         customerId: customer._id,
         items: this.orderLines().map((l) => ({ inventoryItem: l.inventoryItem, quantity: l.quantity })),
         paymentMethod: this.paymentMethod(),
-        amountPaid: this.amountReceived() === null ? undefined : this.effectiveAmountReceived,
+        amountPaid: this.hasEditedAmount()
+          ? Math.min(Math.max(this.amountReceived() ?? 0, 0), this.orderTotal)
+          : undefined,
         prescriptionUsed: this.linkedEyeTestId() || undefined,
         notes: this.orderNotes() || undefined,
       })
       .subscribe({
         next: (res) => {
           this.isPlacingOrder.set(false);
-          this.toast.success(`Order ${res.order.orderId} created`);
+          this.toast.success(
+            res.changeDue > 0
+              ? `Order ${res.order.orderId} created — give ₹${res.changeDue} change to the customer`
+              : `Order ${res.order.orderId} created`
+          );
           this.router.navigate(['/admin-orders']);
         },
         error: (err) => {
