@@ -2,22 +2,29 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { UserService } from '../../core/services/user.service';
 import { ToastService } from '../../core/services/toast.service';
+import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
+import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { User } from '../../core/models/user.model';
+
+const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, PaginationComponent],
   templateUrl: './users.component.html',
   styleUrl: './users.component.scss',
 })
 export class UsersComponent {
   private userService = inject(UserService);
   private toast = inject(ToastService);
+  private confirmDialog = inject(ConfirmDialogService);
   private fb = inject(FormBuilder);
 
   users = signal<User[]>([]);
   totalUsers = signal(0);
+  page = signal(1);
+  totalPages = signal(1);
   isLoading = signal(true);
   searchTerm = signal('');
 
@@ -40,10 +47,11 @@ export class UsersComponent {
 
   fetchUsers(): void {
     this.isLoading.set(true);
-    this.userService.list({ search: this.searchTerm(), limit: 50 }).subscribe({
+    this.userService.list({ search: this.searchTerm(), page: this.page(), limit: PAGE_SIZE }).subscribe({
       next: (res) => {
         this.users.set(res.users || []);
         this.totalUsers.set(res.total);
+        this.totalPages.set(res.pages || 1);
         this.isLoading.set(false);
       },
       error: () => {
@@ -55,6 +63,12 @@ export class UsersComponent {
 
   onSearchChange(value: string): void {
     this.searchTerm.set(value);
+    this.page.set(1); // a new search always starts back at page 1
+    this.fetchUsers();
+  }
+
+  goToPage(page: number): void {
+    this.page.set(page);
     this.fetchUsers();
   }
 
@@ -122,8 +136,14 @@ export class UsersComponent {
     });
   }
 
-  remove(user: User): void {
-    if (!confirm(`Delete ${user.name}? This cannot be undone.`)) return;
+  async remove(user: User): Promise<void> {
+    const confirmed = await this.confirmDialog.confirm({
+      title: 'Delete this user?',
+      message: `Delete ${user.name}? This cannot be undone.`,
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!confirmed) return;
 
     this.userService.remove(user._id).subscribe({
       next: () => {

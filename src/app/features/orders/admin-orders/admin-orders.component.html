@@ -93,6 +93,13 @@
   }
 </div>
 
+<app-pagination
+  [page]="page()"
+  [totalPages]="totalPages()"
+  [totalItems]="totalOrders()"
+  (pageChange)="goToPage($event)"
+/>
+
 @if (selectedOrder(); as order) {
   <div class="overlay" (click)="closeDetail()"></div>
   <div class="side-panel card">

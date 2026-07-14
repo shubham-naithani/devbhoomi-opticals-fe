@@ -51,6 +51,13 @@
   }
 </div>
 
+<app-pagination
+  [page]="page()"
+  [totalPages]="totalPages()"
+  [totalItems]="totalUsers()"
+  (pageChange)="goToPage($event)"
+/>
+
 @if (isPanelOpen()) {
   <div class="overlay" (click)="closePanel()"></div>
   <div class="side-panel card">
