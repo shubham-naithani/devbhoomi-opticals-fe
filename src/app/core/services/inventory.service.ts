@@ -10,11 +10,17 @@ export class InventoryService {
 
   constructor(private http: HttpClient) {}
 
-  list(params: { search?: string; category?: string; gender?: string; page?: number; limit?: number } = {}) {
+  list(params: { search?: string; category?: string; gender?: string; frameShape?: string; page?: number; limit?: number } = {}) {
     const cleaned = Object.fromEntries(
       Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
     );
     return this.http.get<PaginatedResponse<InventoryItem>>(this.base, { params: cleaned as any });
+  }
+
+  uploadImages(files: File[]) {
+    const formData = new FormData();
+    files.forEach((file) => formData.append('images', file));
+    return this.http.post<{ urls: string[] }>(`${this.base}/upload-images`, formData);
   }
 
   getById(id: string) {

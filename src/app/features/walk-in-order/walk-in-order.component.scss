@@ -244,3 +244,12 @@
   padding: 12px;
   font-size: 15px;
 }
+
+.balance-flag {
+  background: rgba(192, 138, 30, 0.1);
+  color: var(--color-warning);
+  font-size: 13px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+}

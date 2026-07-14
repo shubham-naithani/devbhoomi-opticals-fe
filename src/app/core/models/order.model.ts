@@ -1,6 +1,7 @@
 export type OrderStatus = 'pending' | 'confirmed' | 'delivered' | 'cancelled';
 export type PaymentMethod = 'cod' | 'cash' | 'card' | 'upi';
 export type OrderSource = 'online' | 'in_store';
+export type PaymentStatus = 'unpaid' | 'partial' | 'paid';
 
 export interface OrderItem {
   inventoryItem: string;
@@ -12,10 +13,12 @@ export interface OrderItem {
 export interface Order {
   _id: string;
   orderId: string;
-  customer: string | { _id: string; name: string; email?: string; phone?: string };
+  customer: string | { _id: string; name: string; email?: string; phone?: string; address?: string };
   createdBy?: string | { _id: string; name: string };
   items: OrderItem[];
   totalAmount: number;
+  amountPaid: number;
+  paymentStatus: PaymentStatus;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
   source: OrderSource;
@@ -23,6 +26,7 @@ export interface Order {
   shippingAddress?: string;
   contactPhone?: string;
   notes?: string;
+  isDeleted?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -38,6 +42,14 @@ export interface CreateWalkInOrderPayload {
   customerId: string;
   items: { inventoryItem: string; quantity: number }[];
   paymentMethod: PaymentMethod;
+  amountPaid?: number;
   prescriptionUsed?: string;
   notes?: string;
+}
+
+export interface UpdateOrderPayload {
+  notes?: string;
+  shippingAddress?: string;
+  contactPhone?: string;
+  paymentMethod?: PaymentMethod;
 }

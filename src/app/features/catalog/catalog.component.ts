@@ -23,6 +23,7 @@ export class CatalogComponent {
   searchTerm = signal('');
   category = signal('');
   gender = signal('');
+  frameShape = signal('');
 
   constructor() {
     this.fetch();
@@ -35,6 +36,7 @@ export class CatalogComponent {
         search: this.searchTerm() || undefined,
         category: this.category() || undefined,
         gender: this.gender() || undefined,
+        frameShape: this.frameShape() || undefined,
         limit: 50,
       })
       .subscribe({
