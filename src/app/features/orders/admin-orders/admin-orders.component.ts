@@ -29,6 +29,7 @@ export class AdminOrdersComponent {
   totalPages = signal(1);
   isLoading = signal(true);
   statusFilter = signal('');
+  searchTerm = signal('');
   updatingId = signal<string | null>(null);
 
   statusOptions: OrderStatus[] = ['pending', 'confirmed', 'delivered', 'cancelled'];
@@ -53,21 +54,34 @@ export class AdminOrdersComponent {
 
   fetch(): void {
     this.isLoading.set(true);
-    this.orderService.all({ status: this.statusFilter() || undefined, page: this.page(), limit: PAGE_SIZE }).subscribe({
-      next: (res) => {
-        this.orders.set(res.orders);
-        this.totalOrders.set(res.total);
-        this.totalPages.set(res.pages || 1);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.toast.error('Could not load orders');
-      },
-    });
+    this.orderService
+      .all({
+        status: this.statusFilter() || undefined,
+        search: this.searchTerm() || undefined,
+        page: this.page(),
+        limit: PAGE_SIZE,
+      })
+      .subscribe({
+        next: (res) => {
+          this.orders.set(res.orders);
+          this.totalOrders.set(res.total);
+          this.totalPages.set(res.pages || 1);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.toast.error('Could not load orders');
+        },
+      });
   }
 
   onFilterChange(): void {
+    this.page.set(1);
+    this.fetch();
+  }
+
+  onSearchChange(value: string): void {
+    this.searchTerm.set(value);
     this.page.set(1);
     this.fetch();
   }

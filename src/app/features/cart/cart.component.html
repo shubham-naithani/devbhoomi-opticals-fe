@@ -14,7 +14,7 @@
 } @else {
   <div class="cart-layout">
     <div class="card cart-lines">
-      @for (line of cart.lines(); track line.inventoryItem) {
+      @for (line of cart.lines(); track line.articleId) {
         <div class="cart-line">
           <div class="thumb">
             @if (line.imageUrl) {
@@ -37,7 +37,7 @@
 
           <div class="line-total">₹{{ line.price * line.quantity }}</div>
 
-          <button class="btn btn-danger remove-btn" (click)="cart.remove(line.inventoryItem)">Remove</button>
+          <button class="btn btn-danger remove-btn" (click)="cart.remove(line.articleId)">Remove</button>
         </div>
       }
     </div>

@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/auth.service';
 import { UserService } from '../../core/services/user.service';
 import { InventoryService } from '../../core/services/inventory.service';
+import { totalStock } from '../../core/models/inventory.model';
 
 @Component({
   selector: 'app-dashboard',
@@ -25,8 +26,9 @@ export class DashboardComponent {
       this.userService.list({ limit: 1 }).subscribe((res) => this.totalUsers.set(res.total));
       this.inventoryService.list({ limit: 1 }).subscribe((res) => this.totalInventory.set(res.total));
       // A simple heuristic view of low stock — the inventory list screen has full filtering.
+      // "Low stock" now means the product's combined stock across all its variants.
       this.inventoryService.list({ limit: 100 }).subscribe((res) => {
-        const low = (res.items || []).filter((i) => i.stock <= 5).length;
+        const low = (res.items || []).filter((i) => totalStock(i) <= 5).length;
         this.lowStockCount.set(low);
       });
     }

@@ -151,29 +151,44 @@
     @if (itemResults().length > 0) {
       <div class="item-result-list">
         @for (item of itemResults(); track item._id) {
-          <div class="item-result-row">
-            <div>
-              <div class="name">{{ item.name }} <span class="sku">{{ item.sku }}</span></div>
-              <div class="meta">{{ item.brand }} &middot; ₹{{ item.price }} &middot; {{ item.stock }} in stock</div>
+          @if (selectedArticleFor(item); as article) {
+            <div class="item-result-row">
+              <div class="item-result-info">
+                <div class="name">{{ item.name }} <span class="sku">{{ article.sku }}</span></div>
+                <div class="meta">{{ item.brand }} &middot; ₹{{ article.price }} &middot; {{ article.stock }} in stock</div>
+                @if (activeArticles(item).length > 1) {
+                  <select
+                    class="variant-select"
+                    [ngModel]="article._id"
+                    (ngModelChange)="onArticleSelect(item._id, $event)"
+                  >
+                    @for (a of activeArticles(item); track a._id) {
+                      <option [value]="a._id" [disabled]="a.stock <= 0">
+                        {{ describeArticle(a) }} @if (a.stock <= 0) { (out of stock) }
+                      </option>
+                    }
+                  </select>
+                }
+              </div>
+              <button class="btn btn-ghost" [disabled]="article.stock <= 0" (click)="addItem(item)">Add</button>
             </div>
-            <button class="btn btn-ghost" [disabled]="item.stock <= 0" (click)="addItem(item)">Add</button>
-          </div>
+          }
         }
       </div>
     }
 
     @if (orderLines().length > 0) {
       <div class="order-lines">
-        @for (line of orderLines(); track line.inventoryItem) {
+        @for (line of orderLines(); track line.articleId) {
           <div class="order-line-row">
             <span class="line-name">{{ line.name }}</span>
             <div class="qty-control">
-              <button type="button" (click)="updateQuantity(line.inventoryItem, line.quantity - 1)">−</button>
+              <button type="button" (click)="updateQuantity(line.articleId, line.quantity - 1)">−</button>
               <span>{{ line.quantity }}</span>
-              <button type="button" [disabled]="line.quantity >= line.stock" (click)="updateQuantity(line.inventoryItem, line.quantity + 1)">+</button>
+              <button type="button" [disabled]="line.quantity >= line.stock" (click)="updateQuantity(line.articleId, line.quantity + 1)">+</button>
             </div>
             <span class="line-total">₹{{ line.price * line.quantity }}</span>
-            <button class="btn btn-danger remove-btn" (click)="removeItem(line.inventoryItem)">Remove</button>
+            <button class="btn btn-danger remove-btn" (click)="removeItem(line.articleId)">Remove</button>
           </div>
         }
       </div>

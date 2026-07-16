@@ -1,5 +1,5 @@
 import { DatePipe } from '@angular/common';
-import { Component, inject, signal, effect } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { CustomerService } from '../../core/services/customer.service';
@@ -8,12 +8,19 @@ import { EyeTestService } from '../../core/services/eye-test.service';
 import { OrderService } from '../../core/services/order.service';
 import { ToastService } from '../../core/services/toast.service';
 import { User } from '../../core/models/user.model';
-import { InventoryItem } from '../../core/models/inventory.model';
+import {
+  Article,
+  InventoryItem,
+  activeArticles,
+  describeArticle,
+  inStockArticles,
+} from '../../core/models/inventory.model';
 import { EyeTest } from '../../core/models/eye-test.model';
 import { PaymentMethod } from '../../core/models/order.model';
 
 interface OrderLine {
   inventoryItem: string;
+  articleId: string;
   name: string;
   price: number;
   stock: number;
@@ -34,6 +41,13 @@ export class WalkInOrderComponent {
   private orderService = inject(OrderService);
   private toast = inject(ToastService);
   private router = inject(Router);
+
+  // expose helpers to the template
+  activeArticles = activeArticles;
+  describeArticle = describeArticle;
+
+  // Which variant is currently highlighted per search-result row, keyed by product id.
+  private selectedArticleIds = signal<Record<string, string>>({});
 
   // --- Step 1: customer -----------------------------------------------
   phoneQuery = signal('');
@@ -73,16 +87,25 @@ export class WalkInOrderComponent {
 
   // --- Step 4: payment -----------------------------------------------
   paymentMethod = signal<PaymentMethod>('cash');
-  // null = "full amount" (the default — most in-store sales are paid in full).
-  // Set to a smaller number to record a partial/advance payment instead.
   amountReceived = signal<number | null>(null);
+  // Tracks whether the admin/staff has manually typed into the amount field.
+  // Kept separate from amountReceived itself — otherwise "cleared to empty"
+  // and "never touched yet" both look like `null` and can't be told apart,
+  // which is what caused the field to snap back to the full total the
+  // moment someone tried to actually empty it out to type a new value.
+  hasEditedAmount = signal(false);
   orderNotes = signal('');
   isPlacingOrder = signal(false);
-  hasEditedAmount = signal(false);
 
-  get effectiveAmountReceived(): number {
-    const entered = this.amountReceived();
-    return entered === null ? this.orderTotal : Math.min(Math.max(entered, 0), this.orderTotal);
+  constructor() {
+    // Auto-fill the field with the running total as items are added — but
+    // only until the admin/staff actually types into it themselves.
+    effect(() => {
+      const total = this.orderTotal;
+      if (!this.hasEditedAmount()) {
+        this.amountReceived.set(total);
+      }
+    });
   }
 
   get orderTotal(): number {
@@ -97,17 +120,6 @@ export class WalkInOrderComponent {
   get balanceDue(): number {
     const paid = Math.min(Math.max(this.amountReceived() ?? 0, 0), this.orderTotal);
     return this.orderTotal - paid;
-  }
-
-  constructor() {
-    // Keep the field auto-filled with the running total as items are added —
-    // but only until the admin/staff actually types into it themselves.
-    effect(() => {
-      const total = this.orderTotal;
-      if (!this.hasEditedAmount()) {
-        this.amountReceived.set(total);
-      }
-    });
   }
 
   // ---- Customer search / select ----------------------------------------
@@ -245,35 +257,54 @@ export class WalkInOrderComponent {
     });
   }
 
-  addItem(item: InventoryItem): void {
-    if (item.stock <= 0) {
-      this.toast.error('This item is out of stock');
+  selectedArticleFor(product: InventoryItem): Article | undefined {
+    const id = this.selectedArticleIds()[product._id];
+    const inStock = inStockArticles(product);
+    return (id && inStock.find((a) => a._id === id)) || inStock[0] || activeArticles(product)[0];
+  }
+
+  onArticleSelect(productId: string, articleId: string): void {
+    this.selectedArticleIds.update((map) => ({ ...map, [productId]: articleId }));
+  }
+
+  addItem(product: InventoryItem): void {
+    const article = this.selectedArticleFor(product);
+    if (!article || article.stock <= 0) {
+      this.toast.error('This variant is out of stock');
       return;
     }
+
     const current = this.orderLines();
-    const existing = current.find((l) => l.inventoryItem === item._id);
+    const existing = current.find((l) => l.articleId === article._id);
     if (existing) {
-      this.updateQuantity(item._id, Math.min(existing.quantity + 1, item.stock));
+      this.updateQuantity(article._id, Math.min(existing.quantity + 1, article.stock));
       return;
     }
     this.orderLines.set([
       ...current,
-      { inventoryItem: item._id, name: item.name, price: item.price, stock: item.stock, quantity: 1 },
+      {
+        inventoryItem: product._id,
+        articleId: article._id,
+        name: `${product.name} — ${describeArticle(article)}`,
+        price: article.price,
+        stock: article.stock,
+        quantity: 1,
+      },
     ]);
   }
 
-  updateQuantity(inventoryItemId: string, quantity: number): void {
+  updateQuantity(articleId: string, quantity: number): void {
     if (quantity <= 0) {
-      this.removeItem(inventoryItemId);
+      this.removeItem(articleId);
       return;
     }
     this.orderLines.update((lines) =>
-      lines.map((l) => (l.inventoryItem === inventoryItemId ? { ...l, quantity: Math.min(quantity, l.stock) } : l))
+      lines.map((l) => (l.articleId === articleId ? { ...l, quantity: Math.min(quantity, l.stock) } : l))
     );
   }
 
-  removeItem(inventoryItemId: string): void {
-    this.orderLines.update((lines) => lines.filter((l) => l.inventoryItem !== inventoryItemId));
+  removeItem(articleId: string): void {
+    this.orderLines.update((lines) => lines.filter((l) => l.articleId !== articleId));
   }
 
   // ---- Submit ----------------------------------------------------------
@@ -292,7 +323,7 @@ export class WalkInOrderComponent {
     this.orderService
       .createWalkIn({
         customerId: customer._id,
-        items: this.orderLines().map((l) => ({ inventoryItem: l.inventoryItem, quantity: l.quantity })),
+        items: this.orderLines().map((l) => ({ inventoryItem: l.inventoryItem, articleId: l.articleId, quantity: l.quantity })),
         paymentMethod: this.paymentMethod(),
         amountPaid: this.hasEditedAmount()
           ? Math.min(Math.max(this.amountReceived() ?? 0, 0), this.orderTotal)
