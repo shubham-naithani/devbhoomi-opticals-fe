@@ -1,17 +1,24 @@
 <div class="page-header">
   <div>
     <h1>Browse frames</h1>
-    <p class="subtitle">Find your next pair — filter by category or gender.</p>
+    <p class="subtitle">Find your next pair — filter by brand, category, or shape.</p>
   </div>
 </div>
 
 <div class="filters card">
   <input
     type="text"
-    placeholder="Search by name or brand…"
+    placeholder="Search by name, brand, or SKU…"
     [(ngModel)]="searchTerm"
     (ngModelChange)="onFilterChange()"
   />
+
+  <select [(ngModel)]="brand" (ngModelChange)="onFilterChange()">
+    <option value="">Any brand</option>
+    @for (b of brands(); track b) {
+      <option [value]="b">{{ b }}</option>
+    }
+  </select>
 
   <select [(ngModel)]="category" (ngModelChange)="onFilterChange()">
     <option value="">All categories</option>
@@ -50,31 +57,50 @@
 } @else {
   <div class="grid">
     @for (item of items(); track item._id) {
-      <div class="product-card card">
-        <div class="thumb">
-          @if (item.images && item.images.length > 0) {
-            <img [src]="item.images[0]" [alt]="item.name" />
-          } @else {
-            <div class="thumb-placeholder">{{ item.name.charAt(0) }}</div>
-          }
-        </div>
-        <div class="product-body">
-          <div class="brand">{{ item.brand || 'Unbranded' }}</div>
-          <h3>{{ item.name }}</h3>
-          <div class="meta">{{ item.category }} &middot; {{ item.gender }}</div>
-          <div class="price-row">
-            <span class="price">₹{{ item.price }}</span>
-            @if (item.stock <= 5 && item.stock > 0) {
-              <span class="stock-flag">Only {{ item.stock }} left</span>
-            } @else if (item.stock <= 0) {
-              <span class="stock-flag out">Out of stock</span>
+      @if (selectedArticle(item); as article) {
+        <div class="product-card card">
+          <div class="thumb">
+            @if (article.images.length > 0) {
+              <img [src]="article.images[0]" [alt]="item.name" />
+            } @else {
+              <div class="thumb-placeholder">{{ item.name.charAt(0) }}</div>
             }
           </div>
-          <button class="btn btn-accent add-btn" [disabled]="item.stock <= 0" (click)="addToCart(item)">
-            Add to cart
-          </button>
+          <div class="product-body">
+            <button class="brand-link" (click)="filterByBrand(item.brand || '')">{{ item.brand || 'Unbranded' }}</button>
+            <h3>{{ item.name }}</h3>
+            <div class="meta">{{ item.category }} &middot; {{ item.gender }}</div>
+
+            @if (activeArticles(item).length > 1) {
+              <select
+                class="variant-select"
+                [ngModel]="article._id"
+                (ngModelChange)="onArticleChange(item._id, $event)"
+              >
+                @for (a of activeArticles(item); track a._id) {
+                  <option [value]="a._id" [disabled]="a.stock <= 0">
+                    {{ describeArticle(a) }} @if (a.stock <= 0) { (out of stock) }
+                  </option>
+                }
+              </select>
+            } @else {
+              <div class="single-variant">{{ describeArticle(article) }}</div>
+            }
+
+            <div class="price-row">
+              <span class="price">₹{{ article.price }}</span>
+              @if (article.stock <= 5 && article.stock > 0) {
+                <span class="stock-flag">Only {{ article.stock }} left</span>
+              } @else if (article.stock <= 0) {
+                <span class="stock-flag out">Out of stock</span>
+              }
+            </div>
+            <button class="btn btn-accent add-btn" [disabled]="article.stock <= 0" (click)="addToCart(item)">
+              Add to cart
+            </button>
+          </div>
         </div>
-      </div>
+      }
     }
   </div>
 }

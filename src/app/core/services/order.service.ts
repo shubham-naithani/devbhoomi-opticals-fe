@@ -20,14 +20,14 @@ export class OrderService {
   }
 
   createWalkIn(payload: CreateWalkInOrderPayload) {
-  return this.http.post<{ order: Order; changeDue: number }>(`${this.base}/walk-in`, payload);
+    return this.http.post<{ order: Order; changeDue: number }>(`${this.base}/walk-in`, payload);
   }
 
   myOrders() {
     return this.http.get<{ orders: Order[] }>(`${this.base}/my`);
   }
 
-  all(params: { status?: string; source?: string; page?: number; limit?: number } = {}) {
+  all(params: { status?: string; source?: string; search?: string; page?: number; limit?: number } = {}) {
     const cleaned = Object.fromEntries(
       Object.entries(params).filter(([, v]) => v !== undefined && v !== '')
     );
@@ -49,7 +49,7 @@ export class OrderService {
   }
 
   recordPayment(id: string, amount: number) {
-  return this.http.put<{ order: Order; changeDue: number }>(`${this.base}/${id}/payment`, { amount });
+    return this.http.put<{ order: Order; changeDue: number }>(`${this.base}/${id}/payment`, { amount });
   }
 
   remove(id: string) {

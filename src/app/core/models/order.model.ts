@@ -33,7 +33,7 @@ export interface Order {
 }
 
 export interface CreateOrderPayload {
-  items: { inventoryItem: string; quantity: number }[];
+  items: { inventoryItem: string; articleId: string; quantity: number }[];
   shippingAddress?: string;
   contactPhone?: string;
   notes?: string;
@@ -41,7 +41,7 @@ export interface CreateOrderPayload {
 
 export interface CreateWalkInOrderPayload {
   customerId: string;
-  items: { inventoryItem: string; quantity: number }[];
+  items: { inventoryItem: string; articleId: string; quantity: number }[];
   paymentMethod: PaymentMethod;
   amountPaid?: number;
   prescriptionUsed?: string;

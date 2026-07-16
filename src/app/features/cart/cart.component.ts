@@ -23,12 +23,12 @@ export class CartComponent {
   notes = signal('');
   isPlacingOrder = signal(false);
 
-  increment(line: { inventoryItem: string; quantity: number; stock: number }): void {
-    this.cart.update(line.inventoryItem, Math.min(line.quantity + 1, line.stock));
+  increment(line: { articleId: string; quantity: number; stock: number }): void {
+    this.cart.update(line.articleId, Math.min(line.quantity + 1, line.stock));
   }
 
-  decrement(line: { inventoryItem: string; quantity: number }): void {
-    this.cart.update(line.inventoryItem, line.quantity - 1);
+  decrement(line: { articleId: string; quantity: number }): void {
+    this.cart.update(line.articleId, line.quantity - 1);
   }
 
   placeOrder(): void {
@@ -42,7 +42,11 @@ export class CartComponent {
     this.isPlacingOrder.set(true);
 
     const payload = {
-      items: this.cart.lines().map((l) => ({ inventoryItem: l.inventoryItem, quantity: l.quantity })),
+      items: this.cart.lines().map((l) => ({
+        inventoryItem: l.inventoryItem,
+        articleId: l.articleId,
+        quantity: l.quantity,
+      })),
       shippingAddress: this.shippingAddress(),
       contactPhone: this.contactPhone(),
       notes: this.notes() || undefined,

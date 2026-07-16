@@ -1,9 +1,10 @@
 import { Injectable, computed, signal } from '@angular/core';
-import { InventoryItem } from '../models/inventory.model';
+import { Article, InventoryItem, describeArticle } from '../models/inventory.model';
 
 export interface CartLine {
-  inventoryItem: string;
-  name: string;
+  inventoryItem: string; // parent product id
+  articleId: string;     // the specific variant selected
+  name: string;          // "Product — Color / Tint" for display
   price: number;
   stock: number;
   imageUrl?: string;
@@ -20,41 +21,42 @@ export class CartService {
   readonly itemCount = computed(() => this.linesSignal().reduce((sum, l) => sum + l.quantity, 0));
   readonly total = computed(() => this.linesSignal().reduce((sum, l) => sum + l.price * l.quantity, 0));
 
-  add(item: InventoryItem, quantity = 1): void {
+  add(product: InventoryItem, article: Article, quantity = 1): void {
     const current = this.linesSignal();
-    const existing = current.find((l) => l.inventoryItem === item._id);
+    const existing = current.find((l) => l.articleId === article._id);
 
     if (existing) {
-      const nextQty = Math.min(existing.quantity + quantity, item.stock);
-      this.update(item._id, nextQty);
+      const nextQty = Math.min(existing.quantity + quantity, article.stock);
+      this.update(article._id, nextQty);
       return;
     }
 
     const line: CartLine = {
-      inventoryItem: item._id,
-      name: item.name,
-      price: item.price,
-      stock: item.stock,
-      imageUrl: item.images && item.images.length > 0 ? item.images[0] : undefined,
-      quantity: Math.min(quantity, item.stock),
+      inventoryItem: product._id,
+      articleId: article._id,
+      name: `${product.name} — ${describeArticle(article)}`,
+      price: article.price,
+      stock: article.stock,
+      imageUrl: article.images && article.images.length > 0 ? article.images[0] : undefined,
+      quantity: Math.min(quantity, article.stock),
     };
     this.persist([...current, line]);
   }
 
-  update(inventoryItemId: string, quantity: number): void {
+  update(articleId: string, quantity: number): void {
     const current = this.linesSignal();
     if (quantity <= 0) {
-      this.remove(inventoryItemId);
+      this.remove(articleId);
       return;
     }
     const updated = current.map((l) =>
-      l.inventoryItem === inventoryItemId ? { ...l, quantity: Math.min(quantity, l.stock) } : l
+      l.articleId === articleId ? { ...l, quantity: Math.min(quantity, l.stock) } : l
     );
     this.persist(updated);
   }
 
-  remove(inventoryItemId: string): void {
-    this.persist(this.linesSignal().filter((l) => l.inventoryItem !== inventoryItemId));
+  remove(articleId: string): void {
+    this.persist(this.linesSignal().filter((l) => l.articleId !== articleId));
   }
 
   clear(): void {

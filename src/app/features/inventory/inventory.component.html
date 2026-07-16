@@ -1,17 +1,17 @@
 <div class="page-header">
   <div>
     <h1>Inventory</h1>
-    <p class="subtitle">{{ totalItems() }} items in catalog</p>
+    <p class="subtitle">{{ totalItems() }} products in catalog</p>
   </div>
   @if (auth.isAdmin()) {
-    <button class="btn btn-accent" (click)="openCreatePanel()">+ Add item</button>
+    <button class="btn btn-accent" (click)="openCreatePanel()">+ Add product</button>
   }
 </div>
 
 <div class="toolbar">
   <input
     type="text"
-    placeholder="Search by name or brand…"
+    placeholder="Search by name, brand, or SKU…"
     [value]="searchTerm()"
     (input)="onSearchChange($any($event.target).value)"
   />
@@ -20,8 +20,8 @@
 <div class="card table-card">
   @if (isLoading()) {
     <div class="state-msg">Loading inventory…</div>
-  } @else if (items().length === 0) {
-    <div class="state-msg">No items found. Add your first frame to get started.</div>
+  } @else if (products().length === 0) {
+    <div class="state-msg">No products found. Add your first one to get started.</div>
   } @else {
     <table>
       <thead>
@@ -30,38 +30,48 @@
           <th>Name</th>
           <th>Brand</th>
           <th>Category</th>
-          <th>Cost</th>
-          <th>MRP</th>
+          <th>Variants</th>
+          <th>Price</th>
           <th class="stock-col">Stock</th>
           <th>Status</th>
-          @if (auth.isAdmin()) {
-            <th></th>
-          }
+          <th></th>
         </tr>
       </thead>
       <tbody>
-        @for (item of items(); track item._id) {
+        @for (product of products(); track product._id) {
           <tr>
             <td class="thumb-cell">
-              @if (item.images && item.images.length > 0) {
-                <img [src]="item.images[0]" [alt]="item.name" class="row-thumb" />
+              @if (product.articles.length > 0 && product.articles[0].images.length > 0) {
+                <img [src]="product.articles[0].images[0]" [alt]="product.name" class="row-thumb" />
               } @else {
-                <div class="row-thumb-placeholder">{{ item.name.charAt(0) }}</div>
+                <div class="row-thumb-placeholder">{{ product.name.charAt(0) }}</div>
               }
             </td>
-            <td>{{ item.name }}</td>
-            <td>{{ item.brand || '—' }}</td>
-            <td>{{ item.category }}</td>
-            <td class="cost-cell">{{ item.costPrice ? '₹' + item.costPrice : '—' }}</td>
-            <td>₹{{ item.price }}</td>
-            <td class="stock-col" [class.low-stock]="item.stock <= 5">{{ item.stock }}</td>
-            <td><span class="badge" [class.badge-active]="item.isActive" [class.badge-inactive]="!item.isActive">{{ item.isActive ? 'Active' : 'Hidden' }}</span></td>
-             @if (auth.isAdmin()) {
-            <td class="actions">
-                <button class="btn btn-ghost" (click)="openEditPanel(item)">Edit</button>
-                <button class="btn btn-danger" (click)="remove(item)">Delete</button>
+            <td>{{ product.name }}</td>
+            <td>{{ product.brand || '—' }}</td>
+            <td>{{ product.category }}</td>
+            <td>
+              <button class="btn btn-ghost variants-btn" (click)="openManagePanel(product)">
+                {{ product.articles.length }} variant{{ product.articles.length === 1 ? '' : 's' }}
+              </button>
             </td>
-            }
+            <td>
+              @if (priceRange(product).min === priceRange(product).max) {
+                ₹{{ priceRange(product).min }}
+              } @else {
+                ₹{{ priceRange(product).min }}–{{ priceRange(product).max }}
+              }
+            </td>
+            <td class="stock-col" [class.low-stock]="totalStock(product) <= 5">{{ totalStock(product) }}</td>
+            <td><span class="badge" [class.badge-active]="product.isActive" [class.badge-inactive]="!product.isActive">{{ product.isActive ? 'Active' : 'Hidden' }}</span></td>
+            <td class="actions">
+              @if (auth.isAdmin()) {
+                <button class="btn btn-ghost" (click)="openEditProductPanel(product)">Edit</button>
+                <button class="btn btn-danger" (click)="deleteProduct(product)">Delete</button>
+              } @else {
+                <span class="view-only">View only</span>
+              }
+            </td>
           </tr>
         }
       </tbody>
@@ -76,15 +86,16 @@
   (pageChange)="goToPage($event)"
 />
 
-@if (isPanelOpen()) {
-  <div class="overlay" (click)="closePanel()"></div>
+<!-- Product create / edit panel -->
+@if (isProductPanelOpen()) {
+  <div class="overlay" (click)="closeProductPanel()"></div>
   <div class="side-panel card">
-    <h2>{{ editingItem() ? 'Edit item' : 'Add item' }}</h2>
+    <h2>{{ isCreatingNew() ? 'Add product' : 'Edit product' }}</h2>
 
-    <form [formGroup]="form" (ngSubmit)="save()">
+    <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
       <div class="field">
         <label for="name">Product name</label>
-        <input id="name" type="text" formControlName="name" />
+        <input id="name" type="text" formControlName="name" placeholder="Aviator Classic" />
       </div>
 
       <div class="field">
@@ -118,7 +129,7 @@
       <div class="two-col">
         <div class="field">
           <label for="frameType">Frame type (rim style)</label>
-          <input id="frameType" type="text" formControlName="frameType" placeholder="Full-rim, half-rim, rimless…" />
+          <input id="frameType" type="text" formControlName="frameType" placeholder="Full-rim, half-rim…" />
         </div>
 
         <div class="field">
@@ -138,60 +149,6 @@
         </div>
       </div>
 
-      <div class="two-col">
-        <div class="field">
-          <label for="costPrice">Cost price (₹) — what we pay</label>
-          <input id="costPrice" type="number" formControlName="costPrice" min="0" placeholder="Optional" />
-        </div>
-
-        <div class="field">
-          <label for="price">MRP (₹) — what we sell for</label>
-          <input id="price" type="number" formControlName="price" min="0" />
-        </div>
-      </div>
-
-      <div class="two-col">
-        <div class="field stock-field">
-          <label for="stock">Stock</label>
-          <input id="stock" type="number" formControlName="stock" min="0" />
-        </div>
-
-        @if (editingItem()) {
-        <div class="field">
-          <label>SKU (auto-generated)</label>
-          <input id="sku-field" type="text" [value]="editingItem()!.sku" disabled />
-        </div>
-        } @else {
-        <div class="field">
-          <label>SKU</label>
-          <input id="sku-field" type="text" value="Assigned automatically on save" disabled />
-        </div>
-        }
-      </div>
-
-      <div class="field">
-        <label>Photos</label>
-        <div class="image-grid">
-          @for (url of existingImages(); track url) {
-            <div class="image-thumb">
-              <img [src]="url" alt="" />
-              <button type="button" class="remove-thumb" (click)="removeExistingImage(url)">×</button>
-            </div>
-          }
-          @for (preview of pendingPreviews(); track preview; let i = $index) {
-            <div class="image-thumb pending">
-              <img [src]="preview" alt="" />
-              <button type="button" class="remove-thumb" (click)="removePendingFile(i)">×</button>
-            </div>
-          }
-          <label class="image-upload-tile">
-            <input type="file" accept="image/*" multiple (change)="onFilesSelected($event)" hidden />
-            + Add photo
-          </label>
-        </div>
-        <div class="hint">Up to 6 photos. Uploaded when you save.</div>
-      </div>
-
       <div class="field">
         <label for="description">Description</label>
         <textarea id="description" rows="3" formControlName="description"></textarea>
@@ -202,12 +159,184 @@
         Visible in catalog
       </label>
 
+      @if (isCreatingNew()) {
+        <div class="variant-divider">First variant</div>
+        <p class="hint">Every product needs at least one sellable variant — add more colors/tints/sizes later from "Manage variants."</p>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Color</label>
+            <input type="text" [formControl]="articleForm.controls.color" placeholder="Black" />
+          </div>
+          <div class="field">
+            <label>Lens tint</label>
+            <input type="text" [formControl]="articleForm.controls.lensTint" placeholder="Green (for sunglasses)" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Size</label>
+          <input type="text" [formControl]="articleForm.controls.size" placeholder="52mm, M, etc. (optional)" />
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Cost price (₹) — what we pay</label>
+            <input type="number" [formControl]="articleForm.controls.costPrice" min="0" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label>MRP (₹) — what we sell for</label>
+            <input type="number" [formControl]="articleForm.controls.price" min="0" />
+          </div>
+        </div>
+
+        <div class="field stock-field">
+          <label>Stock</label>
+          <input type="number" [formControl]="articleForm.controls.stock" min="0" />
+        </div>
+
+        <div class="field">
+          <label>Photos</label>
+          <div class="image-grid">
+            @for (preview of pendingPreviews(); track preview; let i = $index) {
+              <div class="image-thumb pending">
+                <img [src]="preview" alt="" />
+                <button type="button" class="remove-thumb" (click)="removePendingFile(i)">×</button>
+              </div>
+            }
+            <label class="image-upload-tile">
+              <input type="file" accept="image/*" multiple (change)="onFilesSelected($event)" hidden />
+              + Add photo
+            </label>
+          </div>
+          <div class="hint">Up to 6 photos. Uploaded when you save.</div>
+        </div>
+      }
+
       <div class="panel-actions">
-        <button type="button" class="btn btn-ghost" (click)="closePanel()">Cancel</button>
-        <button type="submit" class="btn btn-primary" [disabled]="isSaving()">
-          {{ isUploadingImages() ? 'Uploading photos…' : isSaving() ? 'Saving…' : 'Save' }}
+        <button type="button" class="btn btn-ghost" (click)="closeProductPanel()">Cancel</button>
+        <button type="submit" class="btn btn-primary" [disabled]="isSavingProduct()">
+          {{ isUploadingImages() ? 'Uploading photos…' : isSavingProduct() ? 'Saving…' : 'Save' }}
         </button>
       </div>
     </form>
+  </div>
+}
+
+<!-- Manage variants panel -->
+@if (managingProduct(); as product) {
+  <div class="overlay" (click)="closeManagePanel()"></div>
+  <div class="side-panel card variants-panel">
+    <div class="panel-head">
+      <div>
+        <h2>{{ product.name }}</h2>
+        <div class="panel-sub">{{ product.brand }} &middot; {{ product.articles.length }} variant(s)</div>
+      </div>
+      <button class="btn btn-ghost" (click)="closeManagePanel()">Close</button>
+    </div>
+
+    @if (!isArticleFormOpen()) {
+      <div class="article-list">
+        @for (article of product.articles; track article._id) {
+          <div class="article-row">
+            <div class="article-thumb">
+              @if (article.images.length > 0) {
+                <img [src]="article.images[0]" alt="" />
+              } @else {
+                <div class="row-thumb-placeholder">{{ product.name.charAt(0) }}</div>
+              }
+            </div>
+            <div class="article-info">
+              <div class="article-name">{{ describeArticle(article) }}</div>
+              <div class="article-meta">
+                {{ article.sku }} &middot; ₹{{ article.price }} &middot; {{ article.stock }} in stock
+                @if (!article.isActive) { &middot; <span class="hidden-flag">Hidden</span> }
+              </div>
+            </div>
+            @if (auth.isAdmin()) {
+              <div class="article-actions">
+                <button class="btn btn-ghost" (click)="openEditArticleForm(article)">Edit</button>
+                <button class="btn btn-danger" (click)="deleteArticle(article)">Delete</button>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      @if (auth.isAdmin()) {
+        <button class="btn btn-accent add-variant-btn" (click)="openAddArticleForm()">+ Add variant</button>
+      }
+    } @else {
+      <form [formGroup]="articleForm" (ngSubmit)="saveArticle()">
+        <h3 class="form-subtitle">{{ editingArticle() ? 'Edit variant' : 'Add variant' }}</h3>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Color</label>
+            <input type="text" formControlName="color" placeholder="Black" />
+          </div>
+          <div class="field">
+            <label>Lens tint</label>
+            <input type="text" formControlName="lensTint" placeholder="Green (for sunglasses)" />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Size</label>
+            <input type="text" formControlName="size" placeholder="52mm, M, etc. (optional)" />
+          </div>
+          <div class="field">
+            <label>Stock</label>
+            <input type="number" formControlName="stock" min="0" />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field">
+            <label>Cost price (₹) — what we pay</label>
+            <input type="number" formControlName="costPrice" min="0" placeholder="Optional" />
+          </div>
+          <div class="field">
+            <label>MRP (₹) — what we sell for</label>
+            <input type="number" formControlName="price" min="0" />
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Photos</label>
+          <div class="image-grid">
+            @for (url of existingImages(); track url) {
+              <div class="image-thumb">
+                <img [src]="url" alt="" />
+                <button type="button" class="remove-thumb" (click)="removeExistingImage(url)">×</button>
+              </div>
+            }
+            @for (preview of pendingPreviews(); track preview; let i = $index) {
+              <div class="image-thumb pending">
+                <img [src]="preview" alt="" />
+                <button type="button" class="remove-thumb" (click)="removePendingFile(i)">×</button>
+              </div>
+            }
+            <label class="image-upload-tile">
+              <input type="file" accept="image/*" multiple (change)="onFilesSelected($event)" hidden />
+              + Add photo
+            </label>
+          </div>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="isActive" />
+          Visible in catalog
+        </label>
+
+        <div class="panel-actions">
+          <button type="button" class="btn btn-ghost" (click)="isArticleFormOpen.set(false)">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="isSavingArticle()">
+            {{ isUploadingImages() ? 'Uploading photos…' : isSavingArticle() ? 'Saving…' : 'Save variant' }}
+          </button>
+        </div>
+      </form>
+    }
   </div>
 }

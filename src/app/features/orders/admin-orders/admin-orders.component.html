@@ -6,6 +6,12 @@
 </div>
 
 <div class="toolbar">
+  <input
+    type="text"
+    placeholder="Search by order ID or phone…"
+    [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)"
+  />
   <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
     <option value="">All statuses</option>
     <option value="pending">Pending</option>

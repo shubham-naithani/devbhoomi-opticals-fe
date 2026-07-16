@@ -69,7 +69,7 @@
   top: 0;
   right: 0;
   height: 100vh;
-  width: 35rem;
+  width: 520px;
   max-width: 92vw;
   z-index: 50;
   padding: 32px 28px;
@@ -114,10 +114,6 @@
 .low-stock {
   color: var(--color-danger);
   font-weight: 600;
-}
-
-#sku-field {
-  background-color: rgba(128, 128, 128, 0.225);
 }
 
 // Stock is just a small number — a full-width table cell/input made it
@@ -208,9 +204,114 @@
   &:hover { border-color: var(--color-primary); color: var(--color-primary); }
 }
 
+.hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin: -8px 0 16px;
+}
+
+.variants-btn {
+  padding: 5px 12px;
+  font-size: 13px;
+}
+
+.variant-divider {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--color-primary-dark);
+  margin: 24px 0 4px;
+  padding-top: 20px;
+  border-top: 1px dashed var(--color-border);
+}
+
+.form-subtitle {
+  font-size: 16px;
+  margin-bottom: 18px;
+}
+
+// ---- Variants management panel --------------------------------------------
+.variants-panel {
+  width: 520px;
+}
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+
+  h2 { font-size: 18px; margin-bottom: 4px; }
+}
+
+.panel-sub {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.article-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.article-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.article-thumb {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  flex-shrink: 0;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.article-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.article-name {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.article-meta {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.hidden-flag {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.article-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+
+  .btn { padding: 5px 10px; font-size: 12px; }
+}
+
+.add-variant-btn {
+  width: 100%;
+  justify-content: center;
+}
+
 // ---- Mobile ---------------------------------------------------------------
 @media (max-width: 640px) {
-  .side-panel {
+  .side-panel, .variants-panel {
     width: 100vw;
     max-width: 100vw;
     padding: 22px 18px;
@@ -237,9 +338,12 @@
     }
   }
 
-  .table-card {
-    // the table itself still scrolls horizontally (already have overflow-x: auto
-    // on .table-card), this just gives a visual hint that there's more to scroll
-    -webkit-overflow-scrolling: touch;
+  .article-row {
+    flex-wrap: wrap;
+  }
+
+  .article-actions {
+    width: 100%;
+    justify-content: flex-end;
   }
 }
