@@ -267,17 +267,26 @@ export class WalkInOrderComponent {
     this.selectedArticleIds.update((map) => ({ ...map, [productId]: articleId }));
   }
 
+  // The database stock (article.stock) never changes until the order is
+  // actually placed — so this subtracts whatever's already sitting in the
+  // current draft, giving an accurate "what can I still add" number instead
+  // of showing the same raw stock figure no matter how much is already queued.
+  remainingStock(article: Article): number {
+    const alreadyAdded = this.orderLines().find((l) => l.articleId === article._id)?.quantity ?? 0;
+    return article.stock - alreadyAdded;
+  }
+
   addItem(product: InventoryItem): void {
     const article = this.selectedArticleFor(product);
-    if (!article || article.stock <= 0) {
-      this.toast.error('This variant is out of stock');
+    if (!article || this.remainingStock(article) <= 0) {
+      this.toast.error('No more of this variant available to add');
       return;
     }
 
     const current = this.orderLines();
     const existing = current.find((l) => l.articleId === article._id);
     if (existing) {
-      this.updateQuantity(article._id, Math.min(existing.quantity + 1, article.stock));
+      this.updateQuantity(article._id, existing.quantity + 1);
       return;
     }
     this.orderLines.set([
