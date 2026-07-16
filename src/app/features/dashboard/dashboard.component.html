@@ -6,28 +6,82 @@
 </div>
 
 @if (auth.isAdmin()) {
-  <div class="stat-grid">
-    <div class="stat-card card">
-      <div class="stat-label">Total users</div>
-      <div class="stat-value">{{ totalUsers() ?? '—' }}</div>
-    </div>
-    <div class="stat-card card">
-      <div class="stat-label">Inventory items</div>
-      <div class="stat-value">{{ totalInventory() ?? '—' }}</div>
-    </div>
-    <div class="stat-card card accent">
-      <div class="stat-label">Low stock (≤ 5 units)</div>
-      <div class="stat-value">{{ lowStockCount() ?? '—' }}</div>
-    </div>
-  </div>
+  @if (loading()) {
+    <div class="card" style="padding: 40px; text-align: center;">Loading dashboard…</div>
+  } @else {
+    @if (stats(); as s) {
+      <div class="stat-grid">
+        <div class="stat-card card">
+          <div class="stat-label">Revenue today</div>
+          <div class="stat-value">₹{{ s.revenue.today.revenue | number }}</div>
+          <div class="stat-sub">{{ s.revenue.today.orders }} orders</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-label">Revenue this week</div>
+          <div class="stat-value">₹{{ s.revenue.week.revenue | number }}</div>
+          <div class="stat-sub">{{ s.revenue.week.orders }} orders</div>
+        </div>
+        <div class="stat-card card">
+          <div class="stat-label">Revenue this month</div>
+          <div class="stat-value">₹{{ s.revenue.month.revenue | number }}</div>
+          <div class="stat-sub">{{ s.revenue.month.orders }} orders</div>
+        </div>
+        <div class="stat-card card accent">
+          <div class="stat-label">Low stock (≤ 5 units)</div>
+          <div class="stat-value">{{ s.lowStockCount }}</div>
+        </div>
+      </div>
 
-  <div class="quick-links card">
-    <h3>Quick actions</h3>
-    <div class="links">
-      <a routerLink="/inventory" class="btn btn-primary">Manage inventory</a>
-      <a routerLink="/users" class="btn btn-ghost">Manage users</a>
-    </div>
-  </div>
+      <div class="chart-grid">
+        <div class="card chart-card">
+          <h3>Revenue — last 7 days</h3>
+          <canvas baseChart [data]="revenueTrendData()" [options]="revenueTrendOptions" type="line"></canvas>
+        </div>
+        <div class="card chart-card">
+          <h3>Order status</h3>
+          <canvas baseChart [data]="statusChartData()" [options]="statusChartOptions" type="doughnut"></canvas>
+        </div>
+        <div class="card chart-card">
+          <h3>Top products (30 days)</h3>
+          <canvas baseChart [data]="topProductsData()" [options]="topProductsOptions" type="bar"></canvas>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card list-card">
+          <h3>Recent orders</h3>
+          @for (o of s.recentOrders; track o.orderId) {
+            <div class="list-row">
+              <span class="mono">{{ o.orderId }}</span>
+              <span>{{ o.customer?.name || '—' }}</span>
+              <span class="badge">{{ o.status }}</span>
+              <span>₹{{ o.totalAmount | number }}</span>
+            </div>
+          }
+        </div>
+        <div class="card list-card">
+          <h3>Low stock items</h3>
+          @for (item of s.lowStockItems; track item.sku) {
+            <div class="list-row">
+              <span>{{ item.name }}</span>
+              <span class="mono">{{ item.sku }}</span>
+              <span class="badge accent">{{ item.stock }} left</span>
+            </div>
+          } @empty {
+            <p class="empty-note">Nothing low on stock right now.</p>
+          }
+        </div>
+      </div>
+
+     <div class="quick-links card">
+        <h3>Quick actions</h3>
+        <div class="links" style="margin-bottom: 8px;">
+          <a routerLink="/inventory" class="btn btn-primary" style="margin-right: 10px;">Manage inventory</a>
+          <a routerLink="/users" class="btn btn-ghost">Manage users</a>
+        </div>
+      </div>
+    }
+  }
 } @else {
   <div class="quick-links card">
     <h3>Get started</h3>
