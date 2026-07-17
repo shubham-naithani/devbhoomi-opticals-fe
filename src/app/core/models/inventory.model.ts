@@ -16,6 +16,8 @@ export type FrameShape =
 export interface Article {
   _id: string;
   sku?: string;
+  barcode?: string;
+  barcodeGeneratedAt?: string;
   color?: string;
   lensTint?: string;
   size?: string;

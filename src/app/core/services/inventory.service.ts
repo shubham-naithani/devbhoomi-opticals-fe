@@ -1,7 +1,7 @@
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { environment } from '../../../environments/environment';
-import { ArticleFormValue, InventoryItem, ProductFormValue } from '../models/inventory.model';
+import { ArticleFormValue, InventoryItem, ProductFormValue, Article } from '../models/inventory.model';
 import { PaginatedResponse } from '../models/paginated-response.model';
 
 @Injectable({ providedIn: 'root' })
@@ -63,5 +63,9 @@ export class InventoryService {
 
   deleteArticle(productId: string, articleId: string) {
     return this.http.delete<{ item: InventoryItem }>(`${this.base}/${productId}/articles/${articleId}`);
+  }
+
+  lookupByBarcode(barcode: string) {
+    return this.http.get<{ item: InventoryItem; article: Article }>(`${this.base}/barcode/${barcode}`);
   }
 }
