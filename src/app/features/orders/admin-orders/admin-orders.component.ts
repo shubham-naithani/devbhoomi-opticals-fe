@@ -79,13 +79,19 @@ export class AdminOrdersComponent {
       });
   }
 
+  changeDuePreview(order: Order): number {
+    const amount = this.paymentAmount();
+    if (!amount || amount <= 0) return 0;
+    return Math.max(amount - this.balanceDue(order), 0);
+  }
+
   needsRefund(order: Order): boolean {
     return order.status === 'cancelled' && order.amountPaid > 0 && order.refundStatus !== 'completed';
   }
 
   openRefundForm(): void {
     const order = this.selectedOrder();
-    if (order) this.refundAmount.set(order.amountPaid);
+    if (order) this.refundAmount.set(this.outstandingRefund(order));
     this.showRefundForm.set(true);
   }
 
@@ -193,6 +199,10 @@ export class AdminOrdersComponent {
 
   balanceDue(order: Order): number {
     return Math.max(order.totalAmount - order.amountPaid, 0);
+  }
+
+  outstandingRefund(order: Order): number {
+    return Math.max(order.amountPaid - order.refundedAmount, 0);
   }
 
   changeStatus(order: Order, status: OrderStatus): void {

@@ -60,7 +60,13 @@
         </td>
         <td>
           <div class="payment-cell">{{ order.paymentMethod | uppercase }}</div>
-          <span class="badge payment-badge" [class]="'pay-' + order.paymentStatus">{{ order.paymentStatus }}</span>
+          @if (order.status === 'cancelled' && order.refundStatus === 'completed') {
+            <span class="badge badge-refunded">Refunded</span>
+          } @else if (order.status === 'cancelled' && order.refundStatus === 'pending') {
+            <span class="badge badge-refund-pending">Refund pending</span>
+          } @else {
+            <span class="badge payment-badge" [class]="'pay-' + order.paymentStatus">{{ order.paymentStatus }}</span>
+          }
         </td>
         <td>
           <span class="badge" [class.badge-admin]="order.source === 'in_store'"
@@ -151,6 +157,8 @@
   }
   @if (order.status === 'cancelled' && order.refundStatus === 'completed') {
     <span class="badge badge-refunded">Refunded ₹{{ order.refundedAmount }}</span>
+  } @else if (order.status === 'cancelled' && order.refundStatus === 'pending') {
+    <span class="badge badge-refund-pending">Refund pending — ₹{{ outstandingRefund(order) }} left</span>
   } @else {
     <span class="badge payment-badge" [class]="'pay-' + order.paymentStatus">{{ order.paymentStatus }}</span>
   }
@@ -160,7 +168,7 @@
   <span class="badge refund-flag">Refund needed</span>
   <div class="detail-section refund-section">
     @if (order.refundStatus === 'pending') {
-    <div class="detail-label">Refund pending — ₹{{ order.amountPaid }} owed</div>
+    <div class="detail-label">Refund pending — ₹{{ outstandingRefund(order) }} owed</div>
     } @else {
     <div class="detail-label">This cancelled order collected ₹{{ order.amountPaid }} — refund needed</div>
     }
@@ -205,12 +213,15 @@
   <div class="detail-section">
     <div class="detail-label">Record a payment</div>
     <div class="payment-input-row">
-      <input type="number" min="0" [max]="balanceDue(order)" [ngModel]="paymentAmount()"
+      <input type="number" min="0" [ngModel]="paymentAmount()"
         (ngModelChange)="paymentAmount.set($event)" placeholder="Amount received" />
       <button class="btn btn-primary" [disabled]="isRecordingPayment()" (click)="recordPayment()">
         {{ isRecordingPayment() ? 'Saving…' : 'Record' }}
       </button>
     </div>
+    @if (changeDuePreview(order) > 0) {
+      <div class="change-preview">Change due: ₹{{ changeDuePreview(order) }}</div>
+    }
   </div>
   }
 
