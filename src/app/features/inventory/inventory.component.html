@@ -98,9 +98,22 @@
         <input id="name" type="text" formControlName="name" placeholder="Aviator Classic" />
       </div>
 
-      <div class="field">
+      <div class="field brand-field">
         <label for="brand">Brand</label>
-        <input id="brand" type="text" formControlName="brand" placeholder="Ray-Ban, Oakley, local brand…" />
+        <input id="brand" type="text" formControlName="brand" (focus)="showBrandSuggestions.set(true)"
+          (blur)="hideBrandSuggestions()" placeholder="Ray-Ban, Oakley, local brand…" autocomplete="off" />
+      @if (showBrandSuggestions() && (brandSuggestions().length > 0 || isNewBrandName())) {
+      <ul class="brand-suggestions">
+        @for (b of brandSuggestions(); track b) {
+        <li (mousedown)="selectBrand(b)">{{ b }}</li>
+        }
+        @if (isNewBrandName()) {
+        <li class="add-new-brand" (mousedown)="addNewBrand()">
+          + Add "{{ productForm.controls.brand.value }}" as new brand
+        </li>
+        }
+      </ul>
+      }
       </div>
 
       <div class="two-col">

@@ -68,4 +68,14 @@ export class InventoryService {
   lookupByBarcode(barcode: string) {
     return this.http.get<{ item: InventoryItem; article: Article }>(`${this.base}/barcode/${barcode}`);
   }
+
+  brandDefaults(brand: string) {
+    return this.http.get<{ defaults: { category?: string; frameType?: string; gender?: string } | null }>(
+      `${this.base}/brands/${encodeURIComponent(brand)}/defaults`
+    );
+  }
+
+  addBrand(name: string) {
+    return this.http.post<{ brand: { _id: string; name: string } }>(`${this.base}/brands`, { name });
+  }
 }

@@ -116,6 +116,43 @@
   font-weight: 600;
 }
 
+.brand-field {
+  position: relative;
+}
+
+.brand-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 4px 0 0;
+  padding: 4px 0;
+  list-style: none;
+  background: var(--color-surface, #fff);
+  border: 1px solid var(--color-border, #ddd);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  max-height: 200px;
+  overflow-y: auto;
+
+  li {
+    padding: 8px 12px;
+    font-size: 14px;
+    cursor: pointer;
+
+    &:hover {
+      background: var(--color-surface-hover, #f5f5f5);
+    }
+  }
+}
+
+.add-new-brand {
+  border-top: 1px solid var(--color-border, #eee);
+  color: var(--color-primary, #c97b4a);
+  font-weight: 600;
+}
+
 // Stock is just a small number — a full-width table cell/input made it
 // visually oversized and forced horizontal scroll on the input itself.
 .stock-col {

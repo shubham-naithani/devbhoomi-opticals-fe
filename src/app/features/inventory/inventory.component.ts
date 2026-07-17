@@ -48,6 +48,10 @@ export class InventoryComponent {
   isLoading = signal(true);
   searchTerm = signal('');
 
+  allBrands = signal<string[]>([]);
+  brandSuggestions = signal<string[]>([]);
+  showBrandSuggestions = signal(false);
+
   // ---- Product create/edit panel -----------------------------------------
   isProductPanelOpen = signal(false);
   editingProduct = signal<InventoryItem | null>(null); // non-null = editing product-level fields only
@@ -87,9 +91,22 @@ export class InventoryComponent {
   isArticleFormOpen = signal(false);
   editingArticle = signal<Article | null>(null);
   isSavingArticle = signal(false);
+  isNewBrandName = signal(false);
 
   constructor() {
     this.fetchProducts();
+    this.loadBrands();
+
+    this.productForm.controls.brand.valueChanges.subscribe((value) => {
+      const v = (value || '').trim().toLowerCase();
+      const list = this.allBrands();
+      const filtered = v ? list.filter((b) => b.toLowerCase().includes(v)).slice(0, 8) : list.slice(0, 8);
+      this.brandSuggestions.set(filtered);
+      // Only offer "add new" when NOTHING matches at all — a partial match
+      // (e.g. typing "te" while "TestBrandXYZ" exists) should just show that
+      // suggestion, not also invite creating a redundant near-duplicate.
+      this.isNewBrandName.set(v.length > 0 && filtered.length === 0);
+    });
 
     // Client-side preview only, purely for immediate feedback while typing —
     // the server response after save is always the real source of truth for
@@ -128,6 +145,52 @@ export class InventoryComponent {
         this.toast.error('Could not load inventory');
       },
     });
+  }
+
+  addNewBrand(): void {
+    const name = (this.productForm.controls.brand.value || '').trim();
+    if (!name) return;
+
+    this.inventoryService.addBrand(name).subscribe({
+      next: () => {
+        this.allBrands.update((list) => [...list, name].sort());
+        this.showBrandSuggestions.set(false);
+        this.toast.success(`"${name}" added as a new brand`);
+        // Auto-fill won't fire for a brand-new name (no products yet) — nothing to fetch.
+      },
+      error: (err) => this.toast.error(err?.error?.message || 'Could not add brand'),
+    });
+  }
+
+  private loadBrands(): void {
+    this.inventoryService.brands().subscribe({
+      next: (res) => this.allBrands.set(res.brands || []),
+      error: () => {}, // non-critical — autocomplete just won't have suggestions
+    });
+  }
+
+  selectBrand(brand: string): void {
+  this.productForm.controls.brand.setValue(brand);
+  this.showBrandSuggestions.set(false);
+
+  if (!this.isCreatingNew()) return; // don't auto-fill over an existing product's real data
+
+  this.inventoryService.brandDefaults(brand).subscribe({
+      next: (res) => {
+        if (!res.defaults) return;
+        const { category, frameType, gender } = res.defaults;
+        if (category) this.productForm.controls.category.setValue(category);
+        if (frameType) this.productForm.controls.frameType.setValue(frameType);
+        if (gender) this.productForm.controls.gender.setValue(gender);
+      },
+      error: () => {},
+    });
+  }
+
+  hideBrandSuggestions(): void {
+    // Delay so a suggestion's (mousedown) fires before blur hides the list —
+    // otherwise the click never registers because the list disappears first.
+    setTimeout(() => this.showBrandSuggestions.set(false), 150);
   }
 
   onSearchChange(value: string): void {
