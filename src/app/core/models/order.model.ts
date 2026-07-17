@@ -30,6 +30,9 @@ export interface Order {
   isDeleted?: boolean;
   createdAt?: string;
   updatedAt?: string;
+  refundStatus: 'none' | 'pending' | 'completed';
+  refundedAmount: number;
+  refundedAt?: string;
 }
 
 export interface CreateOrderPayload {

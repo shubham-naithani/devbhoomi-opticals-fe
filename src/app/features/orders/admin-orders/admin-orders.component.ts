@@ -31,6 +31,10 @@ export class AdminOrdersComponent {
   statusFilter = signal('');
   searchTerm = signal('');
   updatingId = signal<string | null>(null);
+  showRefundForm = signal(false);
+  refundAmount = signal<number | null>(null);
+  refundMethod = signal<PaymentMethod>('cash');
+  isProcessingRefund = signal(false);
 
   statusOptions: OrderStatus[] = ['pending', 'confirmed', 'delivered', 'cancelled'];
   paymentMethodOptions: PaymentMethod[] = ['cash', 'card', 'upi', 'cod'];
@@ -73,6 +77,84 @@ export class AdminOrdersComponent {
           this.toast.error('Could not load orders');
         },
       });
+  }
+
+  needsRefund(order: Order): boolean {
+    return order.status === 'cancelled' && order.amountPaid > 0 && order.refundStatus !== 'completed';
+  }
+
+  openRefundForm(): void {
+    const order = this.selectedOrder();
+    if (order) this.refundAmount.set(order.amountPaid);
+    this.showRefundForm.set(true);
+  }
+
+  refundNow(): void {
+    const order = this.selectedOrder();
+    const amount = this.refundAmount();
+    if (!order || !amount || amount <= 0) {
+      this.toast.error('Enter a valid refund amount');
+      return;
+    }
+
+    this.isProcessingRefund.set(true);
+    this.orderService.refund(order._id, { mode: 'now', amount, method: this.refundMethod() }).subscribe({
+      next: (res) => {
+        this.isProcessingRefund.set(false);
+        this.showRefundForm.set(false);
+        this.selectedOrder.set(res.order);
+        this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
+        this.toast.success(`Refund of ₹${amount} recorded`);
+      },
+      error: (err) => {
+        this.isProcessingRefund.set(false);
+        this.toast.error(err?.error?.message || 'Could not record refund');
+      },
+    });
+  }
+
+  markRefundPending(): void {
+    const order = this.selectedOrder();
+    if (!order) return;
+
+    this.isProcessingRefund.set(true);
+    this.orderService.refund(order._id, { mode: 'pending' }).subscribe({
+      next: (res) => {
+        this.isProcessingRefund.set(false);
+        this.showRefundForm.set(false);
+        this.selectedOrder.set(res.order);
+        this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
+        this.toast.success('Refund marked as pending');
+      },
+      error: (err) => {
+        this.isProcessingRefund.set(false);
+        this.toast.error(err?.error?.message || 'Could not update refund status');
+      },
+    });
+  }
+
+  settlePendingRefund(): void {
+    const order = this.selectedOrder();
+    const amount = this.refundAmount();
+    if (!order || !amount || amount <= 0) {
+      this.toast.error('Enter a valid refund amount');
+      return;
+    }
+
+    this.isProcessingRefund.set(true);
+    this.orderService.settleRefund(order._id, { amount, method: this.refundMethod() }).subscribe({
+      next: (res) => {
+        this.isProcessingRefund.set(false);
+        this.showRefundForm.set(false);
+        this.selectedOrder.set(res.order);
+        this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
+        this.toast.success(`Refund of ₹${amount} settled`);
+      },
+      error: (err) => {
+        this.isProcessingRefund.set(false);
+        this.toast.error(err?.error?.message || 'Could not settle refund');
+      },
+    });
   }
 
   onFilterChange(): void {
@@ -135,6 +217,7 @@ export class AdminOrdersComponent {
   openDetail(order: Order): void {
     this.isPanelLoading.set(true);
     this.isEditMode.set(false);
+    this.showRefundForm.set(false);
     this.paymentAmount.set(null);
     this.selectedOrder.set(order); // show cached data immediately
 
