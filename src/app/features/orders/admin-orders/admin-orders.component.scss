@@ -175,6 +175,11 @@
   }
 }
 
+.badge-refunded {
+  background: rgba(74, 127, 201, 0.15);
+  color: var(--color-primary-dark, #2e4a4f);
+}
+
 .field {
   display: flex;
   flex-direction: column;

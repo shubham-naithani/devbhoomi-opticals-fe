@@ -6,12 +6,8 @@
 </div>
 
 <div class="toolbar">
-  <input
-    type="text"
-    placeholder="Search by order ID or phone…"
-    [value]="searchTerm()"
-    (input)="onSearchChange($any($event.target).value)"
-  />
+  <input type="text" placeholder="Search by order ID or phone…" [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)" />
   <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
     <option value="">All statuses</option>
     <option value="pending">Pending</option>
@@ -23,201 +19,237 @@
 
 <div class="card table-card">
   @if (isLoading()) {
-    <div class="state-msg">Loading orders…</div>
+  <div class="state-msg">Loading orders…</div>
   } @else if (orders().length === 0) {
-    <div class="state-msg">No orders found.</div>
+  <div class="state-msg">No orders found.</div>
   } @else {
-    <table>
-      <thead>
-        <tr>
-          <th>Order</th>
-          <th>Customer</th>
-          <th>Items</th>
-          <th>Total</th>
-          <th>Payment</th>
-          <th>Source</th>
-          <th>Status</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (order of orders(); track order._id) {
-          <tr>
-            <td>
-              <div class="order-id">{{ order.orderId }}</div>
-              <div class="order-date">{{ order.createdAt | date: 'short' }}</div>
-            </td>
-            <td>
-              <div>{{ customerName(order) }}</div>
-              <div class="contact">{{ customerContact(order) }}</div>
-            </td>
-            <td>
-              @for (item of order.items; track item.inventoryItem) {
-                <div class="item-line">{{ item.name }} &times; {{ item.quantity }}</div>
-              }
-            </td>
-            <td class="total-cell">
-              <div>₹{{ order.totalAmount }}</div>
-              @if (order.paymentStatus === 'partial') {
-                <div class="balance-note">₹{{ balanceDue(order) }} due</div>
-              }
-            </td>
-            <td>
-              <div class="payment-cell">{{ order.paymentMethod | uppercase }}</div>
-              <span class="badge payment-badge" [class]="'pay-' + order.paymentStatus">{{ order.paymentStatus }}</span>
-            </td>
-            <td>
-              <span class="badge" [class.badge-admin]="order.source === 'in_store'" [class.badge-customer]="order.source === 'online'">
-                {{ order.source === 'in_store' ? 'In-store' : 'Online' }}
-              </span>
-              @if (order.source === 'in_store' && createdByName(order)) {
-                <div class="created-by">by {{ createdByName(order) }}</div>
-              }
-            </td>
-            <td>
-              <select
-                [ngModel]="order.status"
-                (ngModelChange)="changeStatus(order, $event)"
-                [disabled]="updatingId() === order._id"
-                [class]="'status-select status-' + order.status"
-              >
-                @for (opt of statusOptions; track opt) {
-                  <option [value]="opt">{{ opt }}</option>
-                }
-              </select>
-            </td>
-            <td class="actions">
-              <button class="btn btn-ghost" (click)="openDetail(order)">View</button>
-              @if (auth.isAdmin()) {
-                <button class="btn btn-danger" (click)="deleteOrder(order)">Delete</button>
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  <table>
+    <thead>
+      <tr>
+        <th>Order</th>
+        <th>Customer</th>
+        <th>Items</th>
+        <th>Total</th>
+        <th>Payment</th>
+        <th>Source</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (order of orders(); track order._id) {
+      <tr>
+        <td>
+          <div class="order-id">{{ order.orderId }}</div>
+          <div class="order-date">{{ order.createdAt | date: 'short' }}</div>
+        </td>
+        <td>
+          <div>{{ customerName(order) }}</div>
+          <div class="contact">{{ customerContact(order) }}</div>
+        </td>
+        <td>
+          @for (item of order.items; track item.inventoryItem) {
+          <div class="item-line">{{ item.name }} &times; {{ item.quantity }}</div>
+          }
+        </td>
+        <td class="total-cell">
+          <div>₹{{ order.totalAmount }}</div>
+          @if (order.paymentStatus === 'partial') {
+          <div class="balance-note">₹{{ balanceDue(order) }} due</div>
+          }
+        </td>
+        <td>
+          <div class="payment-cell">{{ order.paymentMethod | uppercase }}</div>
+          <span class="badge payment-badge" [class]="'pay-' + order.paymentStatus">{{ order.paymentStatus }}</span>
+        </td>
+        <td>
+          <span class="badge" [class.badge-admin]="order.source === 'in_store'"
+            [class.badge-customer]="order.source === 'online'">
+            {{ order.source === 'in_store' ? 'In-store' : 'Online' }}
+          </span>
+          @if (order.source === 'in_store' && createdByName(order)) {
+          <div class="created-by">by {{ createdByName(order) }}</div>
+          }
+        </td>
+        <td>
+          <select [ngModel]="order.status" (ngModelChange)="changeStatus(order, $event)"
+            [disabled]="updatingId() === order._id" [class]="'status-select status-' + order.status">
+            @for (opt of statusOptions; track opt) {
+            <option [value]="opt">{{ opt }}</option>
+            }
+          </select>
+        </td>
+        <td class="actions">
+          <button class="btn btn-ghost" (click)="openDetail(order)">View</button>
+          @if (auth.isAdmin()) {
+          <button class="btn btn-danger" (click)="deleteOrder(order)">Delete</button>
+          }
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>
   }
 </div>
 
-<app-pagination
-  [page]="page()"
-  [totalPages]="totalPages()"
-  [totalItems]="totalOrders()"
-  (pageChange)="goToPage($event)"
-/>
+<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="totalOrders()"
+  (pageChange)="goToPage($event)" />
 
 @if (selectedOrder(); as order) {
-  <div class="overlay" (click)="closeDetail()"></div>
-  <div class="side-panel card">
-    <div class="panel-head">
-      <div>
-        <h2>{{ order.orderId }}</h2>
-        <div class="panel-sub">{{ order.createdAt | date: 'medium' }}</div>
-      </div>
-      <button class="btn btn-ghost" (click)="closeDetail()">Close</button>
+<div class="overlay" (click)="closeDetail()"></div>
+<div class="side-panel card">
+  <div class="panel-head">
+    <div>
+      <h2>{{ order.orderId }}</h2>
+      <div class="panel-sub">{{ order.createdAt | date: 'medium' }}</div>
     </div>
+    <button class="btn btn-ghost" (click)="closeDetail()">Close</button>
+  </div>
 
-    @if (isPanelLoading()) {
-      <div class="state-msg">Loading…</div>
-    } @else {
-      <div class="detail-section">
-        <div class="detail-label">Customer</div>
-        <div class="detail-value">{{ customerName(order) }}</div>
-        <div class="detail-sub">{{ customerContact(order) }}</div>
-        @if (order.shippingAddress) {
-          <div class="detail-sub">{{ order.shippingAddress }}</div>
-        }
-      </div>
-
-      <div class="detail-section">
-        <div class="detail-label">Items</div>
-        @for (item of order.items; track item.inventoryItem) {
-          <div class="detail-item-row">
-            <span>{{ item.name }} &times; {{ item.quantity }}</span>
-            <span>₹{{ item.price * item.quantity }}</span>
-          </div>
-        }
-      </div>
-
-      <div class="detail-section payment-summary">
-        <div class="summary-row">
-          <span>Total</span>
-          <span>₹{{ order.totalAmount }}</span>
-        </div>
-        <div class="summary-row">
-          <span>Paid</span>
-          <span>₹{{ order.amountPaid }}</span>
-        </div>
-        @if (balanceDue(order) > 0) {
-          <div class="summary-row due">
-            <span>Balance due</span>
-            <span>₹{{ balanceDue(order) }}</span>
-          </div>
-        }
-        @if (order.changeGiven && order.changeGiven > 0) {
-          <div class="summary-row change">
-            <span>Change given</span>
-            <span>₹{{ order.changeGiven }}</span>
-          </div>
-        }
-        <span class="badge payment-badge" [class]="'pay-' + order.paymentStatus">{{ order.paymentStatus }}</span>
-      </div>
-
-      @if (balanceDue(order) > 0) {
-        <div class="detail-section">
-          <div class="detail-label">Record a payment</div>
-          <div class="payment-input-row">
-            <input
-              type="number"
-              min="0"
-              [max]="balanceDue(order)"
-              [ngModel]="paymentAmount()"
-              (ngModelChange)="paymentAmount.set($event)"
-              placeholder="Amount received"
-            />
-            <button class="btn btn-primary" [disabled]="isRecordingPayment()" (click)="recordPayment()">
-              {{ isRecordingPayment() ? 'Saving…' : 'Record' }}
-            </button>
-          </div>
-        </div>
-      }
-
-      <div class="detail-section">
-        <div class="detail-label">Details</div>
-
-        @if (!isEditMode()) {
-          <div class="detail-item-row"><span>Notes</span><span>{{ order.notes || '—' }}</span></div>
-          <div class="detail-item-row"><span>Contact phone</span><span>{{ order.contactPhone || '—' }}</span></div>
-          <button class="btn btn-ghost edit-toggle-btn" (click)="enterEditMode()">Edit details</button>
-        } @else {
-          <div class="field">
-            <label>Payment method</label>
-            <select [ngModel]="editPaymentMethod()" (ngModelChange)="editPaymentMethod.set($event)">
-              @for (opt of paymentMethodOptions; track opt) {
-                <option [value]="opt">{{ opt | uppercase }}</option>
-              }
-            </select>
-          </div>
-          <div class="field">
-            <label>Contact phone</label>
-            <input type="tel" [ngModel]="editContactPhone()" (ngModelChange)="editContactPhone.set($event)" />
-          </div>
-          <div class="field">
-            <label>Shipping / delivery address</label>
-            <textarea rows="2" [ngModel]="editShippingAddress()" (ngModelChange)="editShippingAddress.set($event)"></textarea>
-          </div>
-          <div class="field">
-            <label>Notes</label>
-            <textarea rows="2" [ngModel]="editNotes()" (ngModelChange)="editNotes.set($event)"></textarea>
-          </div>
-          <div class="edit-actions">
-            <button class="btn btn-ghost" (click)="isEditMode.set(false)">Cancel</button>
-            <button class="btn btn-primary" [disabled]="isSavingEdit()" (click)="saveEdit()">
-              {{ isSavingEdit() ? 'Saving…' : 'Save changes' }}
-            </button>
-          </div>
-        }
-      </div>
+  @if (isPanelLoading()) {
+  <div class="state-msg">Loading…</div>
+  } @else {
+  <div class="detail-section">
+    <div class="detail-label">Customer</div>
+    <div class="detail-value">{{ customerName(order) }}</div>
+    <div class="detail-sub">{{ customerContact(order) }}</div>
+    @if (order.shippingAddress) {
+    <div class="detail-sub">{{ order.shippingAddress }}</div>
     }
   </div>
+
+  <div class="detail-section">
+    <div class="detail-label">Items</div>
+    @for (item of order.items; track item.inventoryItem) {
+    <div class="detail-item-row">
+      <span>{{ item.name }} &times; {{ item.quantity }}</span>
+      <span>₹{{ item.price * item.quantity }}</span>
+    </div>
+    }
+  </div>
+
+  <div class="detail-section payment-summary">
+  <div class="summary-row">
+    <span>Total</span>
+    <span>₹{{ order.totalAmount }}</span>
+  </div>
+  <div class="summary-row">
+    <span>Paid</span>
+    <span>₹{{ order.amountPaid }}</span>
+  </div>
+  @if (balanceDue(order) > 0) {
+  <div class="summary-row due">
+    <span>Balance due</span>
+    <span>₹{{ balanceDue(order) }}</span>
+  </div>
+  }
+  @if (order.changeGiven && order.changeGiven > 0) {
+  <div class="summary-row change">
+    <span>Change given</span>
+    <span>₹{{ order.changeGiven }}</span>
+  </div>
+  }
+  @if (order.status === 'cancelled' && order.refundStatus === 'completed') {
+    <span class="badge badge-refunded">Refunded ₹{{ order.refundedAmount }}</span>
+  } @else {
+    <span class="badge payment-badge" [class]="'pay-' + order.paymentStatus">{{ order.paymentStatus }}</span>
+  }
+  </div>
+
+  @if (needsRefund(order)) {
+  <span class="badge refund-flag">Refund needed</span>
+  <div class="detail-section refund-section">
+    @if (order.refundStatus === 'pending') {
+    <div class="detail-label">Refund pending — ₹{{ order.amountPaid }} owed</div>
+    } @else {
+    <div class="detail-label">This cancelled order collected ₹{{ order.amountPaid }} — refund needed</div>
+    }
+
+    @if (!showRefundForm()) {
+    <div class="edit-actions">
+      <button class="btn btn-primary" (click)="openRefundForm()">Handle refund</button>
+    </div>
+    } @else {
+    <div class="field">
+      <label>Refund amount</label>
+      <input type="number" min="0" [ngModel]="refundAmount()" (ngModelChange)="refundAmount.set($event)" />
+    </div>
+    <div class="field">
+      <label>Method</label>
+      <select [ngModel]="refundMethod()" (ngModelChange)="refundMethod.set($event)">
+        @for (opt of paymentMethodOptions; track opt) {
+        <option [value]="opt">{{ opt | uppercase }}</option>
+        }
+      </select>
+    </div>
+    <div class="edit-actions">
+      <button class="btn btn-ghost" (click)="showRefundForm.set(false)">Cancel</button>
+      @if (order.refundStatus === 'pending') {
+      <button class="btn btn-primary" [disabled]="isProcessingRefund()" (click)="settlePendingRefund()">
+        {{ isProcessingRefund() ? 'Saving…' : 'Settle refund' }}
+      </button>
+      } @else {
+      <button class="btn btn-ghost" [disabled]="isProcessingRefund()" (click)="markRefundPending()">
+        Mark as pending
+      </button>
+      <button class="btn btn-primary" [disabled]="isProcessingRefund()" (click)="refundNow()">
+        {{ isProcessingRefund() ? 'Saving…' : 'Refund now' }}
+      </button>
+      }
+    </div>
+    }
+  </div>
+  }
+
+  @if (balanceDue(order) > 0) {
+  <div class="detail-section">
+    <div class="detail-label">Record a payment</div>
+    <div class="payment-input-row">
+      <input type="number" min="0" [max]="balanceDue(order)" [ngModel]="paymentAmount()"
+        (ngModelChange)="paymentAmount.set($event)" placeholder="Amount received" />
+      <button class="btn btn-primary" [disabled]="isRecordingPayment()" (click)="recordPayment()">
+        {{ isRecordingPayment() ? 'Saving…' : 'Record' }}
+      </button>
+    </div>
+  </div>
+  }
+
+  <div class="detail-section">
+    <div class="detail-label">Details</div>
+
+    @if (!isEditMode()) {
+    <div class="detail-item-row"><span>Notes</span><span>{{ order.notes || '—' }}</span></div>
+    <div class="detail-item-row"><span>Contact phone</span><span>{{ order.contactPhone || '—' }}</span></div>
+    <button class="btn btn-ghost edit-toggle-btn" (click)="enterEditMode()">Edit details</button>
+    } @else {
+    <div class="field">
+      <label>Payment method</label>
+      <select [ngModel]="editPaymentMethod()" (ngModelChange)="editPaymentMethod.set($event)">
+        @for (opt of paymentMethodOptions; track opt) {
+        <option [value]="opt">{{ opt | uppercase }}</option>
+        }
+      </select>
+    </div>
+    <div class="field">
+      <label>Contact phone</label>
+      <input type="tel" [ngModel]="editContactPhone()" (ngModelChange)="editContactPhone.set($event)" />
+    </div>
+    <div class="field">
+      <label>Shipping / delivery address</label>
+      <textarea rows="2" [ngModel]="editShippingAddress()" (ngModelChange)="editShippingAddress.set($event)"></textarea>
+    </div>
+    <div class="field">
+      <label>Notes</label>
+      <textarea rows="2" [ngModel]="editNotes()" (ngModelChange)="editNotes.set($event)"></textarea>
+    </div>
+    <div class="edit-actions">
+      <button class="btn btn-ghost" (click)="isEditMode.set(false)">Cancel</button>
+      <button class="btn btn-primary" [disabled]="isSavingEdit()" (click)="saveEdit()">
+        {{ isSavingEdit() ? 'Saving…' : 'Save changes' }}
+      </button>
+    </div>
+    }
+  </div>
+  }
+</div>
 }

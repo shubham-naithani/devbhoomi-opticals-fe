@@ -55,4 +55,12 @@ export class OrderService {
   remove(id: string) {
     return this.http.delete<{ message: string; id: string }>(`${this.base}/${id}`);
   }
+
+  refund(id: string, payload: { mode: 'now' | 'pending'; amount?: number; method?: string; note?: string }) {
+    return this.http.put<{ order: Order }>(`${this.base}/${id}/refund`, payload);
+  }
+
+  settleRefund(id: string, payload: { amount?: number; method?: string; note?: string }) {
+    return this.http.put<{ order: Order }>(`${this.base}/${id}/settle-refund`, payload);
+  }
 }
