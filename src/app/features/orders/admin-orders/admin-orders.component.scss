@@ -180,6 +180,18 @@
   color: var(--color-primary-dark, #2e4a4f);
 }
 
+.badge-refund-pending {
+  background: rgba(201, 123, 74, 0.15);
+  color: var(--color-primary, #c97b4a);
+}
+
+.change-preview {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--color-primary, #c97b4a);
+  font-weight: 600;
+}
+
 .field {
   display: flex;
   flex-direction: column;
