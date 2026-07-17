@@ -29,6 +29,13 @@ export class InventoryComponent {
   private fb = inject(FormBuilder);
   auth = inject(AuthService);
 
+  private readonly MRP_MARGIN = 1.25;
+  private readonly MSP_MARGIN = 1.4;
+
+  private round2(n: number): number {
+    return Math.round(n * 100) / 100;
+  }
+
   // expose helpers to the template
   describeArticle = describeArticle;
   priceRange = priceRange;
@@ -63,12 +70,13 @@ export class InventoryComponent {
     color: [''],
     lensTint: [''],
     size: [''],
-    costPrice: [null as number | null],
-    price: [0, [Validators.required, Validators.min(0)]],
+    costPrice: [null as number | null, [Validators.required, Validators.min(0)]],
+    price: [{ value: 0, disabled: true }], // MRP — read-only, server-derived
+    mspPrice: [{ value: null as number | null, disabled: true }], // auto by default
+    isMspManual: [false],
     stock: [0, [Validators.required, Validators.min(0)]],
     isActive: [true],
   });
-
   existingImages = signal<string[]>([]);
   pendingFiles = signal<File[]>([]);
   pendingPreviews = signal<string[]>([]);
@@ -82,6 +90,28 @@ export class InventoryComponent {
 
   constructor() {
     this.fetchProducts();
+
+    // Client-side preview only, purely for immediate feedback while typing —
+    // the server response after save is always the real source of truth for
+    // the saved price/mspPrice values (see `saveArticle`, which refreshes
+    // from `res.item`).
+    this.articleForm.controls.costPrice.valueChanges.subscribe((cost) => {
+      const numCost = Number(cost) || 0;
+      this.articleForm.controls.price.setValue(this.round2(numCost * this.MRP_MARGIN), { emitEvent: false });
+      if (!this.articleForm.controls.isMspManual.value) {
+        this.articleForm.controls.mspPrice.setValue(this.round2(numCost * this.MSP_MARGIN), { emitEvent: false });
+      }
+    });
+
+    this.articleForm.controls.isMspManual.valueChanges.subscribe((manual) => {
+      if (manual) {
+        this.articleForm.controls.mspPrice.enable({ emitEvent: false });
+      } else {
+        const cost = Number(this.articleForm.controls.costPrice.value) || 0;
+        this.articleForm.controls.mspPrice.setValue(this.round2(cost * this.MSP_MARGIN), { emitEvent: false });
+        this.articleForm.controls.mspPrice.disable({ emitEvent: false });
+      }
+    });
   }
 
   fetchProducts(): void {
@@ -121,7 +151,7 @@ export class InventoryComponent {
       description: '', isActive: true,
     });
     this.articleForm.reset({
-      color: '', lensTint: '', size: '', costPrice: null, price: 0, stock: 0, isActive: true,
+      color: '', lensTint: '', size: '', costPrice: null, price: 0, mspPrice: null, isMspManual: false, stock: 0, isActive: true,
     });
     this.clearImageState();
     this.isProductPanelOpen.set(true);
@@ -148,10 +178,11 @@ export class InventoryComponent {
     this.clearImageState();
   }
 
-  saveProduct(): void {
+    saveProduct(): void {
     if (this.productForm.invalid || (this.isCreatingNew() && this.articleForm.invalid)) {
       this.productForm.markAllAsTouched();
       this.articleForm.markAllAsTouched();
+      this.toast.error('Please fill in all required fields');
       return;
     }
 
@@ -283,7 +314,7 @@ export class InventoryComponent {
 
   openAddArticleForm(): void {
     this.editingArticle.set(null);
-    this.articleForm.reset({ color: '', lensTint: '', size: '', costPrice: null, price: 0, stock: 0, isActive: true });
+    this.articleForm.reset({ color: '', lensTint: '', size: '', costPrice: null, price: 0, mspPrice: null, isMspManual: false, stock: 0, isActive: true });
     this.clearImageState();
     this.isArticleFormOpen.set(true);
   }
@@ -296,6 +327,8 @@ export class InventoryComponent {
       size: article.size || '',
       costPrice: article.costPrice ?? null,
       price: article.price,
+      mspPrice: article.mspPrice ?? null,
+      isMspManual: article.isMspManual,
       stock: article.stock,
       isActive: article.isActive,
     });
@@ -308,6 +341,7 @@ export class InventoryComponent {
   saveArticle(): void {
     if (this.articleForm.invalid) {
       this.articleForm.markAllAsTouched();
+      this.toast.error('Cost price is required before saving this variant');
       return;
     }
 
@@ -322,13 +356,18 @@ export class InventoryComponent {
 
     const proceed = (newUrls: string[]) => {
       this.isUploadingImages.set(false);
-      const value = this.articleForm.getRawValue();
+      const { price, ...rawValue } = this.articleForm.getRawValue();
       const images = [...this.existingImages(), ...newUrls];
       const editing = this.editingArticle();
 
+      // Only send mspPrice when it's an intentional manual override — otherwise
+      // let the backend derive it fresh from cost, rather than sending a
+      // client-computed preview as if it were a deliberate value.
+      const payload = rawValue.isMspManual ? rawValue : { ...rawValue, mspPrice: undefined };
+
       const request = editing
-        ? this.inventoryService.updateArticle(product._id, editing._id, { ...value, images } as any)
-        : this.inventoryService.addArticle(product._id, { ...value, images } as any);
+        ? this.inventoryService.updateArticle(product._id, editing._id, { ...payload, images } as any)
+        : this.inventoryService.addArticle(product._id, { ...payload, images } as any);
 
       request.subscribe({
         next: (res) => {
@@ -336,8 +375,8 @@ export class InventoryComponent {
           this.isSavingArticle.set(false);
           this.isArticleFormOpen.set(false);
           this.clearImageState();
-          this.managingProduct.set(res.item); // refresh with latest article list
-          this.fetchProducts(); // keep the background table in sync too
+          this.managingProduct.set(res.item);
+          this.fetchProducts();
         },
         error: (err) => {
           this.isSavingArticle.set(false);

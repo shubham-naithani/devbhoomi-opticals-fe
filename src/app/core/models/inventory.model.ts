@@ -22,13 +22,17 @@ export interface Article {
   lensTint?: string;
   size?: string;
   costPrice?: number;
-  price: number;
+  price: number;         // MRP — read-only, server-computed
+  mspPrice?: number;
+  isMspManual: boolean;
   stock: number;
   images: string[];
   isActive: boolean;
 }
 
-export type ArticleFormValue = Omit<Article, '_id'>;
+// Deliberately excludes `price` — MRP is never client-settable, so the
+// article create/edit forms should never have a field that writes to it.
+export type ArticleFormValue = Omit<Article, '_id' | 'price'>;
 
 // The product/model itself — "Ray-Ban Aviator" — shared across every
 // article/variant underneath it.
