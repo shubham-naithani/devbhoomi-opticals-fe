@@ -1,4 +1,4 @@
-export type OrderStatus = 'pending' | 'confirmed' | 'delivered' | 'cancelled';
+export type OrderStatus = 'pending' | 'confirmed' | 'in_progress' | 'ready_for_pickup' | 'delivered' | 'cancelled';
 export type PaymentMethod = 'cod' | 'cash' | 'card' | 'upi';
 export type OrderSource = 'online' | 'in_store';
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid';
