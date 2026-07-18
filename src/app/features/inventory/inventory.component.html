@@ -311,10 +311,13 @@
             </div>
             </div>
             @if (auth.isAdmin()) {
-              <div class="article-actions">
-                <button class="btn btn-ghost" (click)="openEditArticleForm(article)">Edit</button>
-                <button class="btn btn-danger" (click)="deleteArticle(article)">Delete</button>
-              </div>
+            <div class="article-actions">
+              <button class="btn btn-ghost" (click)="openEditArticleForm(article)">Edit</button>
+              @if (article.barcode) {
+              <button class="btn btn-ghost" (click)="openPrintLabel(product, article)">Print label</button>
+              }
+              <button class="btn btn-danger" (click)="deleteArticle(article)">Delete</button>
+            </div>
             }
           </div>
         }
@@ -408,5 +411,22 @@
         </div>
       </form>
     }
+  </div>
+}
+@if (printingArticle(); as p) {
+  <div class="overlay" (click)="closePrintLabel()"></div>
+  <div class="print-modal card">
+    <div class="print-preview">
+      <div class="label-box" id="printable-label">
+        <div class="label-name">{{ p.product.name }}</div>
+        <div class="label-variant">{{ describeArticle(p.article) }}</div>
+        <svg id="label-barcode-svg"></svg>
+        <div class="label-price">₹{{ p.article.price }}</div>
+      </div>
+    </div>
+    <div class="panel-actions no-print">
+      <button class="btn btn-ghost" (click)="closePrintLabel()">Close</button>
+      <button class="btn btn-primary" (click)="triggerPrint()">Print</button>
+    </div>
   </div>
 }

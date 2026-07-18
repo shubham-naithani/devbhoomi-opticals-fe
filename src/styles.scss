@@ -205,3 +205,33 @@ select {
     cursor: not-allowed;
   }
 }
+
+// Print-only visibility: hide everything on the page except the label
+// itself when the browser print dialog is actually printing.
+
+@media print {
+  body * { visibility: hidden; }
+  .print-modal, .print-modal * { visibility: visible; }
+
+  // Reset the modal's own screen-centering styles during print — a
+  // transform on this ancestor was hijacking the label's "fixed"
+  // positioning, causing it to print floating mid-page instead of
+  // pinned to the actual page top-left.
+  .print-modal {
+    position: static !important;
+    transform: none !important;
+    top: auto !important;
+    left: auto !important;
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .overlay { display: none !important; }
+  .no-print { display: none !important; }
+
+  @page {
+    margin: 10mm;
+  }
+}
+

@@ -5,7 +5,7 @@ import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
-
+import JsBarcode from 'jsbarcode';
 import {
   Article,
   InventoryItem,
@@ -63,6 +63,7 @@ export class InventoryComponent {
   editingProduct = signal<InventoryItem | null>(null); // non-null = editing product-level fields only
   isCreatingNew = signal(false); // true = create mode (product + first article together)
   isSavingProduct = signal(false);
+  printingArticle = signal<{ product: InventoryItem; article: Article } | null>(null);
 
   productForm = this.fb.group({
     name: ['', Validators.required],
@@ -502,5 +503,36 @@ export class InventoryComponent {
       },
       error: (err) => this.toast.error(err?.error?.message || 'Could not delete variant'),
     });
+  }
+
+  openPrintLabel(product: InventoryItem, article: Article): void {
+    if (!article.barcode) {
+      this.toast.error('This variant has no barcode yet');
+      return;
+    }
+    this.printingArticle.set({ product, article });
+    setTimeout(() => this.renderBarcode(article.barcode!), 0);
+  }
+
+  private renderBarcode(value: string): void {
+    const svg = document.getElementById('label-barcode-svg');
+    if (svg) {
+      JsBarcode(svg, value, {
+        format: 'CODE128',
+        width: 2,
+        height: 50,
+        displayValue: true,
+        fontSize: 12,
+        margin: 4,
+      });
+    }
+  }
+
+  closePrintLabel(): void {
+    this.printingArticle.set(null);
+  }
+
+  triggerPrint(): void {
+    window.print();
   }
 }

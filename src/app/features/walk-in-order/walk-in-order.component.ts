@@ -18,6 +18,8 @@ import {
 } from '../../core/models/inventory.model';
 import { EyeTest } from '../../core/models/eye-test.model';
 import { PaymentMethod } from '../../core/models/order.model';
+import { ViewChild, ElementRef } from '@angular/core';
+import JsBarcode from 'jsbarcode'; // not actually needed here, skip this import
 
 interface OrderLine {
   inventoryItem: string;
@@ -53,6 +55,7 @@ interface WalkInDraft {
   styleUrl: './walk-in-order.component.scss',
 })
 export class WalkInOrderComponent {
+  @ViewChild('scanInput') scanInputRef?: ElementRef<HTMLInputElement>;
   private customerService = inject(CustomerService);
   private inventoryService = inject(InventoryService);
   private eyeTestService = inject(EyeTestService);
@@ -127,6 +130,9 @@ export class WalkInOrderComponent {
   orderNotes = signal('');
   isPlacingOrder = signal(false);
 
+  scanBarcode = signal('');
+  isScanning = signal(false);
+
   constructor() {
     this.restoreDraftIfAny();
 
@@ -141,6 +147,12 @@ export class WalkInOrderComponent {
       },
       { allowSignalWrites: true }
     );
+
+    effect(() => {
+      if (this.currentStep() === 'items') {
+        setTimeout(() => this.scanInputRef?.nativeElement?.focus(), 50);
+      }
+    });
 
     // Persist a resumable draft on any meaningful change. Only writes once
     // there's actually something worth resuming (a customer picked, or
@@ -216,6 +228,54 @@ export class WalkInOrderComponent {
           localStorage.removeItem(this.DRAFT_KEY);
         }
       });
+  }
+
+  onScanBarcode(): void {
+    const code = this.scanBarcode().trim();
+    if (!code) return;
+
+    this.isScanning.set(true);
+    this.inventoryService.lookupByBarcode(code).subscribe({
+      next: (res) => {
+        this.isScanning.set(false);
+        this.scanBarcode.set('');
+        if (!res.article || !res.item) {
+          this.toast.error('No item found for this barcode');
+          return;
+        }
+        this.addScannedItem(res.item, res.article);
+      },
+      error: (err) => {
+        this.isScanning.set(false);
+        this.scanBarcode.set('');
+        this.toast.error(err?.error?.message || 'No item found for this barcode');
+      },
+    });
+  }
+
+  private addScannedItem(product: InventoryItem, article: Article): void {
+    if (this.remainingStock(article) <= 0) {
+      this.toast.error('No more of this variant available to add');
+      return;
+    }
+    const current = this.orderLines();
+    const existing = current.find((l) => l.articleId === article._id);
+    if (existing) {
+      this.updateQuantity(article._id, existing.quantity + 1);
+    } else {
+      this.orderLines.set([
+        ...current,
+        {
+          inventoryItem: product._id,
+          articleId: article._id,
+          name: `${product.name} — ${describeArticle(article)}`,
+          price: article.price,
+          stock: article.stock,
+          quantity: 1,
+        },
+      ]);
+    }
+    this.toast.success(`Added: ${product.name} — ${describeArticle(article)}`);
   }
 
   private clearDraft(): void {

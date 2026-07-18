@@ -97,6 +97,26 @@
   font-style: italic;
 }
 
+.print-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1000;
+  padding: 28px;
+  text-align: center;
+}
+
+.label-box {
+  display: inline-block;
+  padding: 14px 18px;
+  border: 1px dashed var(--color-border);
+}
+
+.label-name { font-size: 13px; font-weight: 600; }
+.label-variant { font-size: 11px; color: var(--color-text-muted); margin-bottom: 6px; }
+.label-price { font-size: 14px; font-weight: 700; margin-top: 4px; }
+
 // ---- Slide-over panel -----------------------------------------------------
 .overlay {
   position: fixed;
