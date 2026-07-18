@@ -1,10 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InventoryService } from '../../core/services/inventory.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
+
 import {
   Article,
   InventoryItem,
@@ -12,13 +13,14 @@ import {
   priceRange,
   totalStock,
 } from '../../core/models/inventory.model';
+import { DatePipe } from '@angular/common';
 
 const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [ReactiveFormsModule, PaginationComponent],
+  imports: [ReactiveFormsModule, FormsModule, DatePipe, PaginationComponent ],
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.scss',
 })
@@ -28,6 +30,13 @@ export class InventoryComponent {
   private confirmDialog = inject(ConfirmDialogService);
   private fb = inject(FormBuilder);
   auth = inject(AuthService);
+
+  private readonly MRP_MARGIN = 1.25;
+  private readonly MSP_MARGIN = 1.4;
+
+  private round2(n: number): number {
+    return Math.round(n * 100) / 100;
+  }
 
   // expose helpers to the template
   describeArticle = describeArticle;
@@ -40,6 +49,14 @@ export class InventoryComponent {
   totalPages = signal(1);
   isLoading = signal(true);
   searchTerm = signal('');
+
+  categoryFilter = signal('');
+  genderFilter = signal('');
+  frameShapeFilter = signal('');
+
+  allBrands = signal<string[]>([]);
+  brandSuggestions = signal<string[]>([]);
+  showBrandSuggestions = signal(false);
 
   // ---- Product create/edit panel -----------------------------------------
   isProductPanelOpen = signal(false);
@@ -63,12 +80,13 @@ export class InventoryComponent {
     color: [''],
     lensTint: [''],
     size: [''],
-    costPrice: [null as number | null],
-    price: [0, [Validators.required, Validators.min(0)]],
+    costPrice: [null as number | null, [Validators.required, Validators.min(0)]],
+    price: [{ value: 0, disabled: true }], // MRP — read-only, server-derived
+    mspPrice: [{ value: null as number | null, disabled: true }], // auto by default
+    isMspManual: [false],
     stock: [0, [Validators.required, Validators.min(0)]],
     isActive: [true],
   });
-
   existingImages = signal<string[]>([]);
   pendingFiles = signal<File[]>([]);
   pendingPreviews = signal<string[]>([]);
@@ -79,25 +97,120 @@ export class InventoryComponent {
   isArticleFormOpen = signal(false);
   editingArticle = signal<Article | null>(null);
   isSavingArticle = signal(false);
+  isNewBrandName = signal(false);
 
   constructor() {
     this.fetchProducts();
+    this.loadBrands();
+
+    this.productForm.controls.brand.valueChanges.subscribe((value) => {
+      const v = (value || '').trim().toLowerCase();
+      const list = this.allBrands();
+      const filtered = v ? list.filter((b) => b.toLowerCase().includes(v)).slice(0, 8) : list.slice(0, 8);
+      this.brandSuggestions.set(filtered);
+      // Only offer "add new" when NOTHING matches at all — a partial match
+      // (e.g. typing "te" while "TestBrandXYZ" exists) should just show that
+      // suggestion, not also invite creating a redundant near-duplicate.
+      this.isNewBrandName.set(v.length > 0 && filtered.length === 0);
+    });
+
+    // Client-side preview only, purely for immediate feedback while typing —
+    // the server response after save is always the real source of truth for
+    // the saved price/mspPrice values (see `saveArticle`, which refreshes
+    // from `res.item`).
+    this.articleForm.controls.costPrice.valueChanges.subscribe((cost) => {
+      const numCost = Number(cost) || 0;
+      this.articleForm.controls.price.setValue(this.round2(numCost * this.MRP_MARGIN), { emitEvent: false });
+      if (!this.articleForm.controls.isMspManual.value) {
+        this.articleForm.controls.mspPrice.setValue(this.round2(numCost * this.MSP_MARGIN), { emitEvent: false });
+      }
+    });
+
+    this.articleForm.controls.isMspManual.valueChanges.subscribe((manual) => {
+      if (manual) {
+        this.articleForm.controls.mspPrice.enable({ emitEvent: false });
+      } else {
+        const cost = Number(this.articleForm.controls.costPrice.value) || 0;
+        this.articleForm.controls.mspPrice.setValue(this.round2(cost * this.MSP_MARGIN), { emitEvent: false });
+        this.articleForm.controls.mspPrice.disable({ emitEvent: false });
+      }
+    });
   }
 
   fetchProducts(): void {
     this.isLoading.set(true);
-    this.inventoryService.list({ search: this.searchTerm(), page: this.page(), limit: PAGE_SIZE }).subscribe({
-      next: (res) => {
-        this.products.set(res.items || []);
-        this.totalItems.set(res.total);
-        this.totalPages.set(res.pages || 1);
-        this.isLoading.set(false);
+    this.inventoryService
+      .list({
+        search: this.searchTerm(),
+        category: this.categoryFilter() || undefined,
+        gender: this.genderFilter() || undefined,
+        frameShape: this.frameShapeFilter() || undefined,
+        page: this.page(),
+        limit: PAGE_SIZE,
+      })
+      .subscribe({
+        next: (res) => {
+          this.products.set(res.items || []);
+          this.totalItems.set(res.total);
+          this.totalPages.set(res.pages || 1);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.toast.error('Could not load inventory');
+        },
+      });
+  }
+
+  onFilterChange(): void {
+    this.page.set(1);
+    this.fetchProducts();
+  }
+
+  addNewBrand(): void {
+    const name = (this.productForm.controls.brand.value || '').trim();
+    if (!name) return;
+
+    this.inventoryService.addBrand(name).subscribe({
+      next: () => {
+        this.allBrands.update((list) => [...list, name].sort());
+        this.showBrandSuggestions.set(false);
+        this.toast.success(`"${name}" added as a new brand`);
+        // Auto-fill won't fire for a brand-new name (no products yet) — nothing to fetch.
       },
-      error: () => {
-        this.isLoading.set(false);
-        this.toast.error('Could not load inventory');
-      },
+      error: (err) => this.toast.error(err?.error?.message || 'Could not add brand'),
     });
+  }
+
+  private loadBrands(): void {
+    this.inventoryService.brands().subscribe({
+      next: (res) => this.allBrands.set(res.brands || []),
+      error: () => {}, // non-critical — autocomplete just won't have suggestions
+    });
+  }
+
+  selectBrand(brand: string): void {
+  this.productForm.controls.brand.setValue(brand);
+  this.showBrandSuggestions.set(false);
+
+  if (!this.isCreatingNew()) return; // don't auto-fill over an existing product's real data
+
+  this.inventoryService.brandDefaults(brand).subscribe({
+      next: (res) => {
+        if (!res.defaults) return;
+        const { category, frameType, gender } = res.defaults;
+        if (category) this.productForm.controls.category.setValue(category);
+        if (frameType) this.productForm.controls.frameType.setValue(frameType);
+        if (gender) this.productForm.controls.gender.setValue(gender);
+      },
+      error: () => {},
+    });
+  }
+
+  hideBrandSuggestions(): void {
+    // Delay so a suggestion's (mousedown) fires before blur hides the list —
+    // otherwise the click never registers because the list disappears first.
+    setTimeout(() => this.showBrandSuggestions.set(false), 150);
   }
 
   onSearchChange(value: string): void {
@@ -121,7 +234,7 @@ export class InventoryComponent {
       description: '', isActive: true,
     });
     this.articleForm.reset({
-      color: '', lensTint: '', size: '', costPrice: null, price: 0, stock: 0, isActive: true,
+      color: '', lensTint: '', size: '', costPrice: null, price: 0, mspPrice: null, isMspManual: false, stock: 0, isActive: true,
     });
     this.clearImageState();
     this.isProductPanelOpen.set(true);
@@ -148,10 +261,11 @@ export class InventoryComponent {
     this.clearImageState();
   }
 
-  saveProduct(): void {
+    saveProduct(): void {
     if (this.productForm.invalid || (this.isCreatingNew() && this.articleForm.invalid)) {
       this.productForm.markAllAsTouched();
       this.articleForm.markAllAsTouched();
+      this.toast.error('Please fill in all required fields');
       return;
     }
 
@@ -283,7 +397,7 @@ export class InventoryComponent {
 
   openAddArticleForm(): void {
     this.editingArticle.set(null);
-    this.articleForm.reset({ color: '', lensTint: '', size: '', costPrice: null, price: 0, stock: 0, isActive: true });
+    this.articleForm.reset({ color: '', lensTint: '', size: '', costPrice: null, price: 0, mspPrice: null, isMspManual: false, stock: 0, isActive: true });
     this.clearImageState();
     this.isArticleFormOpen.set(true);
   }
@@ -296,6 +410,8 @@ export class InventoryComponent {
       size: article.size || '',
       costPrice: article.costPrice ?? null,
       price: article.price,
+      mspPrice: article.mspPrice ?? null,
+      isMspManual: article.isMspManual,
       stock: article.stock,
       isActive: article.isActive,
     });
@@ -308,6 +424,7 @@ export class InventoryComponent {
   saveArticle(): void {
     if (this.articleForm.invalid) {
       this.articleForm.markAllAsTouched();
+      this.toast.error('Cost price is required before saving this variant');
       return;
     }
 
@@ -322,13 +439,18 @@ export class InventoryComponent {
 
     const proceed = (newUrls: string[]) => {
       this.isUploadingImages.set(false);
-      const value = this.articleForm.getRawValue();
+      const { price, ...rawValue } = this.articleForm.getRawValue();
       const images = [...this.existingImages(), ...newUrls];
       const editing = this.editingArticle();
 
+      // Only send mspPrice when it's an intentional manual override — otherwise
+      // let the backend derive it fresh from cost, rather than sending a
+      // client-computed preview as if it were a deliberate value.
+      const payload = rawValue.isMspManual ? rawValue : { ...rawValue, mspPrice: undefined };
+
       const request = editing
-        ? this.inventoryService.updateArticle(product._id, editing._id, { ...value, images } as any)
-        : this.inventoryService.addArticle(product._id, { ...value, images } as any);
+        ? this.inventoryService.updateArticle(product._id, editing._id, { ...payload, images } as any)
+        : this.inventoryService.addArticle(product._id, { ...payload, images } as any);
 
       request.subscribe({
         next: (res) => {
@@ -336,8 +458,8 @@ export class InventoryComponent {
           this.isSavingArticle.set(false);
           this.isArticleFormOpen.set(false);
           this.clearImageState();
-          this.managingProduct.set(res.item); // refresh with latest article list
-          this.fetchProducts(); // keep the background table in sync too
+          this.managingProduct.set(res.item);
+          this.fetchProducts();
         },
         error: (err) => {
           this.isSavingArticle.set(false);

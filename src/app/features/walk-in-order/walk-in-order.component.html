@@ -3,77 +3,103 @@
     <h1>New walk-in order</h1>
     <p class="subtitle">For a customer at the counter — find or create them, record an eye test if needed, then build the order.</p>
   </div>
+  <button type="button" class="btn btn-ghost start-over-btn" (click)="startOver()">Start over</button>
 </div>
 
-<!-- Step 1: Customer -->
-<div class="card step-card">
-  <div class="step-title">1. Customer</div>
-
-  @if (!selectedCustomer()) {
-    <div class="search-row">
-      <input
-        type="tel"
-        placeholder="Search by phone number…"
-        [(ngModel)]="phoneQuery"
-        (keyup.enter)="searchCustomer()"
-      />
-      <button class="btn btn-primary" [disabled]="isSearching()" (click)="searchCustomer()">
-        {{ isSearching() ? 'Searching…' : 'Search' }}
-      </button>
-    </div>
-
-    @if (searchResults().length > 0) {
-      <div class="result-list">
-        @for (c of searchResults(); track c._id) {
-          <div class="result-row" (click)="selectCustomer(c)">
-            <div>
-              <div class="name">{{ c.name }}</div>
-              <div class="meta">{{ c.phone }} @if (c.email) { &middot; {{ c.email }} }</div>
-            </div>
-            <button class="btn btn-ghost">Use this customer</button>
-          </div>
-        }
-      </div>
-    }
-
-    @if (showNewCustomerForm()) {
-      <div class="new-customer-form">
-        <div class="hint">No match found — create a new customer record:</div>
-        <div class="two-col">
-          <div class="field">
-            <label>Full name</label>
-            <input type="text" [(ngModel)]="newCustomerName" placeholder="Customer name" />
-          </div>
-          <div class="field">
-            <label>Phone</label>
-            <input type="tel" [(ngModel)]="newCustomerPhone" placeholder="98765 43210" />
-          </div>
-        </div>
-        <div class="field">
-          <label>Email (optional)</label>
-          <input type="email" [(ngModel)]="newCustomerEmail" placeholder="Leave blank if not given" />
-        </div>
-        <button class="btn btn-accent" [disabled]="isCreatingCustomer()" (click)="createNewCustomer()">
-          {{ isCreatingCustomer() ? 'Creating…' : 'Create customer' }}
-        </button>
-      </div>
-    }
-  } @else {
-    <div class="selected-customer">
-      <div>
-        <div class="name">{{ selectedCustomer()!.name }}</div>
-        <div class="meta">
-          {{ selectedCustomer()!.phone }}
-          @if (selectedCustomer()!.email) { &middot; {{ selectedCustomer()!.email }} }
-        </div>
-      </div>
-      <button class="btn btn-ghost" (click)="changeCustomer()">Change</button>
-    </div>
+<div class="stepper-nav">
+  @for (s of steps; track s.key) {
+    <button
+      type="button"
+      class="step-pill"
+      [class.active]="currentStep() === s.key"
+      [class.done]="isStepDone(s.key)"
+      [disabled]="!canJumpTo(s.key)"
+      (click)="goToStep(s.key)"
+    >
+      @if (isStepDone(s.key)) {
+        <span class="pill-check">✓</span>
+      }
+      {{ s.label }}
+    </button>
   }
 </div>
 
+<!-- Step 1: Customer -->
+@if (currentStep() === 'customer') {
+  <div class="card step-card">
+    <div class="step-title">1. Customer</div>
+
+    @if (!selectedCustomer()) {
+      <div class="search-row">
+        <input
+          type="tel"
+          placeholder="Search by phone number…"
+          [(ngModel)]="phoneQuery"
+          (keyup.enter)="searchCustomer()"
+        />
+        <button class="btn btn-primary" [disabled]="isSearching()" (click)="searchCustomer()">
+          {{ isSearching() ? 'Searching…' : 'Search' }}
+        </button>
+      </div>
+
+      @if (searchResults().length > 0) {
+        <div class="result-list">
+          @for (c of searchResults(); track c._id) {
+            <div class="result-row" (click)="selectCustomer(c)">
+              <div>
+                <div class="name">{{ c.name }}</div>
+                <div class="meta">{{ c.phone }} @if (c.email) { &middot; {{ c.email }} }</div>
+              </div>
+              <button class="btn btn-ghost">Use this customer</button>
+            </div>
+          }
+        </div>
+      }
+
+      @if (showNewCustomerForm()) {
+        <div class="new-customer-form">
+          <div class="hint">No match found — create a new customer record:</div>
+          <div class="two-col">
+            <div class="field">
+              <label>Full name</label>
+              <input type="text" [(ngModel)]="newCustomerName" placeholder="Customer name" />
+            </div>
+            <div class="field">
+              <label>Phone</label>
+              <input type="tel" [(ngModel)]="newCustomerPhone" placeholder="98765 43210" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Email (optional)</label>
+            <input type="email" [(ngModel)]="newCustomerEmail" placeholder="Leave blank if not given" />
+          </div>
+          <button class="btn btn-accent" [disabled]="isCreatingCustomer()" (click)="createNewCustomer()">
+            {{ isCreatingCustomer() ? 'Creating…' : 'Create customer' }}
+          </button>
+        </div>
+      }
+    } @else {
+      <div class="selected-customer">
+        <div>
+          <div class="name">{{ selectedCustomer()!.name }}</div>
+          <div class="meta">
+            {{ selectedCustomer()!.phone }}
+            @if (selectedCustomer()!.email) { &middot; {{ selectedCustomer()!.email }} }
+          </div>
+        </div>
+        <button class="btn btn-ghost" (click)="changeCustomer()">Change</button>
+      </div>
+
+      <div class="step-nav-buttons">
+        <span></span>
+        <button class="btn btn-primary" (click)="nextStep()">Continue to eye test →</button>
+      </div>
+    }
+  </div>
+}
+
 <!-- Step 2: Eye test -->
-@if (selectedCustomer()) {
+@if (currentStep() === 'eyeTest' && selectedCustomer()) {
   <div class="card step-card">
     <div class="step-title">2. Eye test</div>
 
@@ -97,7 +123,7 @@
     } @else {
       <div class="eye-test-form">
         @if (!latestEyeTest()) {
-          <div class="hint">No prescription on file yet — record the free eyesight checkup:</div>
+          <div class="hint">No prescription on file yet — record the free eyesight checkup, or skip for now:</div>
         }
         <div class="eye-grid">
           <div class="eye-col">
@@ -128,11 +154,16 @@
         </button>
       </div>
     }
+
+    <div class="step-nav-buttons">
+      <button class="btn btn-ghost" (click)="eyeTestBack()">← Back</button>
+      <button class="btn btn-ghost" (click)="skipEyeTest()">Skip for now — continue to items →</button>
+    </div>
   </div>
 }
 
 <!-- Step 3: Items -->
-@if (selectedCustomer()) {
+@if (currentStep() === 'items' && selectedCustomer()) {
   <div class="card step-card">
     <div class="step-title">3. Items</div>
 
@@ -193,13 +224,29 @@
         }
       </div>
     }
+
+    <div class="step-nav-buttons">
+      <button class="btn btn-ghost" (click)="prevStep()">← Back</button>
+      @if (orderLines().length > 0) {
+        <button class="btn btn-primary" (click)="nextStep()">Continue to payment →</button>
+      }
+    </div>
   </div>
 }
 
 <!-- Step 4: Payment + confirm -->
-@if (selectedCustomer() && orderLines().length > 0) {
+@if (currentStep() === 'payment' && selectedCustomer() && orderLines().length > 0) {
   <div class="card step-card">
     <div class="step-title">4. Payment &amp; confirm</div>
+
+    <div class="order-summary">
+      @for (line of orderLines(); track line.articleId) {
+        <div class="summary-line">
+          <span>{{ line.name }} &times; {{ line.quantity }}</span>
+          <span>₹{{ line.price * line.quantity }}</span>
+        </div>
+      }
+    </div>
 
     <div class="total-row">
       <span>Total</span>
@@ -239,8 +286,11 @@
       <textarea rows="2" [(ngModel)]="orderNotes" placeholder="Anything worth noting for this order…"></textarea>
     </div>
 
-    <button class="btn btn-primary confirm-btn" [disabled]="isPlacingOrder()" (click)="placeOrder()">
-      {{ isPlacingOrder() ? 'Placing order…' : 'Confirm order' }}
-    </button>
+    <div class="step-nav-buttons">
+      <button class="btn btn-ghost" (click)="prevStep()">← Back</button>
+      <button class="btn btn-primary confirm-btn" [disabled]="isPlacingOrder()" (click)="placeOrder()">
+        {{ isPlacingOrder() ? 'Placing order…' : 'Confirm order' }}
+      </button>
+    </div>
   </div>
 }
