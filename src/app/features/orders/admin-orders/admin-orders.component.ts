@@ -23,6 +23,24 @@ export class AdminOrdersComponent {
   private confirmDialog = inject(ConfirmDialogService);
   auth = inject(AuthService);
 
+  private readonly statusTransitions: Record<OrderStatus, OrderStatus[]> = {
+    pending: ['confirmed', 'cancelled'],
+    confirmed: ['in_progress', 'cancelled'],
+    in_progress: ['ready_for_pickup', 'cancelled'],
+    ready_for_pickup: ['delivered', 'cancelled'],
+    delivered: [],
+    cancelled: [],
+  };
+
+  private readonly statusLabels: Record<OrderStatus, string> = {
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    in_progress: 'In progress',
+    ready_for_pickup: 'Ready to pick up',
+    delivered: 'Delivered',
+    cancelled: 'Cancelled',
+  };
+
   orders = signal<Order[]>([]);
   totalOrders = signal(0);
   page = signal(1);
@@ -36,7 +54,7 @@ export class AdminOrdersComponent {
   refundMethod = signal<PaymentMethod>('cash');
   isProcessingRefund = signal(false);
 
-  statusOptions: OrderStatus[] = ['pending', 'confirmed', 'delivered', 'cancelled'];
+  statusOptions: OrderStatus[] = ['pending', 'confirmed', 'in_progress', 'ready_for_pickup', 'delivered', 'cancelled'];
   paymentMethodOptions: PaymentMethod[] = ['cash', 'card', 'upi', 'cod'];
 
   // Detail panel state (view + edit combined)
@@ -77,6 +95,21 @@ export class AdminOrdersComponent {
           this.toast.error('Could not load orders');
         },
       });
+  }
+
+  statusLabel(status: OrderStatus): string {
+    return this.statusLabels[status];
+  }
+
+  // Dropdown only ever offers the current status (so it stays selected) plus
+  // whatever's actually reachable from here — never every status in
+  // existence, so staff can't even attempt an invalid jump from the UI.
+  allowedNextStatuses(order: Order): OrderStatus[] {
+    return [order.status, ...this.statusTransitions[order.status]];
+  }
+
+  isTerminalStatus(status: OrderStatus): boolean {
+    return this.statusTransitions[status].length === 0;
   }
 
   changeDuePreview(order: Order): number {

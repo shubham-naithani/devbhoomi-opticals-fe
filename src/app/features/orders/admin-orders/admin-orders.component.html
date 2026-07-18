@@ -10,10 +10,9 @@
     (input)="onSearchChange($any($event.target).value)" />
   <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
     <option value="">All statuses</option>
-    <option value="pending">Pending</option>
-    <option value="confirmed">Confirmed</option>
-    <option value="delivered">Delivered</option>
-    <option value="cancelled">Cancelled</option>
+    @for (opt of statusOptions; track opt) {
+      <option [value]="opt">{{ statusLabel(opt) }}</option>
+    }
   </select>
 </div>
 
@@ -79,9 +78,10 @@
         </td>
         <td>
           <select [ngModel]="order.status" (ngModelChange)="changeStatus(order, $event)"
-            [disabled]="updatingId() === order._id" [class]="'status-select status-' + order.status">
-            @for (opt of statusOptions; track opt) {
-            <option [value]="opt">{{ opt }}</option>
+            [disabled]="updatingId() === order._id || isTerminalStatus(order.status)"
+            [class]="'status-select status-' + order.status">
+            @for (opt of allowedNextStatuses(order); track opt) {
+            <option [value]="opt">{{ statusLabel(opt) }}</option>
             }
           </select>
         </td>

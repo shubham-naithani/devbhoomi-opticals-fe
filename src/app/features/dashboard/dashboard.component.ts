@@ -87,7 +87,7 @@ export class DashboardComponent {
           data: data.revenueTrend.map((d) => d.revenue),
           label: 'Revenue',
           borderColor: '#c97b4a',
-          backgroundColor: 'rgba(201,123,74,0.15)',
+          backgroundColor: ['#c97b4a', '#4a7fc9', '#4ac97b', '#c94a4a', '#1d4ed8', '#6d28d9'],
           tension: 0.3,
           fill: true,
         },

@@ -132,12 +132,15 @@ export class WalkInOrderComponent {
 
     // Auto-fill the field with the running total as items are added — but
     // only until the admin/staff actually types into it themselves.
-    effect(() => {
-      const total = this.orderTotal;
-      if (!this.hasEditedAmount()) {
-        this.amountReceived.set(total);
-      }
-    });
+     effect(
+      () => {
+        const total = this.orderTotal;
+        if (!this.hasEditedAmount()) {
+          this.amountReceived.set(total);
+        }
+      },
+      { allowSignalWrites: true }
+    );
 
     // Persist a resumable draft on any meaningful change. Only writes once
     // there's actually something worth resuming (a customer picked, or
