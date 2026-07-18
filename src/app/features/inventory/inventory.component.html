@@ -9,12 +9,40 @@
 </div>
 
 <div class="toolbar">
-  <input
-    type="text"
-    placeholder="Search by name, brand, or SKU…"
-    [value]="searchTerm()"
-    (input)="onSearchChange($any($event.target).value)"
-  />
+  <div class="search-bar">
+    <input type="text" placeholder="Search by name, brand, SKU, or barcode…" [value]="searchTerm()"
+      (input)="onSearchChange($any($event.target).value)" />
+  </div>
+
+  <div class="filter">
+    <select [(ngModel)]="categoryFilter" (ngModelChange)="onFilterChange()">
+      <option value="">All categories</option>
+      <option value="eyeglasses">Eyeglasses</option>
+      <option value="sunglasses">Sunglasses</option>
+      <option value="lens">Lens</option>
+      <option value="contact_lens">Contact lens</option>
+      <option value="accessory">Accessory</option>
+    </select>
+    <select [(ngModel)]="genderFilter" (ngModelChange)="onFilterChange()">
+      <option value="">All genders</option>
+      <option value="unisex">Unisex</option>
+      <option value="men">Men</option>
+      <option value="women">Women</option>
+      <option value="kids">Kids</option>
+    </select>
+    <select [(ngModel)]="frameShapeFilter" (ngModelChange)="onFilterChange()">
+      <option value="">All frame shapes</option>
+      <option value="aviator">Aviator</option>
+      <option value="wayfarer">Wayfarer</option>
+      <option value="round">Round</option>
+      <option value="square">Square</option>
+      <option value="rectangle">Rectangle</option>
+      <option value="cat_eye">Cat-eye</option>
+      <option value="oval">Oval</option>
+      <option value="geometric">Geometric</option>
+      <option value="other">Other</option>
+    </select>
+  </div>
 </div>
 
 <div class="card table-card">
@@ -34,6 +62,7 @@
           <th>Price</th>
           <th class="stock-col">Stock</th>
           <th>Status</th>
+          <th>Updated</th>
           <th></th>
         </tr>
       </thead>
@@ -64,6 +93,7 @@
             </td>
             <td class="stock-col" [class.low-stock]="totalStock(product) <= 5">{{ totalStock(product) }}</td>
             <td><span class="badge" [class.badge-active]="product.isActive" [class.badge-inactive]="!product.isActive">{{ product.isActive ? 'Active' : 'Hidden' }}</span></td>
+            <td class="updated-cell">{{ product.updatedAt | date: 'mediumDate' }}</td>
             <td class="actions">
               @if (auth.isAdmin()) {
                 <button class="btn btn-ghost" (click)="openEditProductPanel(product)">Edit</button>
@@ -274,10 +304,11 @@
             </div>
             <div class="article-info">
               <div class="article-name">{{ describeArticle(article) }}</div>
-              <div class="article-meta">
-                {{ article.sku }} &middot; ₹{{ article.price }} &middot; {{ article.stock }} in stock
-                @if (!article.isActive) { &middot; <span class="hidden-flag">Hidden</span> }
-              </div>
+            <div class="article-meta">
+              {{ article.sku }} &middot; ₹{{ article.price }} &middot; {{ article.stock }} in stock
+              @if (article.barcode) { &middot; <span class="barcode-tag">{{ article.barcode }}</span> }
+              @if (!article.isActive) { &middot; <span class="hidden-flag">Hidden</span> }
+            </div>
             </div>
             @if (auth.isAdmin()) {
               <div class="article-actions">

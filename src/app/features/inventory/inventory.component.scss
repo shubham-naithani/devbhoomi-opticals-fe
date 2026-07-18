@@ -15,9 +15,19 @@
 
 .toolbar {
   margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  .search-bar {
+    flex: 1 1 300px;
+    min-width: 200px;
+  }
 
   input {
-    width: 320px;
+    width: 650px;
     max-width: 100%;
     padding: 10px 14px;
     border: 1px solid var(--color-border);
@@ -29,6 +39,37 @@
       outline: none;
       border-color: var(--color-primary);
       box-shadow: 0 0 0 3px rgba(31, 78, 92, 0.12);
+    }
+  }
+
+  .filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    flex: 1 1 auto;
+
+    select {
+      margin-left: 0;
+      flex: 1 1 140px;
+      min-width: 120px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .search-bar {
+      flex: 1 1 100%;
+    }
+
+    input {
+      width: 100%;
+    }
+
+    .filter {
+      flex: 1 1 100%;
+
+      select {
+        flex: 1 1 calc(50% - 4px);
+      }
     }
   }
 }
@@ -151,6 +192,18 @@
   border-top: 1px solid var(--color-border, #eee);
   color: var(--color-primary, #c97b4a);
   font-weight: 600;
+}
+
+.barcode-tag {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--color-text-muted, #888);
+}
+
+.updated-cell {
+  font-size: 13px;
+  color: var(--color-text-muted, #888);
+  white-space: nowrap;
 }
 
 // Stock is just a small number — a full-width table cell/input made it

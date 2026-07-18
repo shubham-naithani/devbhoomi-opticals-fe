@@ -1,10 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { InventoryService } from '../../core/services/inventory.service';
 import { ToastService } from '../../core/services/toast.service';
 import { AuthService } from '../../core/services/auth.service';
 import { ConfirmDialogService } from '../../core/services/confirm-dialog.service';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
+
 import {
   Article,
   InventoryItem,
@@ -12,13 +13,14 @@ import {
   priceRange,
   totalStock,
 } from '../../core/models/inventory.model';
+import { DatePipe } from '@angular/common';
 
 const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [ReactiveFormsModule, PaginationComponent],
+  imports: [ReactiveFormsModule, FormsModule, DatePipe, PaginationComponent ],
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.scss',
 })
@@ -47,6 +49,10 @@ export class InventoryComponent {
   totalPages = signal(1);
   isLoading = signal(true);
   searchTerm = signal('');
+
+  categoryFilter = signal('');
+  genderFilter = signal('');
+  frameShapeFilter = signal('');
 
   allBrands = signal<string[]>([]);
   brandSuggestions = signal<string[]>([]);
@@ -133,18 +139,32 @@ export class InventoryComponent {
 
   fetchProducts(): void {
     this.isLoading.set(true);
-    this.inventoryService.list({ search: this.searchTerm(), page: this.page(), limit: PAGE_SIZE }).subscribe({
-      next: (res) => {
-        this.products.set(res.items || []);
-        this.totalItems.set(res.total);
-        this.totalPages.set(res.pages || 1);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.toast.error('Could not load inventory');
-      },
-    });
+    this.inventoryService
+      .list({
+        search: this.searchTerm(),
+        category: this.categoryFilter() || undefined,
+        gender: this.genderFilter() || undefined,
+        frameShape: this.frameShapeFilter() || undefined,
+        page: this.page(),
+        limit: PAGE_SIZE,
+      })
+      .subscribe({
+        next: (res) => {
+          this.products.set(res.items || []);
+          this.totalItems.set(res.total);
+          this.totalPages.set(res.pages || 1);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.toast.error('Could not load inventory');
+        },
+      });
+  }
+
+  onFilterChange(): void {
+    this.page.set(1);
+    this.fetchProducts();
   }
 
   addNewBrand(): void {
