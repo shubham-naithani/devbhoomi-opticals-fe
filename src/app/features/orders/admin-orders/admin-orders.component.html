@@ -85,11 +85,13 @@
             }
           </select>
         </td>
-        <td class="actions">
-          <button class="btn btn-ghost" (click)="openDetail(order)">View</button>
-          @if (auth.isAdmin()) {
-          <button class="btn btn-danger" (click)="deleteOrder(order)">Delete</button>
-          }
+        <td>
+          <div class="actions">
+            <button class="btn btn-ghost" (click)="openDetail(order)">View</button>
+            @if (auth.isAdmin()) {
+            <button class="btn btn-danger" (click)="deleteOrder(order)">Delete</button>
+            }
+          </div>
         </td>
       </tr>
       }

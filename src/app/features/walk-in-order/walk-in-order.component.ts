@@ -234,6 +234,15 @@ export class WalkInOrderComponent {
     const code = this.scanBarcode().trim();
     if (!code) return;
 
+    // Guards against accidental partial/garbage submissions — a real
+    // barcode from this system is always 13 digits (see generateBarcode in
+    // humanId.js), so anything shorter almost certainly isn't a complete
+    // scan or a deliberately typed value yet.
+    if (code.length < 6) {
+      this.toast.error('Enter a complete barcode (or use the scanner)');
+      return;
+    }
+
     this.isScanning.set(true);
     this.inventoryService.lookupByBarcode(code).subscribe({
       next: (res) => {

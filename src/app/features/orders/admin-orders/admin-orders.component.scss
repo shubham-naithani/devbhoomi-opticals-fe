@@ -46,6 +46,10 @@
   font-size: 14px;
 }
 
+table td {
+  vertical-align: middle;
+}
+
 .order-id { font-weight: 600; font-size: 13px; }
 .order-date { font-size: 12px; color: var(--color-text-muted); }
 .contact { font-size: 12px; color: var(--color-text-muted); }
@@ -84,8 +88,9 @@
 
 .actions {
   display: flex;
-  gap: 8px;
+  align-items: center;
   justify-content: flex-end;
+  gap: 8px;
 }
 
 // ---- Detail / edit side panel ---------------------------------------------
