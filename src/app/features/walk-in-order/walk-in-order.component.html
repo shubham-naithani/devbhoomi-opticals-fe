@@ -167,6 +167,20 @@
   <div class="card step-card">
     <div class="step-title">3. Items</div>
 
+    <div class="scan-row">
+      <input
+        #scanInput
+        type="text"
+        placeholder="Scan barcode…"
+        [(ngModel)]="scanBarcode"
+        (keyup.enter)="onScanBarcode()"
+      />
+      <button class="btn btn-primary" [disabled]="isScanning()" (click)="onScanBarcode()">
+        {{ isScanning() ? 'Looking up…' : 'Scan' }}
+      </button>
+    </div>
+    <div class="hint">Scan a barcode to add instantly, or search by name/brand below.</div>
+
     <div class="search-row">
       <input
         type="text"

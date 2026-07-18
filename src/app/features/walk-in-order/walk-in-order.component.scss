@@ -69,6 +69,16 @@
   font-size: 12px;
 }
 
+.scan-row {
+  @extend .search-row;
+  margin-bottom: 16px;
+
+  input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(31, 78, 92, 0.15);
+  }
+}
+
 // ---- Step card ----
 
 .step-card {
