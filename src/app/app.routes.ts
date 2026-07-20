@@ -34,6 +34,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () => import('./features/audit-log/audit-log.component').then((m) => m.AuditLogComponent),
       },
+      {
+        path: 'pnl',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/pnl/pnl.component').then((m) => m.PnlComponent),
+      },
 
       // Staff or admin (store-counter functionality)
       {

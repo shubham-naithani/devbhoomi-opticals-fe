@@ -17,6 +17,7 @@ export interface Order {
   createdBy?: string | { _id: string; name: string };
   items: OrderItem[];
   totalAmount: number;
+  shippingCharge: number;
   amountPaid: number;
   changeGiven?: number;
   paymentStatus: PaymentStatus;

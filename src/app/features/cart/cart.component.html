@@ -49,8 +49,26 @@
         <span>₹{{ cart.total() }}</span>
       </div>
       <div class="summary-row muted">
-        <span>Payment</span>
-        <span>Cash on delivery</span>
+        <span>Shipping</span>
+        <span>₹{{ shippingFee }}</span>
+      </div>
+      <div class="summary-row total-row">
+        <span>Total</span>
+        <span>₹{{ grandTotal() }}</span>
+      </div>
+
+      <div class="field">
+        <label>Payment method</label>
+        <div class="payment-choice">
+          <label class="payment-option" [class.selected]="paymentChoice() === 'cod'">
+            <input type="radio" name="paymentChoice" value="cod" [(ngModel)]="paymentChoice" />
+            <span>Cash on delivery</span>
+          </label>
+          <label class="payment-option" [class.selected]="paymentChoice() === 'online'">
+            <input type="radio" name="paymentChoice" value="online" [(ngModel)]="paymentChoice" />
+            <span>Pay online (Card / UPI / Netbanking)</span>
+          </label>
+        </div>
       </div>
 
       <div class="field">
@@ -69,7 +87,7 @@
       </div>
 
       <button class="btn btn-primary place-order-btn" [disabled]="isPlacingOrder()" (click)="placeOrder()">
-        {{ isPlacingOrder() ? 'Placing order…' : 'Place order (COD)' }}
+        {{ isPlacingOrder() ? 'Placing order…' : (paymentChoice() === 'cod' ? 'Place order (COD)' : 'Place order & pay online') }}
       </button>
     </div>
   </div>

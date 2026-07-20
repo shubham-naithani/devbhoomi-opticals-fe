@@ -43,6 +43,18 @@
             }
           </span>
         </div>
+
+        @if (order.status !== 'cancelled' && balanceDue(order) > 0) {
+          <div class="pay-now-row">
+            <button
+              class="btn btn-primary pay-now-btn"
+              [disabled]="payingOrderId() === order._id"
+              (click)="payNow(order)"
+            >
+              {{ payingOrderId() === order._id ? 'Processing…' : 'Pay ₹' + balanceDue(order) + ' now' }}
+            </button>
+          </div>
+        }
       </div>
     }
   </div>

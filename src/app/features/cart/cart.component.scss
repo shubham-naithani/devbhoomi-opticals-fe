@@ -135,3 +135,38 @@
   font-size: 15px;
   margin-top: 8px;
 }
+
+.total-row {
+  font-weight: 700;
+  font-size: 16px;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--color-border);
+}
+
+.payment-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.payment-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+
+  input[type="radio"] {
+    width: auto;
+    margin: 0;
+  }
+
+  &.selected {
+    border-color: var(--color-primary);
+    background: rgba(31, 78, 92, 0.04);
+  }
+}
