@@ -1,0 +1,107 @@
+<div class="page-header">
+  <div>
+    <h1>Profit &amp; Loss</h1>
+    <p class="subtitle">Revenue, cost of goods, and margin.</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <input
+    type="text"
+    placeholder="Search by order ID or phone…"
+    [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)"
+  />
+  <select [(ngModel)]="rangePreset" (ngModelChange)="onRangeChange()">
+    <option value="today">Today</option>
+    <option value="week">This week</option>
+    <option value="month">This month</option>
+    <option value="custom">Custom range</option>
+  </select>
+
+  @if (rangePreset() === 'custom') {
+    <input type="date" [(ngModel)]="customFrom" (ngModelChange)="onRangeChange()" />
+    <input type="date" [(ngModel)]="customTo" (ngModelChange)="onRangeChange()" />
+  }
+
+  <select [(ngModel)]="typeFilter" (ngModelChange)="onTypeFilterChange()">
+    <option value="">All transactions</option>
+    <option value="payment">Payments only</option>
+    <option value="refund">Refunds only</option>
+  </select>
+</div>
+
+@if (isLoadingSummary()) {
+  <div class="card state-msg">Loading summary…</div>
+} @else {
+  @if (summary(); as s) {
+    <div class="stat-grid">
+      <div class="stat-card card">
+        <div class="stat-label">Revenue</div>
+        <div class="stat-value">₹{{ s.revenue | number }}</div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-label">Refunds</div>
+        <div class="stat-value">₹{{ s.refunds | number }}</div>
+      </div>
+      <div class="stat-card card">
+        <div class="stat-label">Cost of goods</div>
+        <div class="stat-value">₹{{ s.cogs | number }}</div>
+      </div>
+      <div class="stat-card card accent">
+        <div class="stat-label">Gross profit</div>
+        <div class="stat-value">₹{{ s.grossProfit | number }}</div>
+        <div class="stat-sub">{{ s.grossMarginPct }}% margin</div>
+      </div>
+    </div>
+
+    @if (s.itemsMissingCost > 0) {
+      <div class="caveat-note card">
+        ⚠️ {{ s.itemsMissingCost }} sold item(s) in this range have no recorded cost price — profit for this period may be understated. This applies to items sold before cost tracking was added.
+      </div>
+    }
+  }
+}
+
+<div class="card table-card">
+  @if (isLoadingList()) {
+    <div class="state-msg">Loading transactions…</div>
+  } @else if (transactions().length === 0) {
+    <div class="state-msg">No transactions in this range.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Order</th>
+          <th>Customer</th>
+          <th>Type</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>By</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (tx of transactions(); track tx._id) {
+          <tr>
+            <td>{{ tx.createdAt | date: 'short' }}</td>
+            <td class="mono">{{ tx.order.orderId || '—' }}</td>
+            <td>{{ tx.order.customer?.name || '—' }}</td>
+            <td>
+              <span class="badge" [class.badge-active]="tx.type === 'payment'" [class.badge-inactive]="tx.type === 'refund'">
+                {{ tx.type }}
+              </span>
+            </td>
+            <td class="amount-cell" [class.negative]="tx.type === 'refund'">
+              {{ tx.type === 'refund' ? '−' : '' }}₹{{ tx.amount | number }}
+            </td>
+            <td>{{ tx.method | uppercase }}</td>
+            <td>{{ tx.performedBy?.name || '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="totalTransactions()" (pageChange)="goToPage($event)" />

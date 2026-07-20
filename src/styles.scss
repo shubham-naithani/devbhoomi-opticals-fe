@@ -27,6 +27,38 @@
 
   --shadow-sm: 0 1px 3px rgba(23, 40, 40, 0.06);
   --shadow-md: 0 8px 24px rgba(23, 40, 40, 0.10);
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 40px;
+
+  // Shared breakpoint reference — not usable directly inside @media
+  // (media queries need literal values, not custom properties), but kept
+  // here as the single documented source of truth: every component's
+  // @media (max-width: ...) should match one of these two numbers.
+  // Mobile:  860px
+  // Tablet: 1024px
+}
+
+// ---- Shared table container behavior — reused by Inventory, Orders,
+// Users, Activity Log so scroll/overflow behavior stays consistent
+// instead of being redefined slightly differently in each component ----
+.table-card {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+// ---- Shared page container width — used by the shell's main content
+// area; centralized here so any future adjustment only happens once ----
+.page-container {
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  box-sizing: border-box;
 }
 
 * { box-sizing: border-box; }

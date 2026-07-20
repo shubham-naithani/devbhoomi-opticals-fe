@@ -54,10 +54,13 @@ import { CartService } from '../../../core/services/cart.service';
       min-height: 100vh;
     }
 
-    .shell-content {
+   .shell-content {
       flex: 1;
       padding: 32px 40px;
-      max-width: 1180px;
+      width: 100%;
+      max-width: 1600px;
+      margin: 0 auto;
+      box-sizing: border-box;
     }
 
     .mobile-topbar {
