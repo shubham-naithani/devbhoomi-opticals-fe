@@ -20,7 +20,7 @@ const PAGE_SIZE = 10;
 @Component({
   selector: 'app-inventory',
   standalone: true,
-  imports: [ReactiveFormsModule, FormsModule, DatePipe, PaginationComponent ],
+  imports: [ReactiveFormsModule, FormsModule, DatePipe, PaginationComponent],
   templateUrl: './inventory.component.html',
   styleUrl: './inventory.component.scss',
 })
@@ -60,12 +60,17 @@ export class InventoryComponent {
 
   selectedIds = signal<Set<string>>(new Set());
 
+  originalStock = signal<number | null>(null);
+  stockAdjustmentReason = signal('');
+
   // ---- Product create/edit panel -----------------------------------------
   isProductPanelOpen = signal(false);
   editingProduct = signal<InventoryItem | null>(null); // non-null = editing product-level fields only
   isCreatingNew = signal(false); // true = create mode (product + first article together)
   isSavingProduct = signal(false);
-  printingArticle = signal<{ product: InventoryItem; article: Article } | null>(null);
+  printingArticle = signal<{ product: InventoryItem; article: Article } | null>(
+    null,
+  );
 
   productForm = this.fb.group({
     name: ['', Validators.required],
@@ -83,11 +88,15 @@ export class InventoryComponent {
     color: [''],
     lensTint: [''],
     size: [''],
-    costPrice: [null as number | null, [Validators.required, Validators.min(0)]],
-    price: [{ value: 0, disabled: true }], // MRP — read-only, server-derived
-    mspPrice: [{ value: null as number | null, disabled: true }], // auto by default
+    costPrice: [
+      null as number | null,
+      [Validators.required, Validators.min(0)],
+    ],
+    price: [{ value: 0, disabled: true }],
+    mspPrice: [{ value: null as number | null, disabled: true }],
     isMspManual: [false],
     stock: [0, [Validators.required, Validators.min(0)]],
+    lowStockThreshold: [null as number | null, [Validators.min(0)]],
     isActive: [true],
   });
   existingImages = signal<string[]>([]);
@@ -109,7 +118,9 @@ export class InventoryComponent {
     this.productForm.controls.brand.valueChanges.subscribe((value) => {
       const v = (value || '').trim().toLowerCase();
       const list = this.allBrands();
-      const filtered = v ? list.filter((b) => b.toLowerCase().includes(v)).slice(0, 8) : list.slice(0, 8);
+      const filtered = v
+        ? list.filter((b) => b.toLowerCase().includes(v)).slice(0, 8)
+        : list.slice(0, 8);
       this.brandSuggestions.set(filtered);
       // Only offer "add new" when NOTHING matches at all — a partial match
       // (e.g. typing "te" while "TestBrandXYZ" exists) should just show that
@@ -123,9 +134,15 @@ export class InventoryComponent {
     // from `res.item`).
     this.articleForm.controls.costPrice.valueChanges.subscribe((cost) => {
       const numCost = Number(cost) || 0;
-      this.articleForm.controls.price.setValue(this.round2(numCost * this.MRP_MARGIN), { emitEvent: false });
+      this.articleForm.controls.price.setValue(
+        this.round2(numCost * this.MRP_MARGIN),
+        { emitEvent: false },
+      );
       if (!this.articleForm.controls.isMspManual.value) {
-        this.articleForm.controls.mspPrice.setValue(this.round2(numCost * this.MSP_MARGIN), { emitEvent: false });
+        this.articleForm.controls.mspPrice.setValue(
+          this.round2(numCost * this.MSP_MARGIN),
+          { emitEvent: false },
+        );
       }
     });
 
@@ -134,10 +151,20 @@ export class InventoryComponent {
         this.articleForm.controls.mspPrice.enable({ emitEvent: false });
       } else {
         const cost = Number(this.articleForm.controls.costPrice.value) || 0;
-        this.articleForm.controls.mspPrice.setValue(this.round2(cost * this.MSP_MARGIN), { emitEvent: false });
+        this.articleForm.controls.mspPrice.setValue(
+          this.round2(cost * this.MSP_MARGIN),
+          { emitEvent: false },
+        );
         this.articleForm.controls.mspPrice.disable({ emitEvent: false });
       }
     });
+  }
+
+  isStockChanged(): boolean {
+    const orig = this.originalStock();
+    if (orig === null) return false; // create mode — not an adjustment
+    const current = Number(this.articleForm.controls.stock.value);
+    return current !== orig;
   }
 
   fetchProducts(): void {
@@ -181,7 +208,8 @@ export class InventoryComponent {
         this.toast.success(`"${name}" added as a new brand`);
         // Auto-fill won't fire for a brand-new name (no products yet) — nothing to fetch.
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Could not add brand'),
+      error: (err) =>
+        this.toast.error(err?.error?.message || 'Could not add brand'),
     });
   }
 
@@ -193,12 +221,12 @@ export class InventoryComponent {
   }
 
   selectBrand(brand: string): void {
-  this.productForm.controls.brand.setValue(brand);
-  this.showBrandSuggestions.set(false);
+    this.productForm.controls.brand.setValue(brand);
+    this.showBrandSuggestions.set(false);
 
-  if (!this.isCreatingNew()) return; // don't auto-fill over an existing product's real data
+    if (!this.isCreatingNew()) return; // don't auto-fill over an existing product's real data
 
-  this.inventoryService.brandDefaults(brand).subscribe({
+    this.inventoryService.brandDefaults(brand).subscribe({
       next: (res) => {
         if (!res.defaults) return;
         const { category, frameType, gender } = res.defaults;
@@ -234,11 +262,26 @@ export class InventoryComponent {
     this.isCreatingNew.set(true);
     this.editingProduct.set(null);
     this.productForm.reset({
-      name: '', brand: '', category: 'eyeglasses', frameType: '', frameShape: '', gender: 'unisex',
-      description: '', isActive: true,
+      name: '',
+      brand: '',
+      category: 'eyeglasses',
+      frameType: '',
+      frameShape: '',
+      gender: 'unisex',
+      description: '',
+      isActive: true,
     });
     this.articleForm.reset({
-      color: '', lensTint: '', size: '', costPrice: null, price: 0, mspPrice: null, isMspManual: false, stock: 0, isActive: true,
+      color: '',
+      lensTint: '',
+      size: '',
+      costPrice: null,
+      price: 0,
+      mspPrice: null,
+      isMspManual: false,
+      stock: 0,
+      lowStockThreshold: null,
+      isActive: true,
     });
     this.clearImageState();
     this.isProductPanelOpen.set(true);
@@ -265,8 +308,11 @@ export class InventoryComponent {
     this.clearImageState();
   }
 
-    saveProduct(): void {
-    if (this.productForm.invalid || (this.isCreatingNew() && this.articleForm.invalid)) {
+  saveProduct(): void {
+    if (
+      this.productForm.invalid ||
+      (this.isCreatingNew() && this.articleForm.invalid)
+    ) {
       this.productForm.markAllAsTouched();
       this.articleForm.markAllAsTouched();
       this.toast.error('Please fill in all required fields');
@@ -279,24 +325,27 @@ export class InventoryComponent {
     if (!this.isCreatingNew()) {
       // Editing product-level fields only
       const editing = this.editingProduct()!;
-      this.inventoryService.updateProduct(editing._id, productValue as any).subscribe({
-        next: () => {
-          this.toast.success('Product updated');
-          this.isSavingProduct.set(false);
-          this.isProductPanelOpen.set(false);
-          this.fetchProducts();
-        },
-        error: (err) => {
-          this.isSavingProduct.set(false);
-          this.toast.error(err?.error?.message || 'Could not update product');
-        },
-      });
+      this.inventoryService
+        .updateProduct(editing._id, productValue as any)
+        .subscribe({
+          next: () => {
+            this.toast.success('Product updated');
+            this.isSavingProduct.set(false);
+            this.isProductPanelOpen.set(false);
+            this.fetchProducts();
+          },
+          error: (err) => {
+            this.isSavingProduct.set(false);
+            this.toast.error(err?.error?.message || 'Could not update product');
+          },
+        });
       return;
     }
 
     // Creating: upload any picked photos first, then create product + first article together
     const uploadStep = this.pendingFiles().length
-      ? (this.isUploadingImages.set(true), this.inventoryService.uploadImages(this.pendingFiles()))
+      ? (this.isUploadingImages.set(true),
+        this.inventoryService.uploadImages(this.pendingFiles()))
       : null;
 
     const proceed = (imageUrls: string[]) => {
@@ -304,7 +353,10 @@ export class InventoryComponent {
       const articleValue = this.articleForm.getRawValue();
 
       this.inventoryService
-        .createProduct({ ...productValue, article: { ...articleValue, images: imageUrls } } as any)
+        .createProduct({
+          ...productValue,
+          article: { ...articleValue, images: imageUrls },
+        } as any)
         .subscribe({
           next: () => {
             this.toast.success('Product added');
@@ -348,7 +400,8 @@ export class InventoryComponent {
         this.toast.success('Product deleted');
         this.fetchProducts();
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Could not delete product'),
+      error: (err) =>
+        this.toast.error(err?.error?.message || 'Could not delete product'),
     });
   }
 
@@ -359,14 +412,18 @@ export class InventoryComponent {
     const files = input.files ? Array.from(input.files) : [];
     if (files.length === 0) return;
 
-    const totalCount = this.existingImages().length + this.pendingFiles().length + files.length;
+    const totalCount =
+      this.existingImages().length + this.pendingFiles().length + files.length;
     if (totalCount > 6) {
       this.toast.error('Maximum 6 images per variant');
       return;
     }
 
     this.pendingFiles.update((list) => [...list, ...files]);
-    this.pendingPreviews.update((list) => [...list, ...files.map((f) => URL.createObjectURL(f))]);
+    this.pendingPreviews.update((list) => [
+      ...list,
+      ...files.map((f) => URL.createObjectURL(f)),
+    ]);
     input.value = '';
   }
 
@@ -401,13 +458,28 @@ export class InventoryComponent {
 
   openAddArticleForm(): void {
     this.editingArticle.set(null);
-    this.articleForm.reset({ color: '', lensTint: '', size: '', costPrice: null, price: 0, mspPrice: null, isMspManual: false, stock: 0, isActive: true });
+    this.originalStock.set(null);
+    this.stockAdjustmentReason.set('');
+    this.articleForm.reset({
+      color: '',
+      lensTint: '',
+      size: '',
+      costPrice: null,
+      price: 0,
+      mspPrice: null,
+      isMspManual: false,
+      stock: 0,
+      lowStockThreshold: null,
+      isActive: true,
+    });
     this.clearImageState();
     this.isArticleFormOpen.set(true);
   }
 
   openEditArticleForm(article: Article): void {
     this.editingArticle.set(article);
+    this.originalStock.set(article.stock);
+    this.stockAdjustmentReason.set('');
     this.articleForm.reset({
       color: article.color || '',
       lensTint: article.lensTint || '',
@@ -417,6 +489,7 @@ export class InventoryComponent {
       mspPrice: article.mspPrice ?? null,
       isMspManual: article.isMspManual,
       stock: article.stock,
+      lowStockThreshold: article.lowStockThreshold ?? null,
       isActive: article.isActive,
     });
     this.existingImages.set(article.images || []);
@@ -432,29 +505,47 @@ export class InventoryComponent {
       return;
     }
 
+    const editing = this.editingArticle();
+    if (
+      editing &&
+      this.isStockChanged() &&
+      !this.stockAdjustmentReason().trim()
+    ) {
+      this.toast.error('Enter a reason for this stock change');
+      return;
+    }
+
     const product = this.managingProduct();
     if (!product) return;
 
     this.isSavingArticle.set(true);
 
     const uploadStep = this.pendingFiles().length
-      ? (this.isUploadingImages.set(true), this.inventoryService.uploadImages(this.pendingFiles()))
+      ? (this.isUploadingImages.set(true),
+        this.inventoryService.uploadImages(this.pendingFiles()))
       : null;
 
     const proceed = (newUrls: string[]) => {
       this.isUploadingImages.set(false);
       const { price, ...rawValue } = this.articleForm.getRawValue();
       const images = [...this.existingImages(), ...newUrls];
-      const editing = this.editingArticle();
 
-      // Only send mspPrice when it's an intentional manual override — otherwise
-      // let the backend derive it fresh from cost, rather than sending a
-      // client-computed preview as if it were a deliberate value.
-      const payload = rawValue.isMspManual ? rawValue : { ...rawValue, mspPrice: undefined };
+      const payload: any = rawValue.isMspManual
+        ? rawValue
+        : { ...rawValue, mspPrice: undefined };
+      if (editing && this.isStockChanged()) {
+        payload.stockAdjustmentReason = this.stockAdjustmentReason().trim();
+      }
 
       const request = editing
-        ? this.inventoryService.updateArticle(product._id, editing._id, { ...payload, images } as any)
-        : this.inventoryService.addArticle(product._id, { ...payload, images } as any);
+        ? this.inventoryService.updateArticle(product._id, editing._id, {
+            ...payload,
+            images,
+          } as any)
+        : this.inventoryService.addArticle(product._id, {
+            ...payload,
+            images,
+          } as any);
 
       request.subscribe({
         next: (res) => {
@@ -504,7 +595,8 @@ export class InventoryComponent {
         this.managingProduct.set(res.item);
         this.fetchProducts();
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Could not delete variant'),
+      error: (err) =>
+        this.toast.error(err?.error?.message || 'Could not delete variant'),
     });
   }
 
@@ -576,7 +668,8 @@ export class InventoryComponent {
         this.clearSelection();
         this.fetchProducts();
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Bulk update failed'),
+      error: (err) =>
+        this.toast.error(err?.error?.message || 'Bulk update failed'),
     });
   }
 
@@ -598,7 +691,8 @@ export class InventoryComponent {
         this.clearSelection();
         this.fetchProducts();
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Bulk delete failed'),
+      error: (err) =>
+        this.toast.error(err?.error?.message || 'Bulk delete failed'),
     });
   }
 }

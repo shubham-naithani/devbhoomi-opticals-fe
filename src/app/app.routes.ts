@@ -44,6 +44,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () => import('./features/purchases/purchases.component').then((m) => m.PurchasesComponent),
       },
+      {
+        path: 'stock-history',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/stock-history/stock-history.component').then((m) => m.StockHistoryComponent),
+      },
 
       // Staff or admin (store-counter functionality)
       {

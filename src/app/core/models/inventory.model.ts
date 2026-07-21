@@ -26,6 +26,7 @@ export interface Article {
   mspPrice?: number;
   isMspManual: boolean;
   stock: number;
+  lowStockThreshold?: number;
   images: string[];
   isActive: boolean;
 }
