@@ -54,6 +54,10 @@ export class AdminOrdersComponent {
   refundMethod = signal<PaymentMethod>('cash');
   isProcessingRefund = signal(false);
 
+  selectedIds = signal<Set<string>>(new Set());
+  bulkStatus = signal<OrderStatus | ''>('');
+  isBulkUpdating = signal(false);
+
   statusOptions: OrderStatus[] = ['pending', 'confirmed', 'in_progress', 'ready_for_pickup', 'delivered', 'cancelled'];
   paymentMethodOptions: PaymentMethod[] = ['cash', 'card', 'upi', 'cod'];
 
@@ -366,6 +370,83 @@ export class AdminOrdersComponent {
         if (this.selectedOrder()?._id === order._id) this.closeDetail();
       },
       error: (err) => this.toast.error(err?.error?.message || 'Could not delete order'),
+    });
+  }
+
+  isSelected(id: string): boolean {
+    return this.selectedIds().has(id);
+  }
+
+  isAllSelected(): boolean {
+    const ids = this.orders().map((o) => o._id);
+    return ids.length > 0 && ids.every((id) => this.selectedIds().has(id));
+  }
+
+  toggleSelect(id: string): void {
+    this.selectedIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  toggleSelectAll(): void {
+    const ids = this.orders().map((o) => o._id);
+    this.selectedIds.set(this.isAllSelected() ? new Set() : new Set(ids));
+  }
+
+  clearSelection(): void {
+    this.selectedIds.set(new Set());
+  }
+
+  applyBulkStatus(): void {
+    const ids = [...this.selectedIds()];
+    const status = this.bulkStatus();
+    if (ids.length === 0 || !status) return;
+
+    this.isBulkUpdating.set(true);
+    this.orderService.bulkUpdateStatus(ids, status as OrderStatus).subscribe({
+      next: (res) => {
+        this.isBulkUpdating.set(false);
+        this.toast.success(res.message);
+        if (res.skipped.length > 0) {
+          console.warn('Bulk status update — skipped orders:', res.skipped);
+          this.toast.error(`${res.skipped.length} order(s) skipped — see console for reasons`);
+        }
+        this.clearSelection();
+        this.bulkStatus.set('');
+        this.fetch();
+      },
+      error: (err) => {
+        this.isBulkUpdating.set(false);
+        this.toast.error(err?.error?.message || 'Bulk update failed');
+      },
+    });
+  }
+
+  async bulkDeleteSelected(): Promise<void> {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) return;
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: `Delete ${ids.length} order(s)?`,
+      message: `Items will be returned to stock. This cannot be undone.`,
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    this.orderService.bulkDelete(ids).subscribe({
+      next: (res) => {
+        this.toast.success(res.message);
+        if (res.refundNeededOrderIds.length > 0) {
+          this.toast.error(`${res.refundNeededOrderIds.length} order(s) need refund handling — check the Orders list`);
+        }
+        this.clearSelection();
+        this.fetch();
+      },
+      error: (err) => this.toast.error(err?.error?.message || 'Bulk delete failed'),
     });
   }
 }

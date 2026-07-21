@@ -78,4 +78,12 @@ export class InventoryService {
   addBrand(name: string) {
     return this.http.post<{ brand: { _id: string; name: string } }>(`${this.base}/brands`, { name });
   }
+
+  bulkUpdateStatus(ids: string[], isActive: boolean) {
+    return this.http.put<{ message: string; updatedCount: number }>(`${this.base}/bulk/status`, { ids, isActive });
+  }
+
+  bulkDelete(ids: string[]) {
+    return this.http.delete<{ message: string; deletedCount: number }>(`${this.base}/bulk`, { body: { ids } });
+  }
 }

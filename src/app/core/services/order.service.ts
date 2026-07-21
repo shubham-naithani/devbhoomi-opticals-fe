@@ -63,4 +63,20 @@ export class OrderService {
   settleRefund(id: string, payload: { amount?: number; method?: string; note?: string }) {
     return this.http.put<{ order: Order }>(`${this.base}/${id}/settle-refund`, payload);
   }
+
+  bulkUpdateStatus(ids: string[], status: OrderStatus) {
+  return this.http.put<{
+    updated: string[];
+    skipped: { orderId: string; reason: string }[];
+    notFoundCount: number;
+    message: string;
+  }>(`${this.base}/bulk/status`, { ids, status });
+}
+
+  bulkDelete(ids: string[]) {
+    return this.http.delete<{ deleted: string[]; refundNeededOrderIds: string[]; message: string }>(
+      `${this.base}/bulk`,
+      { body: { ids } }
+    );
+  }
 }

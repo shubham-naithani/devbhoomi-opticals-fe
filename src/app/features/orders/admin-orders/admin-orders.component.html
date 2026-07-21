@@ -16,6 +16,26 @@
   </select>
 </div>
 
+@if (selectedIds().size > 0) {
+  <div class="bulk-action-bar card">
+    <span>{{ selectedIds().size }} selected</span>
+    <div class="bulk-actions">
+      <select [(ngModel)]="bulkStatus">
+        <option value="">Set status to…</option>
+        @for (opt of statusOptions; track opt) {
+          <option [value]="opt">{{ statusLabel(opt) }}</option>
+        }
+      </select>
+      <button class="btn btn-primary" [disabled]="!bulkStatus() || isBulkUpdating()" (click)="applyBulkStatus()">
+        Apply
+      </button>
+      @if (auth.isAdmin()) {
+        <button class="btn btn-danger" (click)="bulkDeleteSelected()">Delete</button>
+      }
+      <button class="btn btn-ghost" (click)="clearSelection()">Clear</button>
+    </div>
+  </div>
+}
 <div class="card table-card">
   @if (isLoading()) {
   <div class="state-msg">Loading orders…</div>
@@ -25,6 +45,9 @@
   <table>
     <thead>
       <tr>
+        <th>
+          <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()" />
+        </th>
         <th>Order</th>
         <th>Customer</th>
         <th>Items</th>
@@ -38,6 +61,9 @@
     <tbody>
       @for (order of orders(); track order._id) {
       <tr>
+        <td>
+          <input type="checkbox" [checked]="isSelected(order._id)" (change)="toggleSelect(order._id)" />
+        </td>
         <td>
           <div class="order-id">{{ order.orderId }}</div>
           <div class="order-date">{{ order.createdAt | date: 'short' }}</div>
