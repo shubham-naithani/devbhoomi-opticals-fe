@@ -69,7 +69,12 @@ export class WalkInOrderComponent {
   describeArticle = describeArticle;
 
   private readonly DRAFT_KEY = 'walkInOrderDraft';
-  private readonly stepOrder: Step[] = ['customer', 'eyeTest', 'items', 'payment'];
+  private readonly stepOrder: Step[] = [
+    'customer',
+    'eyeTest',
+    'items',
+    'payment',
+  ];
   readonly steps: { key: Step; label: string }[] = [
     { key: 'customer', label: '1. Customer' },
     { key: 'eyeTest', label: '2. Eye test' },
@@ -132,20 +137,21 @@ export class WalkInOrderComponent {
 
   scanBarcode = signal('');
   isScanning = signal(false);
+  couponCode = signal('');
 
   constructor() {
     this.restoreDraftIfAny();
 
     // Auto-fill the field with the running total as items are added — but
     // only until the admin/staff actually types into it themselves.
-     effect(
+    effect(
       () => {
         const total = this.orderTotal;
         if (!this.hasEditedAmount()) {
           this.amountReceived.set(total);
         }
       },
-      { allowSignalWrites: true }
+      { allowSignalWrites: true },
     );
 
     effect(() => {
@@ -184,7 +190,10 @@ export class WalkInOrderComponent {
   }
 
   get balanceDue(): number {
-    const paid = Math.min(Math.max(this.amountReceived() ?? 0, 0), this.orderTotal);
+    const paid = Math.min(
+      Math.max(this.amountReceived() ?? 0, 0),
+      this.orderTotal,
+    );
     return this.orderTotal - paid;
   }
 
@@ -202,7 +211,10 @@ export class WalkInOrderComponent {
       return;
     }
 
-    if (!draft.customer && (!draft.orderLines || draft.orderLines.length === 0)) {
+    if (
+      !draft.customer &&
+      (!draft.orderLines || draft.orderLines.length === 0)
+    ) {
       localStorage.removeItem(this.DRAFT_KEY);
       return;
     }
@@ -257,7 +269,9 @@ export class WalkInOrderComponent {
       error: (err) => {
         this.isScanning.set(false);
         this.scanBarcode.set('');
-        this.toast.error(err?.error?.message || 'No item found for this barcode');
+        this.toast.error(
+          err?.error?.message || 'No item found for this barcode',
+        );
       },
     });
   }
@@ -296,7 +310,8 @@ export class WalkInOrderComponent {
     if (hasProgress) {
       const confirmed = await this.confirmDialog.confirm({
         title: 'Start a new order?',
-        message: 'This will discard the current in-progress order. This cannot be undone.',
+        message:
+          'This will discard the current in-progress order. This cannot be undone.',
         confirmText: 'Start over',
         danger: true,
       });
@@ -338,7 +353,9 @@ export class WalkInOrderComponent {
   }
 
   isStepDone(step: Step): boolean {
-    return this.stepOrder.indexOf(step) < this.stepOrder.indexOf(this.currentStep());
+    return (
+      this.stepOrder.indexOf(step) < this.stepOrder.indexOf(this.currentStep())
+    );
   }
 
   goToStep(step: Step): void {
@@ -492,23 +509,32 @@ export class WalkInOrderComponent {
   // ---- Items ----------------------------------------------------------
   searchItems(): void {
     this.isSearchingItems.set(true);
-    this.inventoryService.list({ search: this.itemQuery() || undefined, limit: 12 }).subscribe({
-      next: (res) => {
-        this.itemResults.set(res.items || []);
-        this.isSearchingItems.set(false);
-      },
-      error: () => this.isSearchingItems.set(false),
-    });
+    this.inventoryService
+      .list({ search: this.itemQuery() || undefined, limit: 12 })
+      .subscribe({
+        next: (res) => {
+          this.itemResults.set(res.items || []);
+          this.isSearchingItems.set(false);
+        },
+        error: () => this.isSearchingItems.set(false),
+      });
   }
 
   selectedArticleFor(product: InventoryItem): Article | undefined {
     const id = this.selectedArticleIds()[product._id];
     const inStock = inStockArticles(product);
-    return (id && inStock.find((a) => a._id === id)) || inStock[0] || activeArticles(product)[0];
+    return (
+      (id && inStock.find((a) => a._id === id)) ||
+      inStock[0] ||
+      activeArticles(product)[0]
+    );
   }
 
   onArticleSelect(productId: string, articleId: string): void {
-    this.selectedArticleIds.update((map) => ({ ...map, [productId]: articleId }));
+    this.selectedArticleIds.update((map) => ({
+      ...map,
+      [productId]: articleId,
+    }));
   }
 
   // The database stock (article.stock) never changes until the order is
@@ -516,7 +542,8 @@ export class WalkInOrderComponent {
   // current draft, giving an accurate "what can I still add" number instead
   // of showing the same raw stock figure no matter how much is already queued.
   remainingStock(article: Article): number {
-    const alreadyAdded = this.orderLines().find((l) => l.articleId === article._id)?.quantity ?? 0;
+    const alreadyAdded =
+      this.orderLines().find((l) => l.articleId === article._id)?.quantity ?? 0;
     return article.stock - alreadyAdded;
   }
 
@@ -552,12 +579,18 @@ export class WalkInOrderComponent {
       return;
     }
     this.orderLines.update((lines) =>
-      lines.map((l) => (l.articleId === articleId ? { ...l, quantity: Math.min(quantity, l.stock) } : l))
+      lines.map((l) =>
+        l.articleId === articleId
+          ? { ...l, quantity: Math.min(quantity, l.stock) }
+          : l,
+      ),
     );
   }
 
   removeItem(articleId: string): void {
-    this.orderLines.update((lines) => lines.filter((l) => l.articleId !== articleId));
+    this.orderLines.update((lines) =>
+      lines.filter((l) => l.articleId !== articleId),
+    );
   }
 
   // ---- Submit ----------------------------------------------------------
@@ -576,22 +609,31 @@ export class WalkInOrderComponent {
     this.orderService
       .createWalkIn({
         customerId: customer._id,
-        items: this.orderLines().map((l) => ({ inventoryItem: l.inventoryItem, articleId: l.articleId, quantity: l.quantity })),
+        items: this.orderLines().map((l) => ({
+          inventoryItem: l.inventoryItem,
+          articleId: l.articleId,
+          quantity: l.quantity,
+        })),
         paymentMethod: this.paymentMethod(),
         amountPaid: this.hasEditedAmount()
           ? Math.min(Math.max(this.amountReceived() ?? 0, 0), this.orderTotal)
           : undefined,
         prescriptionUsed: this.linkedEyeTestId() || undefined,
         notes: this.orderNotes() || undefined,
+        couponCode: this.couponCode() || undefined, // new
       })
       .subscribe({
         next: (res) => {
           this.isPlacingOrder.set(false);
           this.clearDraft();
+          const discountNote =
+            res.order.discountAmount > 0
+              ? ` — ₹${res.order.discountAmount} discount applied`
+              : '';
           this.toast.success(
             res.changeDue > 0
-              ? `Order ${res.order.orderId} created — give ₹${res.changeDue} change to the customer`
-              : `Order ${res.order.orderId} created`
+              ? `Order ${res.order.orderId} created — give ₹${res.changeDue} change to the customer${discountNote}`
+              : `Order ${res.order.orderId} created${discountNote}`,
           );
           this.router.navigate(['/admin-orders']);
         },

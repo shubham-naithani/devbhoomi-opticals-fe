@@ -1,0 +1,126 @@
+<div class="page-header">
+  <div>
+    <h1>Coupons</h1>
+    <p class="subtitle">Discount codes for online and walk-in orders.</p>
+  </div>
+  <button class="btn btn-accent" (click)="openCreatePanel()">+ New coupon</button>
+</div>
+
+<div class="toolbar">
+  <input
+    type="text"
+    placeholder="Search by code…"
+    [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)"
+  />
+</div>
+
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading coupons…</div>
+  } @else if (coupons().length === 0) {
+    <div class="state-msg">No coupons yet. Create your first one to get started.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Discount</th>
+          <th>Min order</th>
+          <th>Expires</th>
+          <th>Usage</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (coupon of coupons(); track coupon._id) {
+          <tr>
+            <td class="mono">{{ coupon.code }}</td>
+            <td>
+              @if (coupon.discountType === 'fixed') {
+                ₹{{ coupon.value }} off
+              } @else {
+                {{ coupon.value }}% off
+              }
+            </td>
+            <td>{{ coupon.minOrderValue > 0 ? '₹' + coupon.minOrderValue : '—' }}</td>
+            <td>{{ coupon.expiresAt ? (coupon.expiresAt | date: 'mediumDate') : 'No expiry' }}</td>
+            <td>{{ coupon.usageCount }}{{ coupon.usageLimit ? ' / ' + coupon.usageLimit : '' }}</td>
+            <td>
+              <span class="badge" [class.badge-active]="coupon.isActive" [class.badge-inactive]="!coupon.isActive">
+                {{ coupon.isActive ? 'Active' : 'Inactive' }}
+              </span>
+            </td>
+            <td class="actions">
+              <button class="btn btn-ghost" (click)="toggleActive(coupon)">
+                {{ coupon.isActive ? 'Deactivate' : 'Activate' }}
+              </button>
+              <button class="btn btn-danger" (click)="deleteCoupon(coupon)">Delete</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="totalCoupons()" (pageChange)="goToPage($event)" />
+
+<!-- Create panel -->
+@if (isCreatePanelOpen()) {
+  <div class="overlay" (click)="closeCreatePanel()"></div>
+  <div class="side-panel card">
+    <div class="panel-head">
+      <h2>New coupon</h2>
+      <button class="btn btn-ghost" (click)="closeCreatePanel()">Close</button>
+    </div>
+
+    <div class="field">
+      <label>Coupon code</label>
+      <input type="text" [ngModel]="code()" (ngModelChange)="code.set($event)" placeholder="SAVE100" />
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label>Discount type</label>
+        <select [ngModel]="discountType()" (ngModelChange)="discountType.set($event)">
+          <option value="fixed">Fixed amount (₹)</option>
+          <option value="percentage">Percentage (%)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>{{ discountType() === 'fixed' ? 'Amount off (₹)' : 'Percent off (%)' }}</label>
+        <input type="number" min="0" [ngModel]="value()" (ngModelChange)="value.set($event)" />
+      </div>
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label>Minimum order value (optional)</label>
+        <input type="number" min="0" [ngModel]="minOrderValue()" (ngModelChange)="minOrderValue.set($event)" placeholder="No minimum" />
+      </div>
+      <div class="field">
+        <label>Usage limit (optional)</label>
+        <input type="number" min="1" [ngModel]="usageLimit()" (ngModelChange)="usageLimit.set($event)" placeholder="Unlimited" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Expiry date (optional)</label>
+      <input type="date" [ngModel]="expiresAt()" (ngModelChange)="expiresAt.set($event)" />
+    </div>
+
+    <div class="hint">
+      Note: a coupon can never discount an item below its MSP (minimum selling price). If an item's MSP hasn't been
+      manually lowered below its MRP, this coupon won't discount it at all.
+    </div>
+
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" (click)="closeCreatePanel()">Cancel</button>
+      <button type="button" class="btn btn-primary" [disabled]="isSaving()" (click)="saveCoupon()">
+        {{ isSaving() ? 'Saving…' : 'Save coupon' }}
+      </button>
+    </div>
+  </div>
+}

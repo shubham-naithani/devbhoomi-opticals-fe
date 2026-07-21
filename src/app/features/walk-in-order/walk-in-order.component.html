@@ -296,6 +296,15 @@
     }
 
     <div class="field">
+      <label>Coupon code (optional)</label>
+      <input
+        type="text"
+        [ngModel]="couponCode()"
+        (ngModelChange)="couponCode.set($event)"
+        placeholder="Enter coupon code if customer has one"
+      />
+    </div>
+    <div class="field">
       <label>Notes (optional)</label>
       <textarea rows="2" [(ngModel)]="orderNotes" placeholder="Anything worth noting for this order…"></textarea>
     </div>

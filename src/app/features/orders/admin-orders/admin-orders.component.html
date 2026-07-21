@@ -162,11 +162,23 @@
     }
   </div>
 
-  <div class="detail-section payment-summary">
+<div class="detail-section payment-summary">
   <div class="summary-row">
     <span>Total</span>
     <span>₹{{ order.totalAmount }}</span>
   </div>
+  @if (order.discountAmount > 0) {
+    <div class="summary-row muted">
+      <span>Discount ({{ order.couponCode }})</span>
+      <span>−₹{{ order.discountAmount }}</span>
+    </div>
+  }
+  @if (order.shippingCharge > 0) {
+    <div class="summary-row muted">
+      <span>Shipping</span>
+      <span>+₹{{ order.shippingCharge }}</span>
+    </div>
+  }
   <div class="summary-row">
     <span>Paid</span>
     <span>₹{{ order.amountPaid }}</span>
