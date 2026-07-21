@@ -117,6 +117,19 @@
 .label-variant { font-size: 11px; color: var(--color-text-muted); margin-bottom: 6px; }
 .label-price { font-size: 14px; font-weight: 700; margin-top: 4px; }
 
+.bulk-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  background: rgba(31, 78, 92, 0.05);
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 10px;
+}
 // ---- Slide-over panel -----------------------------------------------------
 .overlay {
   position: fixed;

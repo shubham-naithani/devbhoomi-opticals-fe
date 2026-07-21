@@ -58,6 +58,8 @@ export class InventoryComponent {
   brandSuggestions = signal<string[]>([]);
   showBrandSuggestions = signal(false);
 
+  selectedIds = signal<Set<string>>(new Set());
+
   // ---- Product create/edit panel -----------------------------------------
   isProductPanelOpen = signal(false);
   editingProduct = signal<InventoryItem | null>(null); // non-null = editing product-level fields only
@@ -221,6 +223,7 @@ export class InventoryComponent {
   }
 
   goToPage(page: number): void {
+    this.clearSelection();
     this.page.set(page);
     this.fetchProducts();
   }
@@ -534,5 +537,68 @@ export class InventoryComponent {
 
   triggerPrint(): void {
     window.print();
+  }
+
+  isSelected(id: string): boolean {
+    return this.selectedIds().has(id);
+  }
+
+  isAllSelected(): boolean {
+    const ids = this.products().map((p) => p._id);
+    return ids.length > 0 && ids.every((id) => this.selectedIds().has(id));
+  }
+
+  toggleSelect(id: string): void {
+    this.selectedIds.update((set) => {
+      const next = new Set(set);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  toggleSelectAll(): void {
+    const ids = this.products().map((p) => p._id);
+    this.selectedIds.set(this.isAllSelected() ? new Set() : new Set(ids));
+  }
+
+  clearSelection(): void {
+    this.selectedIds.set(new Set());
+  }
+
+  bulkActivate(active: boolean): void {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) return;
+
+    this.inventoryService.bulkUpdateStatus(ids, active).subscribe({
+      next: (res) => {
+        this.toast.success(res.message);
+        this.clearSelection();
+        this.fetchProducts();
+      },
+      error: (err) => this.toast.error(err?.error?.message || 'Bulk update failed'),
+    });
+  }
+
+  async bulkDeleteSelected(): Promise<void> {
+    const ids = [...this.selectedIds()];
+    if (ids.length === 0) return;
+
+    const confirmed = await this.confirmDialog.confirm({
+      title: `Delete ${ids.length} product(s)?`,
+      message: `This permanently deletes ${ids.length} product(s) and all their variants. This cannot be undone.`,
+      confirmText: 'Delete',
+      danger: true,
+    });
+    if (!confirmed) return;
+
+    this.inventoryService.bulkDelete(ids).subscribe({
+      next: (res) => {
+        this.toast.success(res.message);
+        this.clearSelection();
+        this.fetchProducts();
+      },
+      error: (err) => this.toast.error(err?.error?.message || 'Bulk delete failed'),
+    });
   }
 }

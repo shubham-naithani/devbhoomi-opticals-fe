@@ -45,6 +45,17 @@
   </div>
 </div>
 
+@if (selectedIds().size > 0) {
+  <div class="bulk-action-bar card">
+    <span>{{ selectedIds().size }} selected</span>
+    <div class="bulk-actions">
+      <button class="btn btn-ghost" (click)="bulkActivate(true)">Activate</button>
+      <button class="btn btn-ghost" (click)="bulkActivate(false)">Deactivate</button>
+      <button class="btn btn-danger" (click)="bulkDeleteSelected()">Delete</button>
+      <button class="btn btn-ghost" (click)="clearSelection()">Clear</button>
+    </div>
+  </div>
+}
 <div class="card table-card">
   @if (isLoading()) {
     <div class="state-msg">Loading inventory…</div>
@@ -54,6 +65,9 @@
     <table>
       <thead>
         <tr>
+          <th>
+            <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()" />
+          </th>
           <th></th>
           <th>Name</th>
           <th>Brand</th>
@@ -69,6 +83,9 @@
       <tbody>
         @for (product of products(); track product._id) {
           <tr>
+            <td>
+              <input type="checkbox" [checked]="isSelected(product._id)" (change)="toggleSelect(product._id)" />
+            </td>
             <td class="thumb-cell">
               @if (product.articles.length > 0 && product.articles[0].images.length > 0) {
                 <img [src]="product.articles[0].images[0]" [alt]="product.name" class="row-thumb" />
