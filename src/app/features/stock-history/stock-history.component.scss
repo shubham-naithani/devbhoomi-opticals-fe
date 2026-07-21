@@ -1,0 +1,41 @@
+.page-header { margin-bottom: 22px; }
+.toolbar { display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
+.toolbar input[type="text"] { flex: 1 1 260px; min-width: 200px; }
+.toolbar select, .toolbar input[type="date"] { flex: 0 1 180px; }
+.mono { font-family: monospace; font-size: 12px; }
+.state-msg { padding: 40px; text-align: center; color: var(--color-text-muted); }
+
+.qty-cell {
+  font-weight: 600;
+  &.positive { color: var(--color-success); }
+  &.negative { color: var(--color-danger); }
+}
+
+.movement-sale { background: rgba(179, 73, 46, 0.10); color: var(--color-danger); }
+.movement-restock_cancelled { background: rgba(31, 78, 92, 0.10); color: var(--color-primary); }
+.movement-purchase_in { background: rgba(47, 122, 82, 0.12); color: var(--color-success); }
+.movement-manual_adjustment { background: rgba(192, 138, 30, 0.12); color: var(--color-warning); }
+
+.toolbar {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+
+  input[type="text"] {
+    flex: 1 1 260px;
+    min-width: 200px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+  }
+
+  input[type="date"] {
+    flex: 0 1 160px;
+    padding: 10px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+  }
+}

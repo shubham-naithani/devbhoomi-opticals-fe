@@ -1,0 +1,236 @@
+<div class="page-header">
+  <div>
+    <h1>Purchases</h1>
+    <p class="subtitle">Stock received from suppliers — updates stock and cost together.</p>
+  </div>
+  <button class="btn btn-accent" (click)="openCreatePanel()">+ New purchase</button>
+</div>
+
+<div class="toolbar">
+  <input
+    type="text"
+    placeholder="Search by supplier or invoice number…"
+    [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)"
+  />
+  <input type="date" [(ngModel)]="fromDate" (ngModelChange)="onDateFilterChange()" />
+  <input type="date" [(ngModel)]="toDate" (ngModelChange)="onDateFilterChange()" />
+</div>
+
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading purchase records…</div>
+  } @else if (records().length === 0) {
+    <div class="state-msg">No purchase records yet. Record your first stock delivery to get started.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Purchase ID</th>
+          <th>Supplier</th>
+          <th>Invoice #</th>
+          <th>Date</th>
+          <th>Items</th>
+          <th>Total</th>
+          <th>Recorded by</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (record of records(); track record._id) {
+          <tr>
+            <td class="mono">{{ record.purchaseId }}</td>
+            <td>{{ record.supplierName }}</td>
+            <td>{{ record.invoiceNumber || '—' }}</td>
+            <td>{{ record.invoiceDate | date: 'mediumDate' }}</td>
+            <td>{{ record.items.length }} item type(s)</td>
+            <td class="total-cell">₹{{ record.totalAmount | number }}</td>
+            <td>{{ record.createdBy?.name || '—' }}</td>
+            <td>
+              <button class="btn btn-ghost" (click)="openDetail(record)">View</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-pagination
+  [page]="page()"
+  [totalPages]="totalPages()"
+  [totalItems]="totalRecords()"
+  (pageChange)="goToPage($event)"
+/>
+
+<!-- Create panel -->
+@if (isCreatePanelOpen()) {
+  <div class="overlay" (click)="closeCreatePanel()"></div>
+  <div class="side-panel card">
+    <div class="panel-head">
+      <h2>New purchase</h2>
+      <button class="btn btn-ghost" (click)="closeCreatePanel()">Close</button>
+    </div>
+
+    <div class="field">
+      <label>Supplier name</label>
+      <input type="text" [(ngModel)]="supplierName" placeholder="Supplier / distributor name" />
+    </div>
+
+    <div class="two-col">
+      <div class="field">
+        <label>Invoice number (optional)</label>
+        <input type="text" [(ngModel)]="invoiceNumber" placeholder="INV-4521" />
+      </div>
+      <div class="field">
+        <label>Invoice date</label>
+        <input type="date" [(ngModel)]="invoiceDate" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Notes (optional)</label>
+      <textarea rows="2" [(ngModel)]="notes" placeholder="Anything worth noting about this delivery…"></textarea>
+    </div>
+
+    <div class="variant-divider">Items received</div>
+
+    <div class="search-row">
+      <input
+        type="text"
+        placeholder="Search products by name or brand…"
+        [(ngModel)]="itemQuery"
+        (keyup.enter)="searchItems()"
+      />
+      <button class="btn btn-primary" [disabled]="isSearchingItems()" (click)="searchItems()">
+        {{ isSearchingItems() ? 'Searching…' : 'Search' }}
+      </button>
+    </div>
+
+    @if (itemResults().length > 0) {
+      <div class="item-result-list">
+        @for (item of itemResults(); track item._id) {
+          @if (selectedArticleFor(item); as article) {
+            <div class="item-result-row">
+              <div class="item-result-info">
+                <div class="name">{{ item.name }} <span class="sku">{{ article.sku }}</span></div>
+                <div class="meta">{{ item.brand }} &middot; current cost ₹{{ article.costPrice ?? '—' }} &middot; {{ article.stock }} in stock</div>
+                @if (activeArticles(item).length > 1) {
+                  <select
+                    class="variant-select"
+                    [ngModel]="article._id"
+                    (ngModelChange)="onArticleSelect(item._id, $event)"
+                  >
+                    @for (a of activeArticles(item); track a._id) {
+                      <option [value]="a._id">{{ describeArticle(a) }}</option>
+                    }
+                  </select>
+                }
+              </div>
+              <button class="btn btn-ghost" (click)="addDraftLine(item)">Add</button>
+            </div>
+          }
+        }
+      </div>
+    }
+
+    @if (draftLines().length > 0) {
+      <div class="order-lines">
+        @for (line of draftLines(); track line.articleId) {
+          <div class="purchase-line-row">
+            <span class="line-name">{{ line.name }}</span>
+            <div class="line-inputs">
+              <label>
+                Qty
+                <input
+                  type="number"
+                  min="1"
+                  [ngModel]="line.quantity"
+                  (ngModelChange)="updateDraftQuantity(line.articleId, $event)"
+                />
+              </label>
+              <label>
+                Unit cost (₹)
+                <input
+                  type="number"
+                  min="0"
+                  [ngModel]="line.unitCost"
+                  (ngModelChange)="updateDraftCost(line.articleId, $event)"
+                />
+              </label>
+            </div>
+            <span class="line-total">₹{{ line.quantity * line.unitCost | number }}</span>
+            <button class="btn btn-danger remove-btn" (click)="removeDraftLine(line.articleId)">Remove</button>
+          </div>
+        }
+      </div>
+
+      <div class="total-row">
+        <span>Total</span>
+        <span class="total-amount">₹{{ draftTotal | number }}</span>
+      </div>
+    }
+
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" (click)="closeCreatePanel()">Cancel</button>
+      <button type="button" class="btn btn-primary" [disabled]="isSaving()" (click)="savePurchase()">
+        {{ isSaving() ? 'Saving…' : 'Save purchase' }}
+      </button>
+    </div>
+  </div>
+}
+
+<!-- Detail panel -->
+@if (viewingRecord(); as record) {
+  <div class="overlay" (click)="closeDetail()"></div>
+  <div class="side-panel card">
+    <div class="panel-head">
+      <div>
+        <h2>{{ record.purchaseId }}</h2>
+        <div class="panel-sub">{{ record.invoiceDate | date: 'mediumDate' }}</div>
+      </div>
+      <button class="btn btn-ghost" (click)="closeDetail()">Close</button>
+    </div>
+
+    @if (isPanelLoading()) {
+      <div class="state-msg">Loading…</div>
+    } @else {
+      <div class="detail-section">
+        <div class="detail-label">Supplier</div>
+        <div class="detail-value">{{ record.supplierName }}</div>
+        @if (record.invoiceNumber) {
+          <div class="detail-sub">Invoice #{{ record.invoiceNumber }}</div>
+        }
+      </div>
+
+      <div class="detail-section">
+        <div class="detail-label">Items received</div>
+        @for (item of record.items; track item.articleId) {
+          <div class="detail-item-row">
+            <span>{{ item.name }} &times; {{ item.quantity }}</span>
+            <span>₹{{ item.unitCost }} each — ₹{{ item.quantity * item.unitCost | number }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="detail-section payment-summary">
+        <div class="summary-row">
+          <span>Total</span>
+          <span>₹{{ record.totalAmount | number }}</span>
+        </div>
+      </div>
+
+      @if (record.notes) {
+        <div class="detail-section">
+          <div class="detail-label">Notes</div>
+          <div class="detail-value">{{ record.notes }}</div>
+        </div>
+      }
+
+      <div class="detail-section">
+        <div class="detail-item-row"><span>Recorded by</span><span>{{ record.createdBy?.name || '—' }}</span></div>
+        <div class="detail-item-row"><span>Recorded on</span><span>{{ record.createdAt | date: 'medium' }}</span></div>
+      </div>
+    }
+  </div>
+}

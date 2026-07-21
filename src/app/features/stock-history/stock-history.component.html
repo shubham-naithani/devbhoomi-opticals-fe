@@ -1,0 +1,81 @@
+<div class="page-header">
+  <div>
+    <h1>Stock History</h1>
+    <p class="subtitle">Every stock change — sales, restocks, purchases, and manual adjustments.</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <input
+    type="text"
+    placeholder="Search by product name or SKU…"
+    [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)"
+  />
+  <select [(ngModel)]="typeFilter" (ngModelChange)="onFilterChange()">
+    <option value="">All types</option>
+    @for (opt of typeOptions; track opt.value) {
+      <option [value]="opt.value">{{ opt.label }}</option>
+    }
+  </select>
+  <input type="date" [(ngModel)]="fromDate" (ngModelChange)="onFilterChange()" />
+  <input type="date" [(ngModel)]="toDate" (ngModelChange)="onFilterChange()" />
+</div>
+
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading stock history…</div>
+  } @else if (movements().length === 0) {
+    <div class="state-msg">No stock movements found for this filter.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Product</th>
+          <th>SKU</th>
+          <th>Type</th>
+          <th>Change</th>
+          <th>Before → After</th>
+          <th>Reason / Reference</th>
+          <th>By</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (m of movements(); track m._id) {
+          <tr>
+            <td>{{ m.createdAt | date: 'short' }}</td>
+            <td>{{ m.productName }}</td>
+            <td class="mono">{{ m.sku }}</td>
+            <td>
+              <span class="badge" [class]="'movement-' + m.type">{{ typeLabel(m.type) }}</span>
+            </td>
+            <td class="qty-cell" [class.positive]="m.quantityChange > 0" [class.negative]="m.quantityChange < 0">
+              {{ m.quantityChange > 0 ? '+' : '' }}{{ m.quantityChange }}
+            </td>
+            <td>{{ m.previousStock }} → {{ m.newStock }}</td>
+            <td>
+              @if (m.reason) {
+                {{ m.reason }}
+              } @else if (m.referenceType === 'Order') {
+                Order-related
+              } @else if (m.referenceType === 'PurchaseRecord') {
+                Purchase-related
+              } @else {
+                —
+              }
+            </td>
+            <td>{{ m.performedBy?.name || '—' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-pagination
+  [page]="page()"
+  [totalPages]="totalPages()"
+  [totalItems]="totalMovements()"
+  (pageChange)="goToPage($event)"
+/>

@@ -269,6 +269,13 @@
         </div>
 
         <div class="field">
+          <label>Low stock alert threshold (optional)</label>
+          <input type="number" [formControl]="articleForm.controls.lowStockThreshold" min="0" placeholder="Default: 5" />
+          <div class="hint">Leave blank to use the store-wide default. Set a custom number for low-volume or premium items.
+          </div>
+        </div>
+
+        <div class="field">
           <label>Photos</label>
           <div class="image-grid">
             @for (preview of pendingPreviews(); track preview; let i = $index) {
@@ -323,6 +330,9 @@
               <div class="article-name">{{ describeArticle(article) }}</div>
             <div class="article-meta">
               {{ article.sku }} &middot; ₹{{ article.price }} &middot; {{ article.stock }} in stock
+              @if (article.lowStockThreshold !== undefined && article.lowStockThreshold !== null) {
+              &middot; <span class="threshold-tag">alert at {{ article.lowStockThreshold }}</span>
+              }
               @if (article.barcode) { &middot; <span class="barcode-tag">{{ article.barcode }}</span> }
               @if (!article.isActive) { &middot; <span class="hidden-flag">Hidden</span> }
             </div>
@@ -366,6 +376,22 @@
           <div class="field">
             <label>Stock</label>
             <input type="number" formControlName="stock" min="0" />
+          </div>
+        </div>
+
+        @if (editingArticle() && isStockChanged()) {
+        <div class="field">
+          <label>Reason for stock change</label>
+          <input type="text" [value]="stockAdjustmentReason()" (input)="stockAdjustmentReason.set($any($event.target).value)"
+            placeholder="e.g. Damaged, miscount, returned by customer" />
+          <div class="hint">Required whenever stock is changed manually here — helps explain the change later.</div>
+        </div>
+        }
+
+        <div class="field">
+          <label>Low stock alert threshold (optional)</label>
+          <input type="number" formControlName="lowStockThreshold" min="0" placeholder="Default: 5" />
+          <div class="hint">Leave blank to use the store-wide default. Set a custom number for low-volume or premium items.
           </div>
         </div>
 
