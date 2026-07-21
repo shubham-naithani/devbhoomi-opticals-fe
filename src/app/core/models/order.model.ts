@@ -34,6 +34,8 @@ export interface Order {
   refundStatus: 'none' | 'pending' | 'completed';
   refundedAmount: number;
   refundedAt?: string;
+  couponCode?: string;
+  discountAmount: number;
 }
 
 export interface CreateOrderPayload {
@@ -50,6 +52,7 @@ export interface CreateWalkInOrderPayload {
   amountPaid?: number;
   prescriptionUsed?: string;
   notes?: string;
+  couponCode?: string;
 }
 
 export interface UpdateOrderPayload {

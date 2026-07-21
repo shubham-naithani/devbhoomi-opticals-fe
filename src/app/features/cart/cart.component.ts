@@ -31,6 +31,7 @@ export class CartComponent {
   notes = signal('');
   paymentChoice = signal<PaymentChoice>('cod');
   isPlacingOrder = signal(false);
+  couponCode = signal('');
 
   readonly shippingFee = SHIPPING_FEE;
 
@@ -65,6 +66,7 @@ export class CartComponent {
       shippingAddress: this.shippingAddress(),
       contactPhone: this.contactPhone(),
       notes: this.notes() || undefined,
+      couponCode: this.couponCode() || undefined,
     };
 
     this.orderService.create(payload).subscribe({
@@ -73,7 +75,8 @@ export class CartComponent {
 
         if (this.paymentChoice() === 'cod') {
           this.isPlacingOrder.set(false);
-          this.toast.success('Order placed! We will contact you to confirm.');
+          const discountNote = res.order.discountAmount > 0 ? ` (₹${res.order.discountAmount} discount applied)` : '';
+          this.toast.success(`Order placed!${discountNote} We will contact you to confirm.`);
           this.router.navigate(['/orders']);
           return;
         }

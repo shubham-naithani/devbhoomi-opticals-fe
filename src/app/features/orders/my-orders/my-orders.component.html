@@ -36,12 +36,20 @@
 
         <div class="order-footer">
           <span>{{ order.paymentMethod === 'cod' ? 'Cash on delivery' : (order.paymentMethod | uppercase) }}</span>
-          <span class="total">
-            Total: ₹{{ order.totalAmount }}
-            @if (order.paymentStatus === 'partial') {
-              <span class="balance-due"> — ₹{{ order.totalAmount - order.amountPaid }} due</span>
+          <div class="total-breakdown">
+            @if (order.discountAmount > 0) {
+            <div class="breakdown-row muted">Discount ({{ order.couponCode }})<span>−₹{{ order.discountAmount }}</span></div>
             }
-          </span>
+            @if (order.shippingCharge > 0) {
+            <div class="breakdown-row muted">Shipping<span>+₹{{ order.shippingCharge }}</span></div>
+            }
+            <span class="total">
+              Total: ₹{{ order.totalAmount }}
+              @if (order.paymentStatus === 'partial') {
+              <span class="balance-due"> — ₹{{ order.totalAmount - order.amountPaid }} due</span>
+              }
+            </span>
+          </div>
         </div>
 
         @if (order.status !== 'cancelled' && balanceDue(order) > 0) {

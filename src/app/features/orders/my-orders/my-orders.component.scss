@@ -106,3 +106,14 @@
 .pay-now-btn {
   padding: 10px 20px;
 }
+
+.total-breakdown {
+  text-align: right;
+}
+.breakdown-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
