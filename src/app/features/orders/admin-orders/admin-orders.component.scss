@@ -93,6 +93,19 @@ table td {
   gap: 8px;
 }
 
+.bulk-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  margin-bottom: 16px;
+  background: rgba(31, 78, 92, 0.05);
+}
+
+.bulk-actions {
+  display: flex;
+  gap: 10px;
+}
 // ---- Detail / edit side panel ---------------------------------------------
 .overlay {
   position: fixed;
