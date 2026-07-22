@@ -1,0 +1,59 @@
+<div class="page-header">
+  <div>
+    <h1>Error Log</h1>
+    <p class="subtitle">Unexpected system errors — backend and frontend.</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <input type="text" placeholder="Search by error message…" [value]="searchTerm()" (input)="onSearchChange($any($event.target).value)" />
+  <select [(ngModel)]="sourceFilter" (ngModelChange)="onFilterChange()">
+    <option value="">All sources</option>
+    <option value="backend">Backend</option>
+    <option value="frontend">Frontend</option>
+  </select>
+</div>
+
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading error log…</div>
+  } @else if (logs().length === 0) {
+    <div class="state-msg">No errors logged. That's a good sign.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Source</th>
+          <th>Route</th>
+          <th>Message</th>
+          <th>User</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (log of logs(); track log._id) {
+          <tr>
+            <td>{{ log.createdAt | date: 'short' }}</td>
+            <td><span class="badge" [class.badge-admin]="log.source === 'backend'" [class.badge-customer]="log.source === 'frontend'">{{ log.source }}</span></td>
+            <td class="mono">{{ log.method }} {{ log.route }}</td>
+            <td>{{ log.message }}</td>
+            <td>{{ log.userName || '—' }}</td>
+            <td>
+              <button class="btn btn-ghost" (click)="toggleExpand(log._id)">
+                {{ expandedId() === log._id ? 'Hide' : 'Stack' }}
+              </button>
+            </td>
+          </tr>
+          @if (expandedId() === log._id && log.stack) {
+            <tr>
+              <td colspan="6"><pre class="stack-trace">{{ log.stack }}</pre></td>
+            </tr>
+          }
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="totalLogs()" (pageChange)="goToPage($event)" />
