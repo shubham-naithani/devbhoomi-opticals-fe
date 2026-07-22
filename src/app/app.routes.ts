@@ -54,6 +54,11 @@ export const routes: Routes = [
         canActivate: [adminGuard],
         loadComponent: () => import('./features/coupons/coupons.component').then((m) => m.CouponsComponent),
       },
+      {
+        path: 'error-log',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/error-log/error-log.component').then((m) => m.ErrorLogComponent),
+      },
 
       // Staff or admin (store-counter functionality)
       {
