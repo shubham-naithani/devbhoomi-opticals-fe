@@ -1,0 +1,147 @@
+.page-header {
+  margin-bottom: 22px;
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--color-primary-dark);
+    margin: 0;
+  }
+
+  .subtitle { margin: 6px 0 0; color: var(--color-text-muted); font-size: 14px; }
+}
+
+.state-msg {
+  padding: 60px;
+  text-align: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+}
+
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+
+  mat-icon { font-size: 48px; height: 48px; width: 48px; color: var(--color-border); margin-bottom: 12px; }
+  h3 { font-family: var(--font-display); color: var(--color-primary-dark); margin-bottom: 8px; }
+  p { color: var(--color-text-muted); margin-bottom: 20px; }
+}
+
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.order-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 20px 22px;
+}
+
+.order-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.order-id {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--color-primary-dark);
+}
+
+.order-date {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+
+  &.status-pending, &.status-confirmed, &.status-in_progress, &.status-ready_for_pickup {
+    background: rgba(31, 78, 92, 0.1);
+    color: var(--color-primary);
+  }
+  &.status-delivered {
+    background: rgba(47, 122, 82, 0.12);
+    color: #2f7a52;
+  }
+  &.status-cancelled {
+    background: rgba(179, 73, 46, 0.1);
+    color: #b3492e;
+  }
+}
+
+.order-items {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.order-item-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--color-text);
+}
+
+.order-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+}
+
+.total-breakdown {
+  text-align: right;
+}
+
+.breakdown-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.total {
+  display: block;
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  margin-top: 2px;
+
+  .balance-due {
+    color: #c08a1e;
+    font-weight: 700;
+  }
+}
+
+.pay-now-row {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pay-now-btn {
+  height: 42px;
+  padding: 0 20px;
+}

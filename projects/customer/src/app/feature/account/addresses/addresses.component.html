@@ -1,0 +1,105 @@
+<div class="account-page">
+  <h1>Account Settings</h1>
+
+  <div class="account-links">
+    <a routerLink="/account">Edit Details</a>
+    <a routerLink="/account/addresses" class="active">Manage Addresses</a>
+    <a routerLink="/orders">My Orders</a>
+  </div>
+
+  @if (isLoading()) {
+    <div class="loading-state">Loading addresses…</div>
+  } @else {
+    @if (!isFormOpen()) {
+      <button mat-stroked-button color="primary" (click)="openAddForm()" class="add-btn">
+        <mat-icon>add</mat-icon> Add New Address
+      </button>
+    }
+
+    @if (isFormOpen()) {
+      <mat-card class="account-card">
+        <h2>{{ editingId() ? 'Edit Address' : 'New Address' }}</h2>
+
+        @if (formError()) {
+          <div class="error-banner">{{ formError() }}</div>
+        }
+
+        <form [formGroup]="form" (ngSubmit)="submit()" class="address-form">
+          <mat-form-field appearance="outline">
+            <mat-label>Label (Home, Office, etc.)</mat-label>
+            <input matInput formControlName="label" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Address Line 1</mat-label>
+            <input matInput formControlName="line1" />
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Address Line 2 (optional)</mat-label>
+            <input matInput formControlName="line2" />
+          </mat-form-field>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>City</mat-label>
+              <input matInput formControlName="city" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>State</mat-label>
+              <input matInput formControlName="state" />
+            </mat-form-field>
+          </div>
+          <div class="form-row">
+            <mat-form-field appearance="outline">
+              <mat-label>Pincode</mat-label>
+              <input matInput formControlName="pincode" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Phone (optional)</mat-label>
+              <input matInput formControlName="phone" />
+            </mat-form-field>
+          </div>
+
+          <label class="default-checkbox">
+            <input type="checkbox" formControlName="isDefault" />
+            Set as default address
+          </label>
+
+          <div class="form-actions">
+            <button mat-flat-button color="primary" type="submit" [disabled]="isSaving()">
+              {{ isSaving() ? 'Saving…' : 'Save Address' }}
+            </button>
+            <button mat-button type="button" (click)="cancelForm()">Cancel</button>
+          </div>
+        </form>
+      </mat-card>
+    }
+
+    @if (addresses().length === 0 && !isFormOpen()) {
+      <div class="empty-state">No saved addresses yet.</div>
+    }
+
+    <div class="address-list">
+      @for (addr of addresses(); track addr._id) {
+        <mat-card class="address-card">
+          <div class="address-header">
+            <span class="address-label">{{ addr.label }}</span>
+            @if (addr.isDefault) {
+              <span class="default-badge">Default</span>
+            }
+          </div>
+          <p class="address-lines">
+            {{ addr.line1 }}@if (addr.line2) {, {{ addr.line2 }}}<br />
+            {{ addr.city }}@if (addr.state) {, {{ addr.state }}} — {{ addr.pincode }}
+            @if (addr.phone) {<br />{{ addr.phone }}}
+          </p>
+          <div class="address-actions">
+            <button mat-button (click)="openEditForm(addr)">Edit</button>
+            @if (!addr.isDefault) {
+              <button mat-button (click)="makeDefault(addr)">Make Default</button>
+            }
+            <button mat-button color="warn" (click)="remove(addr)">Delete</button>
+          </div>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

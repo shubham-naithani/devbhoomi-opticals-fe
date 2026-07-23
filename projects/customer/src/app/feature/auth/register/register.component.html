@@ -1,0 +1,55 @@
+<div class="auth-page">
+  <mat-card class="auth-card">
+    <h1>Create your account</h1>
+    <p class="subtitle">Save your prescriptions and track orders easily.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Full name</mat-label>
+        <input matInput formControlName="name" />
+        @if (form.controls.name.hasError('required') && form.controls.name.touched) {
+          <mat-error>Name is required</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" />
+        @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+          <mat-error>Email is required</mat-error>
+        }
+        @if (form.controls.email.hasError('email') && form.controls.email.touched) {
+          <mat-error>Enter a valid email</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Phone (optional)</mat-label>
+        <input matInput type="tel" formControlName="phone" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password" />
+        @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+          <mat-error>Password is required</mat-error>
+        }
+        @if (form.controls.password.hasError('minlength') && form.controls.password.touched) {
+          <mat-error>At least 6 characters</mat-error>
+        }
+      </mat-form-field>
+
+      @if (errorMessage()) {
+        <div class="error-banner">{{ errorMessage() }}</div>
+      }
+
+      <button mat-flat-button color="primary" type="submit" class="full-width submit-btn" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Creating account…' : 'Create account' }}
+      </button>
+    </form>
+
+    <p class="switch-link">
+      Already have an account? <a routerLink="/login">Log in</a>
+    </p>
+  </mat-card>
+</div>

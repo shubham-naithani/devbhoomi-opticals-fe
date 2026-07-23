@@ -1,0 +1,65 @@
+@if (isLoading()) {
+  <div class="loading-state">Loading your details…</div>
+} @else {
+  <div class="account-page">
+    <h1>Account Settings</h1>
+
+    <div class="account-links">
+      <a routerLink="/account" class="active">Edit Details</a>
+      <a routerLink="/account/addresses">Manage Addresses</a>
+      <a routerLink="/orders">My Orders</a>
+    </div>
+
+    <mat-card class="account-card">
+      <h2>Your Details</h2>
+      <p class="email-display"><mat-icon>email</mat-icon> {{ email() || 'No email on file' }}</p>
+
+      @if (profileError()) {
+        <div class="error-banner">{{ profileError() }}</div>
+      }
+
+      <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="account-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Full Name</mat-label>
+          <input matInput formControlName="name" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Phone</mat-label>
+          <input matInput formControlName="phone" />
+        </mat-form-field>
+        <button mat-flat-button color="primary" type="submit" [disabled]="isSavingProfile()">
+          {{ isSavingProfile() ? 'Saving…' : 'Save Changes' }}
+        </button>
+      </form>
+    </mat-card>
+
+    <mat-card class="account-card">
+      <h2>Change Password</h2>
+
+      @if (passwordError()) {
+        <div class="error-banner">{{ passwordError() }}</div>
+      }
+
+      <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="account-form">
+        <mat-form-field appearance="outline">
+          <mat-label>Current Password</mat-label>
+          <input matInput type="password" formControlName="currentPassword" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>New Password</mat-label>
+          <input matInput type="password" formControlName="newPassword" />
+        </mat-form-field>
+        <mat-form-field appearance="outline">
+          <mat-label>Confirm New Password</mat-label>
+          <input matInput type="password" formControlName="confirmPassword" />
+        </mat-form-field>
+        @if (passwordForm.errors?.['mismatch'] && passwordForm.get('confirmPassword')?.touched) {
+          <div class="field-hint">Passwords don't match.</div>
+        }
+        <button mat-flat-button color="primary" type="submit" [disabled]="isSavingPassword()">
+          {{ isSavingPassword() ? 'Updating…' : 'Update Password' }}
+        </button>
+      </form>
+    </mat-card>
+  </div>
+}

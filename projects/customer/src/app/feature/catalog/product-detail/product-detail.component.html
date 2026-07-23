@@ -1,0 +1,105 @@
+@if (isLoading()) {
+  <div class="state-msg">Loading product…</div>
+} @else if (!product()) {
+  <div class="state-msg">Product not found.</div>
+} @else {
+  @if (product(); as p) {
+    @if (selectedArticle(); as article) {
+      <div class="product-detail">
+        <div class="gallery">
+          <div class="main-image">
+            @if (article.images.length > 0) {
+              <img [src]="article.images[activeImageIndex()]" [alt]="p.name" />
+              @if (article.images.length > 1) {
+                <button class="nav-arrow nav-prev" (click)="prevImage()" aria-label="Previous image">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                <button class="nav-arrow nav-next" (click)="nextImage()" aria-label="Next image">
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              }
+            } @else {
+              <div class="main-image-placeholder">{{ p.name.charAt(0) }}</div>
+            }
+          </div>
+
+          @if (article.images.length > 1) {
+            <div class="thumb-strip">
+              @for (img of article.images; track img; let i = $index) {
+                <button
+                  class="thumb"
+                  [class.active]="i === activeImageIndex()"
+                  (click)="setImageIndex(i)"
+                >
+                  <img [src]="img" [alt]="p.name + ' thumbnail ' + (i + 1)" />
+                </button>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="product-info-panel">
+          <div class="breadcrumb">
+            <a routerLink="/catalog">Catalog</a> / {{ p.category }}
+          </div>
+
+          <div class="brand">{{ p.brand }}</div>
+          <h1>{{ p.name }}</h1>
+          <div class="variant-name">{{ describeArticle(article) }}</div>
+
+          <div class="price">₹{{ article.price }}</div>
+
+          @if (activeArticles(p).length > 1) {
+            <div class="variant-picker">
+              <label>Choose variant</label>
+              <div class="variant-options">
+                @for (a of activeArticles(p); track a._id) {
+                  <button
+                    class="variant-chip"
+                    [class.active]="a._id === selectedArticle()?._id"
+                    [disabled]="a.stock <= 0"
+                    (click)="selectArticle(a._id)"
+                  >
+                    {{ describeArticle(a) }}
+                    @if (a.stock <= 0) { <span class="chip-oos">(out of stock)</span> }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <div class="stock-note">
+            @if (article.stock > 0) {
+              <span class="in-stock">✓ In stock ({{ article.stock }} available)</span>
+            } @else {
+              <span class="out-of-stock">Out of stock</span>
+            }
+          </div>
+
+          @if (p.description) {
+            <p class="description">{{ p.description }}</p>
+          }
+
+          <div class="purchase-row">
+            <div class="qty-control">
+              <button (click)="decrement()" [disabled]="quantity() <= 1">−</button>
+              <span>{{ quantity() }}</span>
+              <button (click)="increment()" [disabled]="quantity() >= article.stock">+</button>
+            </div>
+
+            <button
+              mat-flat-button
+              color="primary"
+              class="add-to-cart-btn"
+              [disabled]="article.stock <= 0"
+              (click)="addToCart()"
+            >
+              <mat-icon>shopping_bag</mat-icon>
+              Add to Cart
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  }
+}

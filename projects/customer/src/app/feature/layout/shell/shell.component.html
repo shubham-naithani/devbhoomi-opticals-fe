@@ -1,0 +1,67 @@
+<mat-toolbar class="navbar">
+  <a routerLink="/" class="brand">
+    <span class="brand-mark">◎</span>
+    <span class="brand-name">Devbhoomi Opticals</span>
+  </a>
+
+  <span class="spacer"></span>
+
+  <nav class="nav-links">
+    <a routerLink="/catalog" routerLinkActive="active">Browse Frames</a>
+  </nav>
+
+  <a routerLink="/cart" class="cart-link" aria-label="Cart">
+    <mat-icon>shopping_bag</mat-icon>
+    @if (cart.itemCount() > 0) {
+      <span class="cart-badge">{{ cart.itemCount() }}</span>
+    }
+  </a>
+
+  @if (auth.isLoggedIn()) {
+    <button mat-icon-button [matMenuTriggerFor]="accountMenu" aria-label="Account">
+      <mat-icon>account_circle</mat-icon>
+    </button>
+    <mat-menu #accountMenu="matMenu">
+      <div class="menu-user-name">{{ auth.currentUser()?.name }}</div>
+      <a mat-menu-item routerLink="/orders">
+        <mat-icon>receipt_long</mat-icon> My Orders
+      </a>
+      <a mat-menu-item routerLink="/account">
+        <mat-icon>edit</mat-icon> Edit Details
+      </a>
+      <a mat-menu-item routerLink="/account/addresses">
+        <mat-icon>location_on</mat-icon> Manage Addresses
+      </a>
+      <button mat-menu-item (click)="auth.logout()">
+        <mat-icon>logout</mat-icon> Log out
+      </button>
+    </mat-menu>
+  } @else {
+    <button mat-stroked-button class="login-btn" (click)="openLogin()">Log in</button>
+  }
+</mat-toolbar>
+
+<main class="page-content">
+  <router-outlet></router-outlet>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="footer-logo">◎ Devbhoomi Opticals</div>
+      <p>Dehradun, Uttarakhand</p>
+    </div>
+    <div class="footer-links">
+      <h4>Shop</h4>
+      <a routerLink="/catalog" [queryParams]="{ category: 'eyeglasses' }">Eyeglasses</a>
+      <a routerLink="/catalog" [queryParams]="{ category: 'sunglasses' }">Sunglasses</a>
+      <a routerLink="/catalog" [queryParams]="{ category: 'contact_lens' }">Contact Lenses</a>
+    </div>
+    <div class="footer-links">
+      <h4>Account</h4>
+      <a routerLink="/orders">My Orders</a>
+      <a routerLink="/cart">Cart</a>
+    </div>
+  </div>
+  <div class="footer-bottom">© 2026 Devbhoomi Opticals. All rights reserved.</div>
+</footer>

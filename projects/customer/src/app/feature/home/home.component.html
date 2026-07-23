@@ -1,0 +1,152 @@
+<!-- Hero Carousel -->
+<section class="hero-carousel" [class]="'theme-' + heroSlides[currentSlide()].theme">
+  <div class="hero-inner">
+    <button class="hero-arrow hero-arrow-left" (click)="onPrevClick()" aria-label="Previous slide">
+      <mat-icon>chevron_left</mat-icon>
+    </button>
+
+    <div class="hero-content">
+      <span class="hero-eyebrow">{{ heroSlides[currentSlide()].eyebrow }}</span>
+      <h1>
+        {{ heroSlides[currentSlide()].headline }}
+        <span class="accent">{{ heroSlides[currentSlide()].headlineAccent }}</span>
+      </h1>
+      <p class="hero-subtitle">{{ heroSlides[currentSlide()].subtitle }}</p>
+      <a mat-flat-button color="primary" routerLink="/catalog" [queryParams]="heroSlides[currentSlide()].ctaQueryParams || null" class="hero-cta">
+        {{ heroSlides[currentSlide()].ctaLabel }}
+        <mat-icon>arrow_forward</mat-icon>
+      </a>
+    </div>
+
+    <div class="hero-visual" aria-hidden="true">
+      <div class="hero-shape hero-shape-1"></div>
+      <div class="hero-shape hero-shape-2"></div>
+    </div>
+
+    <button class="hero-arrow hero-arrow-right" (click)="onNextClick()" aria-label="Next slide">
+      <mat-icon>chevron_right</mat-icon>
+    </button>
+  </div>
+
+  <div class="hero-dots">
+    @for (slide of heroSlides; track $index) {
+      <button class="hero-dot" [class.active]="currentSlide() === $index" (click)="goToSlide($index)" [attr.aria-label]="'Go to slide ' + ($index + 1)"></button>
+    }
+  </div>
+</section>
+
+<!-- Shop by category -->
+<section class="section categories-section">
+  <h2>Shop by Category</h2>
+  <div class="category-grid">
+    @for (cat of categories; track cat.value) {
+      <a class="category-tile" routerLink="/catalog" [queryParams]="{ category: cat.value }">
+        <mat-icon>{{ cat.icon }}</mat-icon>
+        <span>{{ cat.label }}</span>
+      </a>
+    }
+  </div>
+</section>
+
+<!-- Featured products carousel -->
+<section class="section featured-section">
+  <div class="section-header">
+    <h2>New & Popular</h2>
+    <div class="header-actions">
+      <a routerLink="/catalog" class="see-all-link">See all <mat-icon>chevron_right</mat-icon></a>
+      <div class="carousel-nav">
+        <button mat-icon-button (click)="scrollFeatured('left')" aria-label="Scroll left"><mat-icon>chevron_left</mat-icon></button>
+        <button mat-icon-button (click)="scrollFeatured('right')" aria-label="Scroll right"><mat-icon>chevron_right</mat-icon></button>
+      </div>
+    </div>
+  </div>
+
+  @if (isLoadingFeatured()) {
+    <div class="loading-state">Loading frames…</div>
+  } @else if (featuredProducts().length === 0) {
+    <div class="loading-state">New arrivals coming soon.</div>
+  } @else {
+    <div class="product-scroll" #featuredScroll>
+      @for (product of featuredProducts(); track product._id) {
+        <a class="product-card" [routerLink]="['/catalog', product._id]">
+          <div class="product-thumb">
+            @if (thumbnailFor(product); as thumb) {
+              <img [ngSrc]="thumb" [alt]="product.name" fill />
+            } @else {
+              <div class="product-thumb-placeholder">{{ product.name.charAt(0) }}</div>
+            }
+          </div>
+          <div class="product-info">
+            <div class="product-brand">{{ product.brand }}</div>
+            <div class="product-name">{{ product.name }}</div>
+            <div class="product-price">
+              @if (priceRange(product).min === priceRange(product).max) {
+                ₹{{ priceRange(product).min }}
+              } @else {
+                ₹{{ priceRange(product).min }}–{{ priceRange(product).max }}
+              }
+            </div>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</section>
+
+<!-- Testimonials -->
+<section class="section testimonials-section">
+  <h2>What Dehradun is Saying</h2>
+  <div class="testimonial-grid">
+    @for (t of testimonials; track t.name) {
+      <div class="testimonial-card">
+        <mat-icon class="quote-icon">format_quote</mat-icon>
+        <p class="testimonial-quote">{{ t.quote }}</p>
+        <div class="testimonial-rating">
+          @for (star of [1,2,3,4,5]; track star) {
+            <mat-icon [class.filled]="star <= t.rating">star</mat-icon>
+          }
+        </div>
+        <div class="testimonial-author">
+          <span class="author-name">{{ t.name }}</span>
+          <span class="author-location">{{ t.location }}</span>
+        </div>
+      </div>
+    }
+  </div>
+</section>
+
+<!-- Lifestyle gallery -->
+<section class="section gallery-section">
+  <div class="section-header">
+    <h2>Spotted in Dehradun</h2>
+    <a href="https://instagram.com" target="_blank" rel="noopener" class="see-all-link">
+      <mat-icon>photo_camera</mat-icon> &#64;devbhoomiopticals
+    </a>
+  </div>
+  <div class="gallery-grid">
+    @for (tile of galleryTiles; track $index) {
+      <div class="gallery-tile" [style.background]="tile"></div>
+    }
+  </div>
+</section>
+
+<!-- Trust signals -->
+<section class="section trust-section">
+  <div class="trust-grid">
+    <div class="trust-item">
+      <mat-icon>remove_red_eye</mat-icon>
+      <h3>Free Eye Test</h3>
+      <p>Every customer gets a complimentary eyesight checkup — in-store, no strings attached.</p>
+    </div>
+    <div class="trust-item">
+      <mat-icon>verified</mat-icon>
+      <h3>Genuine Frames</h3>
+      <p>Every frame we sell is sourced directly, with real cost transparency behind every price.</p>
+    </div>
+    <div class="trust-item">
+      <mat-icon>support_agent</mat-icon>
+      <h3>Real Local Support</h3>
+      <p>Questions about fit, prescription, or an order? Reach out — we're a real Dehradun store, not a call center.</p>
+    </div>
+  </div>
+</section>

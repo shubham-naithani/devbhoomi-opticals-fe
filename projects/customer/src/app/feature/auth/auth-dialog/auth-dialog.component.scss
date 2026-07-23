@@ -1,0 +1,86 @@
+.auth-dialog {
+  padding: 32px 28px 28px;
+  max-width: 100%;
+  position: relative;
+}
+
+.close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  color: var(--color-text-muted);
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 20px;
+
+  .brand-mark {
+    display: block;
+    font-size: 28px;
+    color: var(--color-accent);
+    margin-bottom: 8px;
+  }
+
+  h2 {
+    font-family: var(--font-display);
+    font-size: 20px;
+    color: var(--color-primary-dark);
+    margin: 0 0 6px;
+  }
+
+  p {
+    font-size: 13px;
+    color: var(--color-text-muted);
+    margin: 0;
+  }
+}
+
+.tab-switch {
+  display: flex;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.tab-btn {
+  flex: 1;
+  border: none;
+  background: transparent;
+  padding: 8px 0;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+
+  &.active {
+    background: var(--color-primary);
+    color: #fff;
+  }
+}
+
+.error-banner {
+  background: rgba(201, 74, 74, 0.1);
+  color: #b3261e;
+  font-size: 13px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  margin-bottom: 16px;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  mat-form-field { width: 100%; }
+}
+
+.submit-btn {
+  height: 46px;
+  margin-top: 8px;
+}

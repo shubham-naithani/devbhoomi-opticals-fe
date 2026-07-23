@@ -1,0 +1,87 @@
+@use '@angular/material' as mat;
+
+$customer-theme: mat.define-theme((
+  color: (
+    theme-type: light,
+    primary: mat.$blue-palette,
+    tertiary: mat.$orange-palette,
+  ),
+  typography: (
+    brand-family: 'Roboto',
+  ),
+  density: (
+    scale: 0,
+  ),
+));
+
+html {
+  @include mat.core();
+  @include mat.all-component-themes($customer-theme);
+}
+
+// ---- Custom brand color override ----
+// Material 18's palette-generation from a single seed color needs the
+// official Material Theme Builder tool for a fully accurate tonal scale.
+// Rather than fighting that tool for an exact hex match, we let Material
+// wire up its internal system correctly above, then directly override the
+// specific CSS custom properties it actually renders with — giving pixel-
+// exact brand colors without needing external tooling.
+:root {
+  --mat-sys-primary: #1F4E5C;
+  --mat-sys-on-primary: #FFFFFF;
+  --mat-sys-primary-container: #3A6B75;
+  --mat-sys-on-primary-container: #FFFFFF;
+
+  --mat-sys-secondary: #C97B4A;
+  --mat-sys-on-secondary: #FFFFFF;
+  --mat-sys-secondary-container: #E3A876;
+  --mat-sys-on-secondary-container: #23302F;
+
+  --mat-sys-surface: #FFFFFF;
+  --mat-sys-on-surface: #23302F;
+  --mat-sys-background: #F6F4EF;
+  --mat-sys-on-background: #23302F;
+
+  --mat-sys-error: #B3492E;
+  --mat-sys-on-error: #FFFFFF;
+
+  // Same design tokens as your admin app, for visual consistency across
+  // any hand-styled (non-Material) elements.
+  --color-primary: #1F4E5C;
+  --color-primary-light: #3A6B75;
+  --color-primary-dark: #123138;
+  --color-accent: #C97B4A;
+  --color-accent-light: #E3A876;
+  --color-bg: #F6F4EF;
+  --color-surface: #FFFFFF;
+  --color-border: #E3E1D9;
+  --color-text: #23302F;
+  --color-text-muted: #6B7A79;
+  --color-success: #2F7A52;
+  --color-danger: #B3492E;
+  --color-warning: #C08A1E;
+
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+  color: var(--color-primary-dark);
+}
