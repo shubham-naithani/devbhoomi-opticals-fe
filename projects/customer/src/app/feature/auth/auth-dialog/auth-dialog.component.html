@@ -1,0 +1,58 @@
+<div class="auth-dialog">
+  <button mat-icon-button class="close-btn" (click)="dismiss()" aria-label="Close">
+    <mat-icon>close</mat-icon>
+  </button>
+
+  <div class="auth-header">
+    <span class="brand-mark">◎</span>
+    <h2>{{ activeTab() === 'login' ? 'Log in to continue' : 'Create your account' }}</h2>
+    <p>{{ activeTab() === 'login' ? 'Log in to place your order and track it.' : 'Just a few details to get started.' }}</p>
+  </div>
+
+  <div class="tab-switch">
+    <button class="tab-btn" [class.active]="activeTab() === 'login'" (click)="setTab('login')">Log In</button>
+    <button class="tab-btn" [class.active]="activeTab() === 'register'" (click)="setTab('register')">Register</button>
+  </div>
+
+  @if (errorMessage()) {
+    <div class="error-banner">{{ errorMessage() }}</div>
+  }
+
+  @if (activeTab() === 'login') {
+    <form [formGroup]="loginForm" (ngSubmit)="submitLogin()" class="auth-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="email" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password" autocomplete="current-password" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()" class="submit-btn">
+        {{ isSubmitting() ? 'Logging in…' : 'Log In' }}
+      </button>
+    </form>
+  } @else {
+    <form [formGroup]="registerForm" (ngSubmit)="submitRegister()" class="auth-form">
+      <mat-form-field appearance="outline">
+        <mat-label>Full Name</mat-label>
+        <input matInput formControlName="name" autocomplete="name" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="email" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Phone (optional)</mat-label>
+        <input matInput formControlName="phone" autocomplete="tel" />
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password" autocomplete="new-password" />
+      </mat-form-field>
+      <button mat-flat-button color="primary" type="submit" [disabled]="isSubmitting()" class="submit-btn">
+        {{ isSubmitting() ? 'Creating account…' : 'Create Account' }}
+      </button>
+    </form>
+  }
+</div>

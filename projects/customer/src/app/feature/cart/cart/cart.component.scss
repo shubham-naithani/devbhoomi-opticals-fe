@@ -1,0 +1,196 @@
+.page-header {
+  margin-bottom: 22px;
+
+  h1 {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--color-primary-dark);
+    margin: 0;
+  }
+
+  .subtitle { margin: 6px 0 0; color: var(--color-text-muted); font-size: 14px; }
+}
+
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+
+  mat-icon { font-size: 48px; height: 48px; width: 48px; color: var(--color-border); margin-bottom: 12px; }
+  h3 { font-family: var(--font-display); color: var(--color-primary-dark); margin-bottom: 8px; }
+  p { color: var(--color-text-muted); margin-bottom: 20px; }
+}
+
+.cart-layout {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 22px;
+  align-items: start;
+
+  @media (max-width: 860px) { grid-template-columns: 1fr; }
+}
+
+.cart-lines {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 8px;
+}
+
+.cart-line {
+  display: grid;
+  grid-template-columns: 56px 1fr auto auto auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border);
+
+  &:last-child { border-bottom: none; }
+
+  @media (max-width: 640px) {
+    grid-template-columns: 44px 1fr;
+    row-gap: 8px;
+  }
+}
+
+.thumb {
+  width: 56px; height: 56px;
+  border-radius: var(--radius-sm);
+  background: #f5f4ef;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+
+.thumb-placeholder {
+  font-family: var(--font-display);
+  font-size: 20px;
+  color: var(--color-border);
+}
+
+.line-info {
+  .name { font-weight: 600; font-size: 14px; }
+  .unit-price { font-size: 12px; color: var(--color-text-muted); }
+}
+
+.qty-control {
+  display: flex; align-items: center; gap: 10px;
+
+  button {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    border: 1px solid var(--color-border);
+    background: #fff;
+    font-size: 14px;
+    line-height: 1;
+
+    &:disabled { opacity: 0.4; cursor: not-allowed; }
+  }
+}
+
+.line-total {
+  font-weight: 700;
+  color: var(--color-primary-dark);
+  min-width: 70px;
+  text-align: right;
+}
+
+.remove-btn { font-size: 12px; }
+
+.checkout-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+  position: sticky;
+  top: 88px;
+
+  h3 { font-family: var(--font-display); font-size: 18px; color: var(--color-primary-dark); margin: 0 0 16px; }
+}
+
+.summary-row {
+  display: flex; justify-content: space-between;
+  font-size: 14px;
+  margin-bottom: 8px;
+
+  &.muted { color: var(--color-text-muted); margin-bottom: 20px; }
+}
+
+.total-row {
+  font-weight: 700;
+  font-size: 16px;
+  padding-top: 8px;
+  margin-top: 4px;
+  border-top: 1px solid var(--color-border);
+  margin-bottom: 20px;
+}
+
+.field {
+  margin-bottom: 18px;
+
+  label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--color-text);
+    margin-bottom: 8px;
+  }
+
+  input[type="text"], input[type="tel"], textarea {
+    width: 100%;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 10px 12px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+
+    &:focus { outline: none; border-color: var(--color-primary); }
+  }
+
+  .phone-input { margin-top: 10px; }
+}
+
+.option-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  font-size: 14px;
+
+  input[type="radio"] { width: auto; margin: 0; }
+
+  &.selected { border-color: var(--color-primary); background: rgba(31, 78, 92, 0.04); }
+}
+
+.address-item {
+  align-items: flex-start;
+
+  span { line-height: 1.5; }
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0 0;
+  text-decoration: underline;
+}
+
+.place-order-btn {
+  width: 100%;
+  height: 48px;
+  font-size: 15px;
+}

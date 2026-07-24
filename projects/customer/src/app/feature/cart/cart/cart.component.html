@@ -1,0 +1,115 @@
+<div class="page-header">
+  <div>
+    <h1>Your Cart</h1>
+    <p class="subtitle">{{ cart.itemCount() }} item(s)</p>
+  </div>
+</div>
+
+@if (cart.lines().length === 0) {
+  <div class="empty-state">
+    <mat-icon>shopping_bag</mat-icon>
+    <h3>Your cart is empty</h3>
+    <p>Browse the catalog and add a few frames to get started.</p>
+    <a mat-flat-button color="primary" routerLink="/catalog">Browse Catalog</a>
+  </div>
+} @else {
+  <div class="cart-layout">
+    <div class="cart-lines">
+      @for (line of cart.lines(); track line.articleId) {
+        <div class="cart-line">
+          <div class="thumb">
+            @if (line.imageUrl) {
+              <img [src]="line.imageUrl" [alt]="line.name" />
+            } @else {
+              <div class="thumb-placeholder">{{ line.name.charAt(0) }}</div>
+            }
+          </div>
+
+          <div class="line-info">
+            <div class="name">{{ line.name }}</div>
+            <div class="unit-price">₹{{ line.price }} each</div>
+          </div>
+
+          <div class="qty-control">
+            <button type="button" (click)="decrement(line)">−</button>
+            <span>{{ line.quantity }}</span>
+            <button type="button" [disabled]="line.quantity >= line.stock" (click)="increment(line)">+</button>
+          </div>
+
+          <div class="line-total">₹{{ line.price * line.quantity }}</div>
+
+          <button mat-button color="warn" class="remove-btn" (click)="cart.remove(line.articleId)">Remove</button>
+        </div>
+      }
+    </div>
+
+    <div class="checkout-panel">
+      <h3>Checkout</h3>
+      <div class="summary-row">
+        <span>Subtotal</span>
+        <span>₹{{ cart.total() }}</span>
+      </div>
+      <div class="summary-row muted">
+        <span>Shipping</span>
+        <span>₹{{ shippingFee }}</span>
+      </div>
+      <div class="summary-row total-row">
+        <span>Total</span>
+        <span>₹{{ grandTotal() }}</span>
+      </div>
+
+      <div class="field">
+        <label>Payment method</label>
+        <div class="option-group">
+          <label class="option-item" [class.selected]="paymentChoice() === 'cod'">
+            <input type="radio" name="paymentChoice" value="cod" [(ngModel)]="paymentChoice" />
+            <span>Cash on delivery</span>
+          </label>
+          <label class="option-item" [class.selected]="paymentChoice() === 'online'">
+            <input type="radio" name="paymentChoice" value="online" [(ngModel)]="paymentChoice" />
+            <span>Pay online (Card / UPI / Netbanking)</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Coupon code (optional)</label>
+        <input type="text" [(ngModel)]="couponCode" placeholder="Enter coupon code if you have one" />
+      </div>
+
+      <div class="field">
+        <label>Deliver to</label>
+
+        @if (auth.isLoggedIn() && addresses().length > 0 && !showManualEntry()) {
+          <div class="option-group">
+            @for (addr of addresses(); track addr._id) {
+              <label class="option-item address-item" [class.selected]="selectedAddressId() === addr._id" (click)="selectAddress(addr._id)">
+                <input type="radio" [checked]="selectedAddressId() === addr._id" (change)="selectAddress(addr._id)" />
+                <span>
+                  <strong>{{ addr.label }}</strong><br />
+                  {{ addr.line1 }}@if (addr.line2) {, {{ addr.line2 }}}, {{ addr.city }} — {{ addr.pincode }}
+                </span>
+              </label>
+            }
+          </div>
+          <button type="button" class="link-btn" (click)="useManualEntry()">Use a different address</button>
+        } @else {
+          <textarea rows="3" [(ngModel)]="manualAddress" placeholder="House no, street, area, Dehradun"></textarea>
+          <input type="tel" [(ngModel)]="manualPhone" placeholder="Contact phone — 98765 43210" class="phone-input" />
+          @if (auth.isLoggedIn() && addresses().length > 0) {
+            <button type="button" class="link-btn" (click)="useSavedAddress()">Use a saved address instead</button>
+          }
+        }
+      </div>
+
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea rows="2" [(ngModel)]="notes" placeholder="Prescription details, preferred delivery time…"></textarea>
+      </div>
+
+      <button mat-flat-button color="primary" class="place-order-btn" [disabled]="isPlacingOrder()" (click)="placeOrder()">
+        {{ isPlacingOrder() ? 'Placing order…' : (paymentChoice() === 'cod' ? 'Place Order (COD)' : 'Place Order & Pay Online') }}
+      </button>
+    </div>
+  </div>
+}

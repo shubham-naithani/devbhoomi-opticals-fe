@@ -1,0 +1,72 @@
+<div class="page-header">
+  <div>
+    <h1>Your Orders</h1>
+    <p class="subtitle">Track the status of everything you've ordered.</p>
+  </div>
+</div>
+
+@if (isLoading()) {
+  <div class="state-msg">Loading your orders…</div>
+} @else if (orders().length === 0) {
+  <div class="empty-state">
+    <mat-icon>receipt_long</mat-icon>
+    <h3>No orders yet</h3>
+    <p>Once you place an order, it'll show up here.</p>
+    <a mat-flat-button color="primary" routerLink="/catalog">Browse Catalog</a>
+  </div>
+} @else {
+  <div class="order-list">
+    @for (order of orders(); track order._id) {
+      <div class="order-card">
+        <div class="order-head">
+          <div>
+            <div class="order-id">Order {{ order.orderId }}</div>
+            <div class="order-date">{{ order.createdAt | date: 'medium' }}</div>
+          </div>
+          <span class="status-badge" [class]="'status-' + order.status">{{ order.status }}</span>
+        </div>
+
+        <div class="order-items">
+          @for (item of order.items; track item.inventoryItem) {
+            <div class="order-item-row">
+              <span>{{ item.name }} &times; {{ item.quantity }}</span>
+              <span>₹{{ item.price * item.quantity }}</span>
+            </div>
+          }
+        </div>
+
+        <div class="order-footer">
+          <span>{{ order.paymentMethod === 'cod' ? 'Cash on delivery' : (order.paymentMethod | uppercase) }}</span>
+          <div class="total-breakdown">
+            @if (order.discountAmount > 0) {
+              <div class="breakdown-row">Discount ({{ order.couponCode }})<span>−₹{{ order.discountAmount }}</span></div>
+            }
+            @if (order.shippingCharge > 0) {
+              <div class="breakdown-row">Shipping<span>+₹{{ order.shippingCharge }}</span></div>
+            }
+            <span class="total">
+              Total: ₹{{ order.totalAmount }}
+              @if (order.paymentStatus === 'partial') {
+                <span class="balance-due"> — ₹{{ order.totalAmount - order.amountPaid }} due</span>
+              }
+            </span>
+          </div>
+        </div>
+
+        @if (order.status !== 'cancelled' && balanceDue(order) > 0) {
+          <div class="pay-now-row">
+            <button
+              mat-flat-button
+              color="primary"
+              class="pay-now-btn"
+              [disabled]="payingOrderId() === order._id"
+              (click)="payNow(order)"
+            >
+              {{ payingOrderId() === order._id ? 'Processing…' : 'Pay ₹' + balanceDue(order) + ' now' }}
+            </button>
+          </div>
+        }
+      </div>
+    }
+  </div>
+}

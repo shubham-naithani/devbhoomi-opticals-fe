@@ -1,0 +1,39 @@
+<div class="auth-page">
+  <mat-card class="auth-card">
+    <h1>Welcome back</h1>
+    <p class="subtitle">Log in to view your orders and checkout faster.</p>
+
+    <form [formGroup]="form" (ngSubmit)="submit()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput type="email" formControlName="email" autocomplete="email" />
+        @if (form.controls.email.hasError('required') && form.controls.email.touched) {
+          <mat-error>Email is required</mat-error>
+        }
+        @if (form.controls.email.hasError('email') && form.controls.email.touched) {
+          <mat-error>Enter a valid email</mat-error>
+        }
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input matInput type="password" formControlName="password" autocomplete="current-password" />
+        @if (form.controls.password.hasError('required') && form.controls.password.touched) {
+          <mat-error>Password is required</mat-error>
+        }
+      </mat-form-field>
+
+      @if (errorMessage()) {
+        <div class="error-banner">{{ errorMessage() }}</div>
+      }
+
+      <button mat-flat-button color="primary" type="submit" class="full-width submit-btn" [disabled]="isSubmitting()">
+        {{ isSubmitting() ? 'Logging in…' : 'Log in' }}
+      </button>
+    </form>
+
+    <p class="switch-link">
+      New here? <a routerLink="/register">Create an account</a>
+    </p>
+  </mat-card>
+</div>

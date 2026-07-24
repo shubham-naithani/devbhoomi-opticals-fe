@@ -1,0 +1,92 @@
+<div class="catalog-page">
+  <div class="catalog-header">
+    <h1>Browse Frames</h1>
+    <p class="subtitle">{{ totalItems() }} products</p>
+  </div>
+
+  <div class="toolbar">
+    <div class="search-box">
+      <input
+        type="text"
+        placeholder="Search by name or brand…"
+        [value]="searchTerm()"
+        (input)="onSearchChange($any($event.target).value)"
+      />
+    </div>
+
+    <select [(ngModel)]="categoryFilter" (ngModelChange)="onFilterChange()" #categorySelect>
+      <option value="">All categories</option>
+      <option value="eyeglasses">Eyeglasses</option>
+      <option value="sunglasses">Sunglasses</option>
+      <option value="lens">Lens</option>
+      <option value="contact_lens">Contact Lenses</option>
+      <option value="accessory">Accessories</option>
+    </select>
+
+    <select [(ngModel)]="genderFilter" (ngModelChange)="onFilterChange()">
+      <option value="">All genders</option>
+      <option value="unisex">Unisex</option>
+      <option value="men">Men</option>
+      <option value="women">Women</option>
+      <option value="kids">Kids</option>
+    </select>
+
+    <select [(ngModel)]="frameShapeFilter" (ngModelChange)="onFilterChange()">
+      <option value="">All shapes</option>
+      <option value="aviator">Aviator</option>
+      <option value="wayfarer">Wayfarer</option>
+      <option value="round">Round</option>
+      <option value="square">Square</option>
+      <option value="rectangle">Rectangle</option>
+      <option value="cat_eye">Cat-eye</option>
+      <option value="oval">Oval</option>
+      <option value="geometric">Geometric</option>
+    </select>
+  </div>
+
+  @if (isLoading()) {
+    <div class="state-msg">Loading frames…</div>
+  } @else if (products().length === 0) {
+    <div class="state-msg">No products match these filters.</div>
+  } @else {
+    <div class="product-grid">
+      @for (product of products(); track product._id) {
+        <a class="product-card" [routerLink]="['/catalog', product._id]">
+          @if (totalStock(product) <= 0) {
+            <span class="out-of-stock-badge">Out of stock</span>
+          }
+          <div class="product-thumb">
+            @if (thumbnailFor(product)) {
+              <img [src]="thumbnailFor(product)" [alt]="product.name" loading="lazy" />
+            } @else {
+              <div class="product-thumb-placeholder">{{ product.name.charAt(0) }}</div>
+            }
+          </div>
+          <div class="product-info">
+            <div class="product-brand">{{ product.brand }}</div>
+            <div class="product-name">{{ product.name }}</div>
+            <div class="product-price">
+              @if (priceRange(product).min === priceRange(product).max) {
+                ₹{{ priceRange(product).min }}
+              } @else {
+                ₹{{ priceRange(product).min }}–{{ priceRange(product).max }}
+              }
+            </div>
+          </div>
+        </a>
+      }
+    </div>
+
+    @if (totalPages() > 1) {
+      <div class="pagination">
+        <button mat-icon-button (click)="goToPage(page() - 1)" [disabled]="page() === 1">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span>Page {{ page() }} of {{ totalPages() }}</span>
+        <button mat-icon-button (click)="goToPage(page() + 1)" [disabled]="page() === totalPages()">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+    }
+  }
+</div>
