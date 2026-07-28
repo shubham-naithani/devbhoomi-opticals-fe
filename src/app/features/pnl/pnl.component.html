@@ -85,8 +85,8 @@
         @for (tx of transactions(); track tx._id) {
           <tr>
             <td>{{ tx.createdAt | date: 'short' }}</td>
-            <td class="mono">{{ tx.order.orderId || '—' }}</td>
-            <td>{{ tx.order.customer?.name || '—' }}</td>
+            <td class="mono">{{ tx.order?.orderId || '—' }}</td>
+            <td>{{ tx.order?.customer?.name || '—' }}</td>
             <td>
               <span class="badge" [class.badge-active]="tx.type === 'payment'" [class.badge-inactive]="tx.type === 'refund'">
                 {{ tx.type }}

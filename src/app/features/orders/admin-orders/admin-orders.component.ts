@@ -24,16 +24,14 @@ export class AdminOrdersComponent {
   auth = inject(AuthService);
 
   private readonly statusTransitions: Record<OrderStatus, OrderStatus[]> = {
-    pending: ['confirmed', 'cancelled'],
     confirmed: ['in_progress', 'cancelled'],
-    in_progress: ['ready_for_pickup', 'cancelled'],
+    in_progress: ['ready_for_pickup'], // cancel blocked here — work has started
     ready_for_pickup: ['delivered', 'cancelled'],
     delivered: [],
     cancelled: [],
   };
 
   private readonly statusLabels: Record<OrderStatus, string> = {
-    pending: 'Pending',
     confirmed: 'Confirmed',
     in_progress: 'In progress',
     ready_for_pickup: 'Ready to pick up',
@@ -58,7 +56,7 @@ export class AdminOrdersComponent {
   bulkStatus = signal<OrderStatus | ''>('');
   isBulkUpdating = signal(false);
 
-  statusOptions: OrderStatus[] = ['pending', 'confirmed', 'in_progress', 'ready_for_pickup', 'delivered', 'cancelled'];
+  statusOptions: OrderStatus[] = ['confirmed', 'in_progress', 'ready_for_pickup', 'delivered', 'cancelled'];
   paymentMethodOptions: PaymentMethod[] = ['cash', 'card', 'upi', 'cod'];
 
   // Detail panel state (view + edit combined)
