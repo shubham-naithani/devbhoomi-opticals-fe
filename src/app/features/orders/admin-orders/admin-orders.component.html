@@ -162,7 +162,45 @@
     }
   </div>
 
-<div class="detail-section payment-summary">
+  @if ($any(order.prescriptionUsed); as rx) {
+    @if (rx.rightEye) {
+    <div class="detail-section">
+      <div class="detail-label">Eye test used</div>
+      <div class="rx-grid">
+        <div class="rx-row rx-header">
+          <span></span>
+          <span>SPH</span>
+          <span>CYL</span>
+          <span>AXIS</span>
+          <span>ADD</span>
+        </div>
+        <div class="rx-row">
+          <span>Right (OD)</span>
+          <span>{{ rx.rightEye.sphere ?? '—' }}</span>
+          <span>{{ rx.rightEye.cylinder ?? '—' }}</span>
+          <span>{{ rx.rightEye.axis ?? '—' }}</span>
+          <span>{{ rx.rightEye.add ?? '—' }}</span>
+        </div>
+        <div class="rx-row">
+          <span>Left (OS)</span>
+          <span>{{ rx.leftEye.sphere ?? '—' }}</span>
+          <span>{{ rx.leftEye.cylinder ?? '—' }}</span>
+          <span>{{ rx.leftEye.axis ?? '—' }}</span>
+          <span>{{ rx.leftEye.add ?? '—' }}</span>
+        </div>
+      </div>
+      @if (rx.pupillaryDistance) {
+      <div class="detail-sub">PD: {{ rx.pupillaryDistance }}mm</div>
+      }
+      <div class="detail-sub">Tested {{ rx.testedAt | date: 'mediumDate' }}</div>
+      @if (rx.notes) {
+      <div class="detail-sub">{{ rx.notes }}</div>
+      }
+    </div>
+    }
+  }
+
+  <div class="detail-section payment-summary">
   <div class="summary-row">
     <span>Total</span>
     <span>₹{{ order.totalAmount }}</span>

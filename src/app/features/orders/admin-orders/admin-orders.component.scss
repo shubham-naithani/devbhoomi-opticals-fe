@@ -248,3 +248,45 @@ table td {
   color: var(--color-text-muted);
   font-size: 13px;
 }
+
+.rx-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+  gap: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  background: var(--surface-subtle, #fafafa);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.rx-row {
+  display: contents;
+
+  span {
+    padding: 0.4rem 0.25rem;
+    text-align: center;
+  }
+
+  span:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-secondary, #555);
+  }
+}
+
+.rx-header span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted, #888);
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  padding-bottom: 0.4rem;
+}
+
+.rx-row:not(.rx-header) {
+  span {
+    border-bottom: 1px dashed var(--border-color, #eee);
+  }
+}

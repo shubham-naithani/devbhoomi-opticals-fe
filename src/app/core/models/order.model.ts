@@ -1,3 +1,5 @@
+import { EyeTest } from "./eye-test.model";
+
 export type OrderStatus = 'confirmed' | 'in_progress' | 'ready_for_pickup' | 'delivered' | 'cancelled';
 export type PaymentMethod = 'cod' | 'cash' | 'card' | 'upi';
 export type OrderSource = 'online' | 'in_store';
@@ -24,7 +26,7 @@ export interface Order {
   paymentMethod: PaymentMethod;
   status: OrderStatus;
   source: OrderSource;
-  prescriptionUsed?: string;
+  prescriptionUsed?: string | EyeTest;
   shippingAddress?: string;
   contactPhone?: string;
   notes?: string;
