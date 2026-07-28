@@ -194,7 +194,10 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
 
-  @media (max-width: 640px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 900px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
 }
 
 .category-tile {
@@ -248,6 +251,14 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 
   &:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(23, 40, 40, 0.08); }
+
+  @media (max-width: 900px) {
+    flex: 0 0 200px;
+  }
+
+  @media (max-width: 480px) {
+    flex: 0 0 160px;
+  }
 }
 
 .product-thumb {

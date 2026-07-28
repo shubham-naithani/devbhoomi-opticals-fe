@@ -24,7 +24,7 @@ export interface Article {
   costPrice?: number;
   price: number;         // MRP — read-only, server-computed
   mspPrice?: number;
-  isMspManual: boolean;
+  isMrpManual: boolean;
   stock: number;
   lowStockThreshold?: number;
   images: string[];

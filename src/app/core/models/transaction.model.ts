@@ -1,6 +1,6 @@
 export interface Transaction {
   _id: string;
-  order: { _id: string; orderId: string; customer?: { name: string; phone: string } };
+  order: { _id: string; orderId: string; customer?: { name: string; phone: string } | null };
   type: 'payment' | 'refund';
   amount: number;
   method: 'cash' | 'card' | 'upi' | 'cod' | 'razorpay';

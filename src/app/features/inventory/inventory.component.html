@@ -245,21 +245,21 @@
             <input type="number" [formControl]="articleForm.controls.costPrice" min="0" placeholder="Required" />
           </div>
           <div class="field">
-            <label>MRP (₹) — auto-calculated</label>
-            <input type="number" [formControl]="articleForm.controls.price" />
-            <div class="hint">Cost × 1.25 — calculated automatically.</div>
+            <label>MSP (₹) — minimum selling price</label>
+            <input type="number" [formControl]="articleForm.controls.mspPrice" min="0" />
+            <div class="hint">Cost × 1.25 — always fixed. No sale can go below this.</div>
           </div>
         </div>
 
         <div class="field">
-          <label class="checkbox-field msp-toggle">
-            <input type="checkbox" [formControl]="articleForm.controls.isMspManual" />
-            Manually set MSP
+          <label class="checkbox-field mrp-toggle">
+            <input type="checkbox" [formControl]="articleForm.controls.isMrpManual" />
+            Manually set MRP
           </label>
-          <label>MSP (₹) — minimum selling price</label>
-          <input type="number" [formControl]="articleForm.controls.mspPrice" min="0" />
-          @if (!articleForm.controls.isMspManual.value) {
-            <div class="hint">Cost × 1.40 — auto-calculated. Check the box above to override.</div>
+          <label>MRP (₹) — customer-facing price</label>
+          <input type="number" [formControl]="articleForm.controls.price" min="0" />
+          @if (!articleForm.controls.isMrpManual.value) {
+          <div class="hint">Cost × 1.40 — auto-calculated. Check the box above to override.</div>
           }
         </div>
 
@@ -401,21 +401,21 @@
             <input type="number" formControlName="costPrice" min="0" placeholder="Required" />
           </div>
           <div class="field">
-            <label>MRP (₹) — auto-calculated</label>
-            <input type="number" formControlName="price" />
-            <div class="hint">Cost × 1.25 — calculated automatically.</div>
+            <label>MSP (₹) — minimum selling price</label>
+            <input type="number" formControlName="mspPrice" min="0" />
+            <div class="hint">Cost × 1.25 — always fixed. No sale can go below this.</div>
           </div>
         </div>
 
         <div class="field">
-          <label class="checkbox-field msp-toggle">
-            <input type="checkbox" formControlName="isMspManual" />
-            Manually set MSP
+          <label class="checkbox-field mrp-toggle">
+            <input type="checkbox" formControlName="isMrpManual" />
+            Manually set MRP
           </label>
-          <label>MSP (₹) — minimum selling price</label>
-          <input type="number" formControlName="mspPrice" min="0" />
-          @if (!articleForm.controls.isMspManual.value) {
-            <div class="hint">Cost × 1.40 — auto-calculated. Check the box above to override.</div>
+          <label>MRP (₹) — customer-facing price</label>
+          <input type="number" formControlName="price" min="0" />
+          @if (!articleForm.controls.isMrpManual.value) {
+          <div class="hint">Cost × 1.40 — auto-calculated. Check the box above to override.</div>
           }
         </div>
 

@@ -248,3 +248,72 @@ table td {
   color: var(--color-text-muted);
   font-size: 13px;
 }
+
+.rx-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr 1fr 1fr 1fr;
+  gap: 0.5rem 0.75rem;
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  background: var(--surface-subtle, #fafafa);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.rx-row {
+  display: contents;
+
+  span {
+    padding: 0.4rem 0.25rem;
+    text-align: center;
+  }
+
+  span:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-secondary, #555);
+  }
+}
+
+.rx-header span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  color: var(--text-muted, #888);
+  border-bottom: 1px solid var(--border-color, #e0e0e0);
+  padding-bottom: 0.4rem;
+}
+
+.rx-row:not(.rx-header) {
+  span {
+    border-bottom: 1px dashed var(--border-color, #eee);
+  }
+}
+
+.item-discount-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-warning, #c08a1e);
+  background: rgba(192, 138, 30, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+}
+
+.repair-status-badge {
+  font-size: 11px;
+  text-transform: capitalize;
+
+  &.repair-received { background: rgba(192, 138, 30, 0.12); color: var(--color-warning); }
+  &.repair-in_progress { background-color: #dbeafe; color: #1d4ed8; }
+  &.repair-ready_for_pickup { background-color: #ede9fe; color: #6d28d9; }
+  &.repair-collected { background: rgba(47, 122, 82, 0.12); color: var(--color-success); }
+  &.repair-cancelled { background: rgba(179, 73, 46, 0.10); color: var(--color-danger); }
+}
+
+.invoice-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}

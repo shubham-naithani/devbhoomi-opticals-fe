@@ -1,0 +1,167 @@
+<div class="page-header">
+  <div>
+    <h1>Repairs</h1>
+    <p class="subtitle">{{ totalTickets() }} repair ticket(s) — customer items brought in for service.</p>
+  </div>
+</div>
+
+<div class="toolbar">
+  <input type="text" placeholder="Search by repair ID…" [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)" />
+  <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
+    <option value="">All statuses</option>
+    @for (opt of statusOptions; track opt) {
+      <option [value]="opt">{{ statusLabel(opt) }}</option>
+    }
+  </select>
+</div>
+
+<div class="card table-card">
+  @if (isLoading()) {
+  <div class="state-msg">Loading repair tickets…</div>
+  } @else if (tickets().length === 0) {
+  <div class="state-msg">No repair tickets found.</div>
+  } @else {
+  <table>
+    <thead>
+      <tr>
+        <th>Ticket</th>
+        <th>Customer</th>
+        <th>Item</th>
+        <th>Warranty</th>
+        <th>Fee</th>
+        <th>Status</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (ticket of tickets(); track ticket._id) {
+      <tr>
+        <td>
+          <div class="order-id">{{ ticket.repairId }}</div>
+          <div class="order-date">{{ ticket.createdAt | date: 'short' }}</div>
+        </td>
+        <td>
+          <div>{{ customerName(ticket) }}</div>
+          <div class="contact">{{ customerContact(ticket) }}</div>
+        </td>
+        <td>
+          {{ ticket.itemName }}
+          @if (ticket.isUnverified) {
+            <div class="unverified-tag">Unverified</div>
+          }
+        </td>
+        <td>
+          @if (ticket.isUnverified) {
+            <span class="muted">—</span>
+          } @else if (ticket.isUnderWarranty) {
+            <span class="badge badge-active">Covered</span>
+          } @else {
+            <span class="badge badge-inactive">Expired</span>
+          }
+        </td>
+        <td>
+          @if (ticket.feeAmount > 0) {
+            ₹{{ ticket.feeAmount }}
+            <div class="contact">{{ ticket.feeCollected ? 'Collected' : 'Pending' }}</div>
+          } @else {
+            <span class="muted">Free</span>
+          }
+        </td>
+        <td>
+          <select [ngModel]="ticket.status" (ngModelChange)="changeStatus(ticket, $event)"
+            [disabled]="updatingId() === ticket._id || isTerminalStatus(ticket.status)"
+            [class]="'status-select status-' + ticket.status">
+            @for (opt of allowedNextStatuses(ticket); track opt) {
+            <option [value]="opt">{{ statusLabel(opt) }}</option>
+            }
+          </select>
+        </td>
+        <td>
+          <div class="actions">
+            <button class="btn btn-ghost" (click)="openDetail(ticket)">View</button>
+            @if (auth.isAdmin()) {
+            <button class="btn btn-danger" (click)="deleteTicket(ticket)">Delete</button>
+            }
+          </div>
+        </td>
+      </tr>
+      }
+    </tbody>
+  </table>
+  }
+</div>
+
+<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="totalTickets()"
+  (pageChange)="goToPage($event)" />
+
+@if (selectedTicket(); as ticket) {
+<div class="overlay" (click)="closeDetail()"></div>
+<div class="side-panel card">
+  <div class="panel-head">
+    <div>
+      <h2>{{ ticket.repairId }}</h2>
+      <div class="panel-sub">{{ ticket.createdAt | date: 'medium' }}</div>
+    </div>
+    <button class="btn btn-ghost" (click)="closeDetail()">Close</button>
+  </div>
+
+  @if (isPanelLoading()) {
+  <div class="state-msg">Loading…</div>
+  } @else {
+  <div class="detail-section">
+    <div class="detail-label">Customer</div>
+    <div class="detail-value">{{ customerName(ticket) }}</div>
+    <div class="detail-sub">{{ customerContact(ticket) }}</div>
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-label">Item</div>
+    <div class="detail-value">{{ ticket.itemName }}</div>
+    @if (ticket.isUnverified) {
+      <div class="detail-sub unverified-note">No matching purchase was found for this customer — warranty could not be auto-verified.</div>
+    } @else {
+      <div class="detail-item-row"><span>Purchased from</span><span>{{ linkedOrderNumber(ticket) }}</span></div>
+      @if (ticket.purchaseDate) {
+      <div class="detail-item-row"><span>Purchase date</span><span>{{ ticket.purchaseDate | date: 'mediumDate' }}</span></div>
+      }
+      <div class="detail-item-row"><span>Warranty</span><span>{{ ticket.warrantyMonths }} month(s)</span></div>
+      @if (ticket.isUnderWarranty) {
+        <span class="badge badge-active">Under warranty</span>
+      } @else {
+        <span class="badge badge-inactive">Warranty expired</span>
+      }
+    }
+  </div>
+
+  <div class="detail-section">
+    <div class="detail-label">Issue</div>
+    <div class="detail-value">{{ ticket.issueDescription }}</div>
+    @if (ticket.staffNotes) {
+    <div class="detail-sub">{{ ticket.staffNotes }}</div>
+    }
+  </div>
+
+  @if (ticket.feeAmount > 0) {
+  <div class="detail-section">
+    <div class="detail-label">Fee</div>
+    <div class="detail-item-row"><span>Amount</span><span>₹{{ ticket.feeAmount }}</span></div>
+    <div class="detail-item-row">
+      <span>Status</span>
+      <span class="badge" [class.badge-active]="ticket.feeCollected" [class.badge-inactive]="!ticket.feeCollected">
+        {{ ticket.feeCollected ? 'Collected' : 'Pending' }}
+      </span>
+    </div>
+    @if (ticket.paymentMethod) {
+    <div class="detail-item-row"><span>Method</span><span>{{ ticket.paymentMethod | uppercase }}</span></div>
+    }
+  </div>
+  }
+
+  <div class="detail-section">
+    <div class="detail-label">Details</div>
+    <div class="detail-item-row"><span>Created by</span><span>{{ createdByName(ticket) || '—' }}</span></div>
+  </div>
+  }
+</div>
+}

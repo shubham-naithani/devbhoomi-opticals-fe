@@ -1,4 +1,6 @@
-export type OrderStatus = 'pending' | 'confirmed' | 'in_progress' | 'ready_for_pickup' | 'delivered' | 'cancelled';
+import { EyeTest } from "./eye-test.model";
+
+export type OrderStatus = 'confirmed' | 'in_progress' | 'ready_for_pickup' | 'delivered' | 'cancelled';
 export type PaymentMethod = 'cod' | 'cash' | 'card' | 'upi';
 export type OrderSource = 'online' | 'in_store';
 export type PaymentStatus = 'unpaid' | 'partial' | 'paid';
@@ -7,6 +9,10 @@ export interface OrderItem {
   inventoryItem: string;
   name: string;
   price: number;
+  mspPrice?: number;
+  itemDiscountPercent?: number;
+  itemDiscountAmount?: number;
+  warrantyMonths?: number;
   quantity: number;
 }
 
@@ -24,7 +30,7 @@ export interface Order {
   paymentMethod: PaymentMethod;
   status: OrderStatus;
   source: OrderSource;
-  prescriptionUsed?: string;
+  prescriptionUsed?: string | EyeTest;
   shippingAddress?: string;
   contactPhone?: string;
   notes?: string;
@@ -36,6 +42,8 @@ export interface Order {
   refundedAt?: string;
   couponCode?: string;
   discountAmount: number;
+  invoiceUrl?: string;
+  invoiceGeneratedAt?: string;
 }
 
 export interface CreateOrderPayload {
@@ -47,7 +55,7 @@ export interface CreateOrderPayload {
 
 export interface CreateWalkInOrderPayload {
   customerId: string;
-  items: { inventoryItem: string; articleId: string; quantity: number }[];
+  items: { inventoryItem: string; articleId: string; quantity: number; discountPercent?: number; warrantyMonths?: number }[];
   paymentMethod: PaymentMethod;
   amountPaid?: number;
   prescriptionUsed?: string;
@@ -60,4 +68,11 @@ export interface UpdateOrderPayload {
   shippingAddress?: string;
   contactPhone?: string;
   paymentMethod?: PaymentMethod;
+}
+
+export interface RelatedRepair {
+  repairId: string;
+  itemName: string;
+  status: string;
+  createdAt: string;
 }

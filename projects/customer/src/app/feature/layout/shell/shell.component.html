@@ -10,6 +10,14 @@
     <a routerLink="/catalog" routerLinkActive="active">Browse Frames</a>
   </nav>
 
+  <!-- Mobile menu button -->
+  <button mat-icon-button class="mobile-menu-btn" [matMenuTriggerFor]="mobileMenu" aria-label="Menu">
+    <mat-icon>menu</mat-icon>
+  </button>
+  <mat-menu #mobileMenu="matMenu">
+    <a mat-menu-item routerLink="/catalog">Browse Frames</a>
+  </mat-menu>
+
   <a routerLink="/cart" class="cart-link" aria-label="Cart">
     <mat-icon>shopping_bag</mat-icon>
     @if (cart.itemCount() > 0) {
@@ -18,7 +26,7 @@
   </a>
 
   @if (auth.isLoggedIn()) {
-    <button mat-icon-button [matMenuTriggerFor]="accountMenu" aria-label="Account">
+    <button mat-icon-button class="account-btn" [matMenuTriggerFor]="accountMenu" aria-label="Account">
       <mat-icon>account_circle</mat-icon>
     </button>
     <mat-menu #accountMenu="matMenu">
