@@ -1,1 +1,201 @@
-<p>repair-order works!</p>
+<div class="page-header">
+  <div>
+    <h2>Repair</h2>
+    <p class="subtitle">Scan the barcode from the customer's original invoice to pull up their purchase and check warranty.</p>
+  </div>
+</div>
+
+<!-- Customer -->
+<div class="card step-card">
+  <div class="step-title">Customer</div>
+
+  @if (!selectedCustomer()) {
+    <div class="search-row">
+      <input
+        type="tel"
+        placeholder="Search by phone number…"
+        [(ngModel)]="phoneQuery"
+        (keyup.enter)="searchCustomer()"
+      />
+      <button class="btn btn-primary" [disabled]="isSearching()" (click)="searchCustomer()">
+        {{ isSearching() ? 'Searching…' : 'Search' }}
+      </button>
+    </div>
+
+    @if (searchResults().length > 0) {
+      <div class="result-list">
+        @for (c of searchResults(); track c._id) {
+          <div class="result-row" (click)="selectCustomer(c)">
+            <div>
+              <div class="name">{{ c.name }}</div>
+              <div class="meta">{{ c.phone }} @if (c.email) { &middot; {{ c.email }} }</div>
+            </div>
+            <button class="btn btn-ghost">Use this customer</button>
+          </div>
+        }
+      </div>
+    }
+
+    @if (showNewCustomerForm()) {
+      <div class="new-customer-form">
+        <div class="hint">No match found — create a new customer record:</div>
+        <div class="two-col">
+          <div class="field">
+            <label>Full name</label>
+            <input type="text" [(ngModel)]="newCustomerName" placeholder="Customer name" />
+          </div>
+          <div class="field">
+            <label>Phone</label>
+            <input type="tel" [(ngModel)]="newCustomerPhone" placeholder="98765 43210" />
+          </div>
+        </div>
+        <div class="field">
+          <label>Email (optional)</label>
+          <input type="email" [(ngModel)]="newCustomerEmail" placeholder="Leave blank if not given" />
+        </div>
+        <button class="btn btn-accent" [disabled]="isCreatingCustomer()" (click)="createNewCustomer()">
+          {{ isCreatingCustomer() ? 'Creating…' : 'Create customer' }}
+        </button>
+      </div>
+    }
+  } @else {
+    <div class="selected-customer">
+      <div>
+        <div class="name">{{ selectedCustomer()!.name }}</div>
+        <div class="meta">
+          {{ selectedCustomer()!.phone }}
+          @if (selectedCustomer()!.email) { &middot; {{ selectedCustomer()!.email }} }
+        </div>
+      </div>
+      <button class="btn btn-ghost" (click)="changeCustomer()">Change</button>
+    </div>
+  }
+</div>
+
+<!-- Barcode scan -->
+@if (selectedCustomer()) {
+  <div class="card step-card">
+    <div class="step-title">Item</div>
+
+    @if (!lookupResult()) {
+      <div class="scan-row">
+        <input
+            #barcodeInputEl
+            type="text"
+            placeholder="Scan barcode from invoice…"
+            [ngModel]="barcodeInput()"
+            (ngModelChange)="barcodeInput.set($event)"
+            (keyup.enter)="onLookupBarcode()"
+          />
+        <button class="btn btn-primary" [disabled]="isLookingUp()" (click)="onLookupBarcode()">
+          {{ isLookingUp() ? 'Looking up…' : 'Scan' }}
+        </button>
+      </div>
+      <div class="hint">Scan the barcode printed on the customer's invoice for this item.</div>
+    } @else {
+      <div class="scanned-item">
+        <div class="name">{{ lookupResult()!.itemName }}</div>
+        <div class="meta">SKU {{ lookupResult()!.article.sku }}</div>
+        <button class="btn btn-ghost" (click)="scanAnotherItem()">Scan a different item</button>
+      </div>
+
+      @if (lookupResult()!.candidates.length > 1 && !selectedCandidate()) {
+        <div class="hint">This customer bought this item more than once — pick the right purchase:</div>
+        <div class="result-list">
+          @for (c of lookupResult()!.candidates; track c.orderId) {
+            <div class="result-row" (click)="pickCandidate(c)">
+              <div>
+                <div class="name">{{ c.orderNumber }}</div>
+                <div class="meta">Purchased {{ c.purchaseDate | date: 'mediumDate' }} &middot; {{ c.warrantyMonths }} month warranty</div>
+              </div>
+              <button class="btn btn-ghost">Use this purchase</button>
+            </div>
+          }
+        </div>
+      }
+
+      @if (lookupResult()!.candidates.length === 0 && !proceedUnverified()) {
+        <div class="unverified-warning">
+          <div class="hint">No matching purchase found for this customer — the fee will need to be set manually.</div>
+          <button class="btn btn-ghost" (click)="useWithoutMatch()">Proceed without a verified purchase</button>
+        </div>
+      }
+
+      @if (selectedCandidate(); as candidate) {
+        <div class="purchase-match">
+          <div class="detail-item-row">
+            <span>Order</span>
+            <span>{{ candidate.orderNumber }}</span>
+          </div>
+          <div class="detail-item-row">
+            <span>Purchased</span>
+            <span>{{ candidate.purchaseDate | date: 'mediumDate' }}</span>
+          </div>
+          <div class="detail-item-row">
+            <span>Warranty</span>
+            <span>{{ candidate.warrantyMonths }} month(s)</span>
+          </div>
+          @if (isUnderWarranty) {
+            <div class="warranty-badge covered">✓ Under warranty until {{ warrantyCutoff | date: 'mediumDate' }} — free repair</div>
+          } @else {
+            <div class="warranty-badge expired">Warranty expired{{ warrantyCutoff ? ' on ' + (warrantyCutoff | date: 'mediumDate') : '' }} — fee required</div>
+          }
+        </div>
+      }
+
+      @if (proceedUnverified()) {
+        <div class="warranty-badge unverified">Unverified purchase — no warranty auto-detected, set fee manually below</div>
+      }
+    }
+  </div>
+}
+
+<!-- Issue + fee + confirm -->
+@if (selectedCustomer() && lookupResult() && (selectedCandidate() || proceedUnverified())) {
+  <div class="card step-card">
+    <div class="step-title">Issue &amp; fee</div>
+
+    <div class="field">
+      <label>What's wrong with it?</label>
+      <textarea rows="2" [ngModel]="issueDescription()" (ngModelChange)="issueDescription.set($event)" placeholder="e.g. Loose hinge, scratched lens…"></textarea>
+    </div>
+
+    @if (showFeeSection) {
+      <div class="two-col">
+        <div class="field">
+          <label>Repair fee (₹)</label>
+          <input type="number" min="0" [ngModel]="feeAmount()" (ngModelChange)="feeAmount.set($event)" placeholder="0" />
+        </div>
+        <div class="field">
+          <label class="checkbox-field fee-collected-toggle">
+            <input type="checkbox" [ngModel]="feeCollected()" (ngModelChange)="feeCollected.set($event)" />
+            Fee collected now
+          </label>
+        </div>
+      </div>
+
+      @if (feeCollected()) {
+        <div class="field">
+          <label>Payment method</label>
+          <select [ngModel]="paymentMethod()" (ngModelChange)="paymentMethod.set($event)">
+            <option value="cash">Cash</option>
+            <option value="card">Card</option>
+            <option value="upi">UPI</option>
+          </select>
+        </div>
+      }
+    }
+
+    <div class="field">
+      <label>Staff notes (optional)</label>
+      <textarea rows="2" [ngModel]="staffNotes()" (ngModelChange)="staffNotes.set($event)" placeholder="Anything worth noting…"></textarea>
+    </div>
+
+    <div class="step-nav-buttons">
+      <span></span>
+      <button class="btn btn-primary confirm-btn" [disabled]="isCreatingTicket()" (click)="createTicket()">
+        {{ isCreatingTicket() ? 'Creating ticket…' : 'Create repair ticket' }}
+      </button>
+    </div>
+  </div>
+}

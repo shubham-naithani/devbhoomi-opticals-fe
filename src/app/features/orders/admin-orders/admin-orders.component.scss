@@ -300,3 +300,14 @@ table td {
   border-radius: 4px;
   margin-left: 8px;
 }
+
+.repair-status-badge {
+  font-size: 11px;
+  text-transform: capitalize;
+
+  &.repair-received { background: rgba(192, 138, 30, 0.12); color: var(--color-warning); }
+  &.repair-in_progress { background-color: #dbeafe; color: #1d4ed8; }
+  &.repair-ready_for_pickup { background-color: #ede9fe; color: #6d28d9; }
+  &.repair-collected { background: rgba(47, 122, 82, 0.12); color: var(--color-success); }
+  &.repair-cancelled { background: rgba(179, 73, 46, 0.10); color: var(--color-danger); }
+}

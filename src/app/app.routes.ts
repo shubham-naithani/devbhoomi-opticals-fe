@@ -78,6 +78,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/walk-in-order/walk-in-order.component').then((m) => m.WalkInOrderComponent),
       },
+      {
+        path: 'repairs',
+        canActivate: [staffGuard],
+        loadComponent: () => import('./features/repairs/repairs.component').then((m) => m.RepairsComponent),
+      },
 
       // Customer-facing
       {

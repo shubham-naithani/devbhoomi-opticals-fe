@@ -167,6 +167,18 @@
     }
   </div>
 
+  @if (relatedRepairs().length > 0) {
+  <div class="detail-section">
+    <div class="detail-label">Repair history</div>
+    @for (r of relatedRepairs(); track r.repairId) {
+    <div class="detail-item-row">
+      <span>{{ r.repairId }} — {{ r.itemName }}</span>
+      <span class="badge repair-status-badge" [class]="'repair-' + r.status">{{ r.status }}</span>
+    </div>
+    }
+  </div>
+  }
+
   @if ($any(order.prescriptionUsed); as rx) {
     @if (rx.rightEye) {
     <div class="detail-section">

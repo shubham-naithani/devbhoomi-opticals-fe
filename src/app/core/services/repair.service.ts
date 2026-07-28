@@ -18,8 +18,14 @@ export class RepairService {
   }
 
   all(params: { status?: string; search?: string; page?: number; limit?: number }) {
+    const cleanParams: Record<string, string> = {};
+    Object.entries(params).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        cleanParams[key] = String(value);
+      }
+    });
     return this.http.get<{ tickets: RepairTicket[]; total: number; page: number; pages: number }>(this.base, {
-      params: params as any,
+      params: cleanParams,
     });
   }
 

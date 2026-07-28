@@ -6,7 +6,7 @@ import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
-import { Order, OrderStatus, PaymentMethod } from '../../../core/models/order.model';
+import { Order, OrderStatus, PaymentMethod, RelatedRepair } from '../../../core/models/order.model';
 
 const PAGE_SIZE = 10;
 
@@ -55,6 +55,7 @@ export class AdminOrdersComponent {
   selectedIds = signal<Set<string>>(new Set());
   bulkStatus = signal<OrderStatus | ''>('');
   isBulkUpdating = signal(false);
+  relatedRepairs = signal<RelatedRepair[]>([]);
 
   statusOptions: OrderStatus[] = ['confirmed', 'in_progress', 'ready_for_pickup', 'delivered', 'cancelled'];
   paymentMethodOptions: PaymentMethod[] = ['cash', 'card', 'upi', 'cod'];
@@ -272,11 +273,13 @@ export class AdminOrdersComponent {
     this.isEditMode.set(false);
     this.showRefundForm.set(false);
     this.paymentAmount.set(null);
+    this.relatedRepairs.set([]); // reset until the fresh fetch resolves
     this.selectedOrder.set(order); // show cached data immediately
 
     this.orderService.getById(order._id).subscribe({
       next: (res) => {
         this.selectedOrder.set(res.order);
+        this.relatedRepairs.set(res.relatedRepairs || []);
         this.resetEditFields(res.order);
         this.isPanelLoading.set(false);
       },

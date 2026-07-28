@@ -6,6 +6,7 @@ import {
   CreateWalkInOrderPayload,
   Order,
   OrderStatus,
+  RelatedRepair,
   UpdateOrderPayload,
 } from '../models/order.model';
 
@@ -37,7 +38,7 @@ export class OrderService {
   }
 
   getById(id: string) {
-    return this.http.get<{ order: Order }>(`${this.base}/${id}`);
+    return this.http.get<{ order: Order; relatedRepairs: RelatedRepair[] }>(`${this.base}/${id}`);
   }
 
   update(id: string, payload: UpdateOrderPayload) {

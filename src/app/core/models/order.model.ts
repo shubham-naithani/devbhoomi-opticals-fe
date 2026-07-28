@@ -67,3 +67,10 @@ export interface UpdateOrderPayload {
   contactPhone?: string;
   paymentMethod?: PaymentMethod;
 }
+
+export interface RelatedRepair {
+  repairId: string;
+  itemName: string;
+  status: string;
+  createdAt: string;
+}
