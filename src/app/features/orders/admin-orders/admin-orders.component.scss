@@ -290,3 +290,13 @@ table td {
     border-bottom: 1px dashed var(--border-color, #eee);
   }
 }
+
+.item-discount-tag {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-warning, #c08a1e);
+  background: rgba(192, 138, 30, 0.1);
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 8px;
+}

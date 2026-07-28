@@ -156,7 +156,12 @@
     <div class="detail-label">Items</div>
     @for (item of order.items; track $index) {
     <div class="detail-item-row">
-      <span>{{ item.name }} &times; {{ item.quantity }}</span>
+      <span>
+        {{ item.name }} &times; {{ item.quantity }}
+        @if (item.itemDiscountPercent && item.itemDiscountPercent > 0) {
+        <span class="item-discount-tag">−{{ item.itemDiscountPercent }}%</span>
+        }
+      </span>
       <span>₹{{ item.price * item.quantity }}</span>
     </div>
     }
@@ -201,45 +206,55 @@
   }
 
   <div class="detail-section payment-summary">
-  <div class="summary-row">
-    <span>Total</span>
-    <span>₹{{ order.totalAmount }}</span>
-  </div>
-  @if (order.discountAmount > 0) {
+    <div class="summary-row">
+      <span>Subtotal (MRP)</span>
+      <span>₹{{ subtotalMrp(order) }}</span>
+    </div>
+    @if (itemDiscountTotal(order) > 0) {
     <div class="summary-row muted">
-      <span>Discount ({{ order.couponCode }})</span>
+      <span>Item discounts</span>
+      <span>−₹{{ itemDiscountTotal(order) }}</span>
+    </div>
+    }
+    @if (order.discountAmount > 0) {
+    <div class="summary-row muted">
+      <span>Coupon ({{ order.couponCode }})</span>
       <span>−₹{{ order.discountAmount }}</span>
     </div>
-  }
-  @if (order.shippingCharge > 0) {
+    }
+    @if (order.shippingCharge > 0) {
     <div class="summary-row muted">
       <span>Shipping</span>
       <span>+₹{{ order.shippingCharge }}</span>
     </div>
-  }
-  <div class="summary-row">
-    <span>Paid</span>
-    <span>₹{{ order.amountPaid }}</span>
-  </div>
-  @if (balanceDue(order) > 0) {
-  <div class="summary-row due">
-    <span>Balance due</span>
-    <span>₹{{ balanceDue(order) }}</span>
-  </div>
-  }
-  @if (order.changeGiven && order.changeGiven > 0) {
-  <div class="summary-row change">
-    <span>Change given</span>
-    <span>₹{{ order.changeGiven }}</span>
-  </div>
-  }
-  @if (order.status === 'cancelled' && order.refundStatus === 'completed') {
+    }
+    <div class="summary-row total-row-detail">
+      <span>Total</span>
+      <span>₹{{ order.totalAmount }}</span>
+    </div>
+    <div class="summary-row">
+      <span style="padding-top: 2px;">Paid</span>
+      <span style="border-top: 1px solid gray; padding-top: 2px;">₹{{ order.amountPaid }}</span>
+    </div>
+    @if (balanceDue(order) > 0) {
+    <div class="summary-row due">
+      <span>Balance due</span>
+      <span>₹{{ balanceDue(order) }}</span>
+    </div>
+    }
+    @if (order.changeGiven && order.changeGiven > 0) {
+    <div class="summary-row change">
+      <span>Change given</span>
+      <span>₹{{ order.changeGiven }}</span>
+    </div>
+    }
+    @if (order.status === 'cancelled' && order.refundStatus === 'completed') {
     <span class="badge badge-refunded">Refunded ₹{{ order.refundedAmount }}</span>
-  } @else if (order.status === 'cancelled' && order.refundStatus === 'pending') {
+    } @else if (order.status === 'cancelled' && order.refundStatus === 'pending') {
     <span class="badge badge-refund-pending">Refund pending — ₹{{ outstandingRefund(order) }} left</span>
-  } @else {
+    } @else {
     <span class="badge payment-badge" [class]="'pay-' + order.paymentStatus">{{ order.paymentStatus }}</span>
-  }
+    }
   </div>
 
   @if (needsRefund(order)) {

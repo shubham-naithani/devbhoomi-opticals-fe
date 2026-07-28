@@ -12,6 +12,7 @@ export interface OrderItem {
   mspPrice?: number;
   itemDiscountPercent?: number;
   itemDiscountAmount?: number;
+  warrantyMonths?: number;
   quantity: number;
 }
 
@@ -52,7 +53,7 @@ export interface CreateOrderPayload {
 
 export interface CreateWalkInOrderPayload {
   customerId: string;
-  items: { inventoryItem: string; articleId: string; quantity: number; discountPercent?: number }[];
+  items: { inventoryItem: string; articleId: string; quantity: number; discountPercent?: number; warrantyMonths?: number }[];
   paymentMethod: PaymentMethod;
   amountPaid?: number;
   prescriptionUsed?: string;

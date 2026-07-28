@@ -130,6 +130,14 @@ export class AdminOrdersComponent {
     this.showRefundForm.set(true);
   }
 
+  subtotalMrp(order: Order): number {
+    return order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+  }
+
+  itemDiscountTotal(order: Order): number {
+    return order.items.reduce((sum, item) => sum + (item.itemDiscountAmount || 0), 0);
+  }
+
   refundNow(): void {
     const order = this.selectedOrder();
     const amount = this.refundAmount();
