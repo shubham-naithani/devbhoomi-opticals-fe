@@ -154,7 +154,7 @@
 
   <div class="detail-section">
     <div class="detail-label">Items</div>
-    @for (item of order.items; track item.inventoryItem) {
+    @for (item of order.items; track $index) {
     <div class="detail-item-row">
       <span>{{ item.name }} &times; {{ item.quantity }}</span>
       <span>₹{{ item.price * item.quantity }}</span>

@@ -223,20 +223,50 @@
     }
 
     @if (orderLines().length > 0) {
-      <div class="order-lines">
-        @for (line of orderLines(); track line.articleId) {
-          <div class="order-line-row">
-            <span class="line-name">{{ line.name }}</span>
-            <div class="qty-control">
-              <button type="button" (click)="updateQuantity(line.articleId, line.quantity - 1)">−</button>
-              <span>{{ line.quantity }}</span>
-              <button type="button" [disabled]="line.quantity >= line.stock" (click)="updateQuantity(line.articleId, line.quantity + 1)">+</button>
-            </div>
-            <span class="line-total">₹{{ line.price * line.quantity }}</span>
-            <button class="btn btn-danger remove-btn" (click)="removeItem(line.articleId)">Remove</button>
+    @if (itemDiscountDisabled) {
+    <div class="hint discount-blocked-hint">Per-item discounts are disabled while a coupon code is entered below.</div>
+    }
+
+    <div class="order-lines">
+      @for (line of orderLines(); track line.articleId) {
+      <div class="order-line-card">
+        <div class="line-top-row">
+          <span class="line-name">{{ line.name }}</span>
+          <button class="btn btn-danger remove-btn" (click)="removeItem(line.articleId)">Remove</button>
+        </div>
+        <div class="line-price-row">
+          <span class="price-tag">MRP ₹{{ line.price }}</span>
+          <span class="price-tag msp">MSP ₹{{ line.mspPrice }}</span>
+          <div class="discount-field">
+            <label>Discount %</label>
+            <input type="number" min="0" max="100" [ngModel]="line.discountPercent"
+              (ngModelChange)="setItemDiscount(line.articleId, $event)" [disabled]="itemDiscountDisabled" placeholder="0" />
           </div>
-        }
+        </div>
+        <div class="line-bottom-row">
+          <div class="qty-control">
+            <button type="button" (click)="updateQuantity(line.articleId, line.quantity - 1)">−</button>
+            <span>{{ line.quantity }}</span>
+            <button type="button" [disabled]="line.quantity >= line.stock"
+              (click)="updateQuantity(line.articleId, line.quantity + 1)">+</button>
+          </div>
+          @if (line.discountPercent > 0) {
+          <span class="line-discount-note">−₹{{ lineDiscountAmount(line) | number: '1.0-2' }}</span>
+          }
+          <span class="line-total">₹{{ lineEffectivePrice(line) * line.quantity | number: '1.0-2' }}</span>
+        </div>
       </div>
+      }
+    </div>
+
+    <div class="field coupon-field">
+      <label>Coupon code (optional)</label>
+      <input type="text" [ngModel]="couponCode()" (ngModelChange)="couponCode.set($event)" [disabled]="couponDisabled"
+        placeholder="Enter coupon code if customer has one" />
+      @if (couponDisabled) {
+      <div class="hint">Coupon disabled — a per-item discount is already applied. Remove it to use a coupon instead.</div>
+      }
+    </div>
     }
 
     <div class="step-nav-buttons">
@@ -255,16 +285,35 @@
 
     <div class="order-summary">
       @for (line of orderLines(); track line.articleId) {
-        <div class="summary-line">
-          <span>{{ line.name }} &times; {{ line.quantity }}</span>
-          <span>₹{{ line.price * line.quantity }}</span>
-        </div>
+      <div class="summary-line">
+        <span>{{ line.name }} &times; {{ line.quantity }}</span>
+        <span>₹{{ lineEffectivePrice(line) * line.quantity | number: '1.0-2' }}</span>
+      </div>
+      }
+    </div>
+
+    <div class="breakdown">
+      <div class="summary-row">
+        <span>Subtotal (MRP)</span>
+        <span>₹{{ subtotalMrp | number: '1.0-2' }}</span>
+      </div>
+      @if (totalItemDiscount > 0) {
+      <div class="summary-row muted">
+        <span>Item discounts</span>
+        <span>−₹{{ totalItemDiscount | number: '1.0-2' }}</span>
+      </div>
+      }
+      @if (couponCode() && !couponDisabled) {
+      <div class="summary-row muted">
+        <span>Coupon ({{ couponCode() }})</span>
+        <span>Applied at confirmation</span>
+      </div>
       }
     </div>
 
     <div class="total-row">
       <span>Total</span>
-      <span class="total-amount">₹{{ orderTotal }}</span>
+      <span class="total-amount">₹{{ orderTotal | number: '1.0-2' }}</span>
     </div>
 
     <div class="field">
@@ -295,15 +344,6 @@
       </div>
     }
 
-    <div class="field">
-      <label>Coupon code (optional)</label>
-      <input
-        type="text"
-        [ngModel]="couponCode()"
-        (ngModelChange)="couponCode.set($event)"
-        placeholder="Enter coupon code if customer has one"
-      />
-    </div>
     <div class="field">
       <label>Notes (optional)</label>
       <textarea rows="2" [(ngModel)]="orderNotes" placeholder="Anything worth noting for this order…"></textarea>

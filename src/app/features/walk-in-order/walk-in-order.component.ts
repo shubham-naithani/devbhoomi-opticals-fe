@@ -1,4 +1,4 @@
-import { DatePipe } from '@angular/common';
+import { DatePipe, DecimalPipe } from '@angular/common';
 import { Component, effect, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -19,15 +19,16 @@ import {
 import { EyeTest } from '../../core/models/eye-test.model';
 import { PaymentMethod } from '../../core/models/order.model';
 import { ViewChild, ElementRef } from '@angular/core';
-import JsBarcode from 'jsbarcode'; // not actually needed here, skip this import
 
 interface OrderLine {
   inventoryItem: string;
   articleId: string;
   name: string;
-  price: number;
+  price: number; // MRP
+  mspPrice: number;
   stock: number;
   quantity: number;
+  discountPercent: number;
 }
 
 type Step = 'customer' | 'eyeTest' | 'items' | 'payment';
@@ -45,12 +46,13 @@ interface WalkInDraft {
   amountReceived: number | null;
   hasEditedAmount: boolean;
   orderNotes: string;
+  couponCode: string;
 }
 
 @Component({
   selector: 'app-walk-in-order',
   standalone: true,
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, DecimalPipe],
   templateUrl: './walk-in-order.component.html',
   styleUrl: './walk-in-order.component.scss',
 })
@@ -173,6 +175,7 @@ export class WalkInOrderComponent {
         amountReceived: this.amountReceived(),
         hasEditedAmount: this.hasEditedAmount(),
         orderNotes: this.orderNotes(),
+        couponCode: this.couponCode(),
       };
       if (draft.customer || draft.orderLines.length > 0) {
         localStorage.setItem(this.DRAFT_KEY, JSON.stringify(draft));
@@ -180,8 +183,48 @@ export class WalkInOrderComponent {
     });
   }
 
-  get orderTotal(): number {
+  // ---- Pricing / discount helpers ---------------------------------------
+
+  lineEffectivePrice(line: OrderLine): number {
+    const discounted = line.price * (1 - line.discountPercent / 100);
+    return Math.max(discounted, line.mspPrice);
+  }
+
+  lineDiscountAmount(line: OrderLine): number {
+    return (line.price - this.lineEffectivePrice(line)) * line.quantity;
+  }
+
+  setItemDiscount(articleId: string, rawValue: number | null): void {
+    const clamped = Math.min(Math.max(Number(rawValue) || 0, 0), 100);
+    this.orderLines.update((lines) =>
+      lines.map((l) => (l.articleId === articleId ? { ...l, discountPercent: clamped } : l)),
+    );
+  }
+
+  get hasAnyItemDiscount(): boolean {
+    return this.orderLines().some((l) => l.discountPercent > 0);
+  }
+
+  get totalItemDiscount(): number {
+    return this.orderLines().reduce((sum, l) => sum + this.lineDiscountAmount(l), 0);
+  }
+
+  get subtotalMrp(): number {
     return this.orderLines().reduce((sum, l) => sum + l.price * l.quantity, 0);
+  }
+
+  // Coupon and per-item discounts are mutually exclusive — whichever is
+  // used first disables the other input, matching the backend guard.
+  get couponDisabled(): boolean {
+    return this.hasAnyItemDiscount;
+  }
+
+  get itemDiscountDisabled(): boolean {
+    return !!this.couponCode();
+  }
+
+  get orderTotal(): number {
+    return this.orderLines().reduce((sum, l) => sum + this.lineEffectivePrice(l) * l.quantity, 0);
   }
 
   onAmountReceivedChange(value: number | null): void {
@@ -230,11 +273,20 @@ export class WalkInOrderComponent {
           this.currentStep.set(draft.step || 'customer');
           this.selectedCustomer.set(draft.customer || null);
           this.linkedEyeTestId.set(draft.linkedEyeTestId || null);
-          this.orderLines.set(draft.orderLines || []);
+          // Defensive defaults — an older draft saved before this feature
+          // existed won't have mspPrice/discountPercent on its lines.
+          this.orderLines.set(
+            (draft.orderLines || []).map((l) => ({
+              ...l,
+              mspPrice: l.mspPrice ?? 0,
+              discountPercent: l.discountPercent ?? 0,
+            })),
+          );
           this.paymentMethod.set(draft.paymentMethod || 'cash');
           this.amountReceived.set(draft.amountReceived ?? null);
           this.hasEditedAmount.set(draft.hasEditedAmount || false);
           this.orderNotes.set(draft.orderNotes || '');
+          this.couponCode.set(draft.couponCode || '');
           if (draft.customer) this.fetchLatestEyeTest(draft.customer._id);
         } else {
           localStorage.removeItem(this.DRAFT_KEY);
@@ -293,8 +345,10 @@ export class WalkInOrderComponent {
           articleId: article._id,
           name: `${product.name} — ${describeArticle(article)}`,
           price: article.price,
+          mspPrice: article.mspPrice ?? 0,
           stock: article.stock,
           quantity: 1,
+          discountPercent: 0,
         },
       ]);
     }
@@ -333,6 +387,7 @@ export class WalkInOrderComponent {
     this.amountReceived.set(null);
     this.hasEditedAmount.set(false);
     this.orderNotes.set('');
+    this.couponCode.set('');
     this.currentStep.set('customer');
   }
 
@@ -567,8 +622,10 @@ export class WalkInOrderComponent {
         articleId: article._id,
         name: `${product.name} — ${describeArticle(article)}`,
         price: article.price,
+        mspPrice: article.mspPrice ?? 0,
         stock: article.stock,
         quantity: 1,
+        discountPercent: 0,
       },
     ]);
   }
@@ -613,6 +670,7 @@ export class WalkInOrderComponent {
           inventoryItem: l.inventoryItem,
           articleId: l.articleId,
           quantity: l.quantity,
+          discountPercent: l.discountPercent || undefined,
         })),
         paymentMethod: this.paymentMethod(),
         amountPaid: this.hasEditedAmount()
@@ -620,7 +678,7 @@ export class WalkInOrderComponent {
           : undefined,
         prescriptionUsed: this.linkedEyeTestId() || undefined,
         notes: this.orderNotes() || undefined,
-        couponCode: this.couponCode() || undefined, // new
+        couponCode: this.couponDisabled ? undefined : (this.couponCode() || undefined),
       })
       .subscribe({
         next: (res) => {

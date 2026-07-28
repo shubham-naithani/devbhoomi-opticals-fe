@@ -9,6 +9,9 @@ export interface OrderItem {
   inventoryItem: string;
   name: string;
   price: number;
+  mspPrice?: number;
+  itemDiscountPercent?: number;
+  itemDiscountAmount?: number;
   quantity: number;
 }
 
@@ -49,7 +52,7 @@ export interface CreateOrderPayload {
 
 export interface CreateWalkInOrderPayload {
   customerId: string;
-  items: { inventoryItem: string; articleId: string; quantity: number }[];
+  items: { inventoryItem: string; articleId: string; quantity: number; discountPercent?: number }[];
   paymentMethod: PaymentMethod;
   amountPaid?: number;
   prescriptionUsed?: string;
