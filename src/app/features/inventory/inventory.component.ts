@@ -31,8 +31,8 @@ export class InventoryComponent {
   private fb = inject(FormBuilder);
   auth = inject(AuthService);
 
-  private readonly MRP_MARGIN = 1.25;
-  private readonly MSP_MARGIN = 1.4;
+  private readonly MRP_MARGIN = 1.4;
+  private readonly MSP_MARGIN = 1.25;
 
   private round2(n: number): number {
     return Math.round(n * 100) / 100;
@@ -88,13 +88,10 @@ export class InventoryComponent {
     color: [''],
     lensTint: [''],
     size: [''],
-    costPrice: [
-      null as number | null,
-      [Validators.required, Validators.min(0)],
-    ],
-    price: [{ value: 0, disabled: true }],
-    mspPrice: [{ value: null as number | null, disabled: true }],
-    isMspManual: [false],
+    costPrice: [null as number | null, [Validators.required, Validators.min(0)]],
+    price: [null as number | null], // MRP — now EDITABLE (was disabled before)
+    mspPrice: [{ value: null as number | null, disabled: true }], // MSP — now always disabled, the fixed floor
+    isMrpManual: [false], // renamed from isMspManual
     stock: [0, [Validators.required, Validators.min(0)]],
     lowStockThreshold: [null as number | null, [Validators.min(0)]],
     isActive: [true],
@@ -132,30 +129,22 @@ export class InventoryComponent {
     // the server response after save is always the real source of truth for
     // the saved price/mspPrice values (see `saveArticle`, which refreshes
     // from `res.item`).
-    this.articleForm.controls.costPrice.valueChanges.subscribe((cost) => {
+   this.articleForm.controls.costPrice.valueChanges.subscribe((cost) => {
       const numCost = Number(cost) || 0;
-      this.articleForm.controls.price.setValue(
-        this.round2(numCost * this.MRP_MARGIN),
-        { emitEvent: false },
-      );
-      if (!this.articleForm.controls.isMspManual.value) {
-        this.articleForm.controls.mspPrice.setValue(
-          this.round2(numCost * this.MSP_MARGIN),
-          { emitEvent: false },
-        );
+      // MSP always recalculates, no exceptions — it's the fixed floor now.
+      this.articleForm.controls.mspPrice.setValue(this.round2(numCost * this.MSP_MARGIN), { emitEvent: false });
+      if (!this.articleForm.controls.isMrpManual.value) {
+        this.articleForm.controls.price.setValue(this.round2(numCost * this.MRP_MARGIN), { emitEvent: false });
       }
     });
 
-    this.articleForm.controls.isMspManual.valueChanges.subscribe((manual) => {
+   this.articleForm.controls.isMrpManual.valueChanges.subscribe((manual) => {
       if (manual) {
-        this.articleForm.controls.mspPrice.enable({ emitEvent: false });
+        this.articleForm.controls.price.enable({ emitEvent: false });
       } else {
         const cost = Number(this.articleForm.controls.costPrice.value) || 0;
-        this.articleForm.controls.mspPrice.setValue(
-          this.round2(cost * this.MSP_MARGIN),
-          { emitEvent: false },
-        );
-        this.articleForm.controls.mspPrice.disable({ emitEvent: false });
+        this.articleForm.controls.price.setValue(this.round2(cost * this.MRP_MARGIN), { emitEvent: false });
+        this.articleForm.controls.price.disable({ emitEvent: false });
       }
     });
   }
@@ -278,7 +267,7 @@ export class InventoryComponent {
       costPrice: null,
       price: 0,
       mspPrice: null,
-      isMspManual: false,
+      isMrpManual: false,
       stock: 0,
       lowStockThreshold: null,
       isActive: true,
@@ -467,7 +456,7 @@ export class InventoryComponent {
       costPrice: null,
       price: 0,
       mspPrice: null,
-      isMspManual: false,
+      isMrpManual: false,
       stock: 0,
       lowStockThreshold: null,
       isActive: true,
@@ -487,7 +476,7 @@ export class InventoryComponent {
       costPrice: article.costPrice ?? null,
       price: article.price,
       mspPrice: article.mspPrice ?? null,
-      isMspManual: article.isMspManual,
+      isMrpManual: article.isMrpManual,
       stock: article.stock,
       lowStockThreshold: article.lowStockThreshold ?? null,
       isActive: article.isActive,
@@ -527,25 +516,17 @@ export class InventoryComponent {
 
     const proceed = (newUrls: string[]) => {
       this.isUploadingImages.set(false);
-      const { price, ...rawValue } = this.articleForm.getRawValue();
+      const { mspPrice, ...rawValue } = this.articleForm.getRawValue();
       const images = [...this.existingImages(), ...newUrls];
+      const editing = this.editingArticle();
 
-      const payload: any = rawValue.isMspManual
-        ? rawValue
-        : { ...rawValue, mspPrice: undefined };
-      if (editing && this.isStockChanged()) {
-        payload.stockAdjustmentReason = this.stockAdjustmentReason().trim();
-      }
+      // Only send `price` when it's an intentional manual override — otherwise
+      // let the backend derive it fresh from cost.
+      const payload: any = rawValue.isMrpManual ? rawValue : { ...rawValue, price: undefined };
 
       const request = editing
-        ? this.inventoryService.updateArticle(product._id, editing._id, {
-            ...payload,
-            images,
-          } as any)
-        : this.inventoryService.addArticle(product._id, {
-            ...payload,
-            images,
-          } as any);
+      ? this.inventoryService.updateArticle(product._id, editing._id, { ...payload, images } as any)
+      : this.inventoryService.addArticle(product._id, { ...payload, images } as any);
 
       request.subscribe({
         next: (res) => {
