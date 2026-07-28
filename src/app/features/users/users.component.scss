@@ -50,6 +50,14 @@
   justify-content: flex-end;
 }
 
+.order-count-badge {
+  background: var(--accent-soft, #eef4f2);
+  color: var(--accent-strong, #1F4E5C);
+  font-weight: 600;
+  min-width: 1.5rem;
+  text-align: center;
+  border-radius: 999px;
+}
 // ---- Slide-over panel -----------------------------------------------------
 .overlay {
   position: fixed;

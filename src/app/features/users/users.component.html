@@ -28,6 +28,7 @@
           <th>Email</th>
           <th>Phone</th>
           <th>Role</th>
+          <th>Orders</th>
           <th>Status</th>
           <th></th>
         </tr>
@@ -36,10 +37,19 @@
         @for (user of users(); track user._id) {
           <tr>
             <td>{{ user.name }}</td>
-            <td>{{ user.email }}</td>
+            <td>{{ user.email || '—'}}</td>
             <td>{{ user.phone || '—' }}</td>
-            <td><span class="badge" [class.badge-admin]="user.role === 'admin'" [class.badge-staff]="user.role === 'staff'" [class.badge-customer]="user.role === 'customer'">{{ user.role }}</span></td>
-            <td><span class="badge" [class.badge-active]="user.isActive" [class.badge-inactive]="!user.isActive">{{ user.isActive ? 'Active' : 'Inactive' }}</span></td>
+            <td><span class="badge" [class.badge-admin]="user.role === 'admin'" [class.badge-staff]="user.role === 'staff'"
+                [class.badge-customer]="user.role === 'customer'">{{ user.role }}</span></td>
+            <td>
+              @if (user.orderCount) {
+              <span class="badge order-count-badge">{{ user.orderCount }}</span>
+              } @else {
+              <span class="muted">—</span>
+              }
+            </td>
+            <td><span class="badge" [class.badge-active]="user.isActive" [class.badge-inactive]="!user.isActive">{{ user.isActive ?
+                'Active' : 'Inactive' }}</span></td>
             <td class="actions">
               <button class="btn btn-ghost" (click)="openEditPanel(user)">Edit</button>
               <button class="btn btn-danger" (click)="remove(user)">Delete</button>

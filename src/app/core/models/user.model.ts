@@ -12,6 +12,7 @@ export interface User {
   source?: 'online' | 'in_store';
   createdAt?: string;
   updatedAt?: string;
+  orderCount?: number;
 }
 
 export interface UserFormValue {
