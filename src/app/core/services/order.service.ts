@@ -80,4 +80,8 @@ export class OrderService {
       { body: { ids } }
     );
   }
+
+  generateInvoice(id: string) {
+    return this.http.post<{ order: Order; invoiceUrl: string }>(`${this.base}/${id}/invoice`, {});
+  }
 }

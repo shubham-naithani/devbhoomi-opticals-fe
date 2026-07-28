@@ -57,7 +57,13 @@ export class AdminOrdersComponent {
   isBulkUpdating = signal(false);
   relatedRepairs = signal<RelatedRepair[]>([]);
 
-  statusOptions: OrderStatus[] = ['confirmed', 'in_progress', 'ready_for_pickup', 'delivered', 'cancelled'];
+  statusOptions: OrderStatus[] = [
+    'confirmed',
+    'in_progress',
+    'ready_for_pickup',
+    'delivered',
+    'cancelled',
+  ];
   paymentMethodOptions: PaymentMethod[] = ['cash', 'card', 'upi', 'cod'];
 
   // Detail panel state (view + edit combined)
@@ -72,6 +78,7 @@ export class AdminOrdersComponent {
 
   paymentAmount = signal<number | null>(null);
   isRecordingPayment = signal(false);
+  isGeneratingInvoice = signal(false);
 
   constructor() {
     this.fetch();
@@ -122,7 +129,11 @@ export class AdminOrdersComponent {
   }
 
   needsRefund(order: Order): boolean {
-    return order.status === 'cancelled' && order.amountPaid > 0 && order.refundStatus !== 'completed';
+    return (
+      order.status === 'cancelled' &&
+      order.amountPaid > 0 &&
+      order.refundStatus !== 'completed'
+    );
   }
 
   openRefundForm(): void {
@@ -132,11 +143,17 @@ export class AdminOrdersComponent {
   }
 
   subtotalMrp(order: Order): number {
-    return order.items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return order.items.reduce(
+      (sum, item) => sum + item.price * item.quantity,
+      0,
+    );
   }
 
   itemDiscountTotal(order: Order): number {
-    return order.items.reduce((sum, item) => sum + (item.itemDiscountAmount || 0), 0);
+    return order.items.reduce(
+      (sum, item) => sum + (item.itemDiscountAmount || 0),
+      0,
+    );
   }
 
   refundNow(): void {
@@ -148,19 +165,23 @@ export class AdminOrdersComponent {
     }
 
     this.isProcessingRefund.set(true);
-    this.orderService.refund(order._id, { mode: 'now', amount, method: this.refundMethod() }).subscribe({
-      next: (res) => {
-        this.isProcessingRefund.set(false);
-        this.showRefundForm.set(false);
-        this.selectedOrder.set(res.order);
-        this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
-        this.toast.success(`Refund of ₹${amount} recorded`);
-      },
-      error: (err) => {
-        this.isProcessingRefund.set(false);
-        this.toast.error(err?.error?.message || 'Could not record refund');
-      },
-    });
+    this.orderService
+      .refund(order._id, { mode: 'now', amount, method: this.refundMethod() })
+      .subscribe({
+        next: (res) => {
+          this.isProcessingRefund.set(false);
+          this.showRefundForm.set(false);
+          this.selectedOrder.set(res.order);
+          this.orders.update((list) =>
+            list.map((o) => (o._id === order._id ? res.order : o)),
+          );
+          this.toast.success(`Refund of ₹${amount} recorded`);
+        },
+        error: (err) => {
+          this.isProcessingRefund.set(false);
+          this.toast.error(err?.error?.message || 'Could not record refund');
+        },
+      });
   }
 
   markRefundPending(): void {
@@ -173,12 +194,16 @@ export class AdminOrdersComponent {
         this.isProcessingRefund.set(false);
         this.showRefundForm.set(false);
         this.selectedOrder.set(res.order);
-        this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
+        this.orders.update((list) =>
+          list.map((o) => (o._id === order._id ? res.order : o)),
+        );
         this.toast.success('Refund marked as pending');
       },
       error: (err) => {
         this.isProcessingRefund.set(false);
-        this.toast.error(err?.error?.message || 'Could not update refund status');
+        this.toast.error(
+          err?.error?.message || 'Could not update refund status',
+        );
       },
     });
   }
@@ -192,19 +217,23 @@ export class AdminOrdersComponent {
     }
 
     this.isProcessingRefund.set(true);
-    this.orderService.settleRefund(order._id, { amount, method: this.refundMethod() }).subscribe({
-      next: (res) => {
-        this.isProcessingRefund.set(false);
-        this.showRefundForm.set(false);
-        this.selectedOrder.set(res.order);
-        this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
-        this.toast.success(`Refund of ₹${amount} settled`);
-      },
-      error: (err) => {
-        this.isProcessingRefund.set(false);
-        this.toast.error(err?.error?.message || 'Could not settle refund');
-      },
-    });
+    this.orderService
+      .settleRefund(order._id, { amount, method: this.refundMethod() })
+      .subscribe({
+        next: (res) => {
+          this.isProcessingRefund.set(false);
+          this.showRefundForm.set(false);
+          this.selectedOrder.set(res.order);
+          this.orders.update((list) =>
+            list.map((o) => (o._id === order._id ? res.order : o)),
+          );
+          this.toast.success(`Refund of ₹${amount} settled`);
+        },
+        error: (err) => {
+          this.isProcessingRefund.set(false);
+          this.toast.error(err?.error?.message || 'Could not settle refund');
+        },
+      });
   }
 
   onFilterChange(): void {
@@ -255,7 +284,9 @@ export class AdminOrdersComponent {
 
     this.orderService.updateStatus(order._id, status).subscribe({
       next: (res) => {
-        this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
+        this.orders.update((list) =>
+          list.map((o) => (o._id === order._id ? res.order : o)),
+        );
         this.updatingId.set(null);
         this.toast.success('Order status updated');
       },
@@ -325,7 +356,9 @@ export class AdminOrdersComponent {
           this.isSavingEdit.set(false);
           this.isEditMode.set(false);
           this.selectedOrder.set(res.order);
-          this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
+          this.orders.update((list) =>
+            list.map((o) => (o._id === order._id ? res.order : o)),
+          );
           this.toast.success('Order updated');
         },
         error: (err) => {
@@ -349,11 +382,13 @@ export class AdminOrdersComponent {
         this.isRecordingPayment.set(false);
         this.paymentAmount.set(null);
         this.selectedOrder.set(res.order);
-        this.orders.update((list) => list.map((o) => (o._id === order._id ? res.order : o)));
+        this.orders.update((list) =>
+          list.map((o) => (o._id === order._id ? res.order : o)),
+        );
         this.toast.success(
           res.changeDue > 0
             ? `Payment recorded — give ₹${res.changeDue} change to the customer`
-            : 'Payment recorded'
+            : 'Payment recorded',
         );
       },
       error: (err) => {
@@ -378,7 +413,8 @@ export class AdminOrdersComponent {
         this.orders.update((list) => list.filter((o) => o._id !== order._id));
         if (this.selectedOrder()?._id === order._id) this.closeDetail();
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Could not delete order'),
+      error: (err) =>
+        this.toast.error(err?.error?.message || 'Could not delete order'),
     });
   }
 
@@ -421,7 +457,9 @@ export class AdminOrdersComponent {
         this.toast.success(res.message);
         if (res.skipped.length > 0) {
           console.warn('Bulk status update — skipped orders:', res.skipped);
-          this.toast.error(`${res.skipped.length} order(s) skipped — see console for reasons`);
+          this.toast.error(
+            `${res.skipped.length} order(s) skipped — see console for reasons`,
+          );
         }
         this.clearSelection();
         this.bulkStatus.set('');
@@ -450,12 +488,41 @@ export class AdminOrdersComponent {
       next: (res) => {
         this.toast.success(res.message);
         if (res.refundNeededOrderIds.length > 0) {
-          this.toast.error(`${res.refundNeededOrderIds.length} order(s) need refund handling — check the Orders list`);
+          this.toast.error(
+            `${res.refundNeededOrderIds.length} order(s) need refund handling — check the Orders list`,
+          );
         }
         this.clearSelection();
         this.fetch();
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Bulk delete failed'),
+      error: (err) =>
+        this.toast.error(err?.error?.message || 'Bulk delete failed'),
+    });
+  }
+
+  generateInvoice(): void {
+    const order = this.selectedOrder();
+    if (!order) return;
+
+    this.isGeneratingInvoice.set(true);
+    this.orderService.generateInvoice(order._id).subscribe({
+      next: (res) => {
+        this.isGeneratingInvoice.set(false);
+        const updatedOrder = {
+          ...res.order,
+          invoiceUrl: res.invoiceUrl,
+          invoiceGeneratedAt: new Date().toISOString(),
+        };
+        this.selectedOrder.set(updatedOrder);
+        this.orders.update((list) =>
+          list.map((o) => (o._id === order._id ? updatedOrder : o)),
+        );
+        this.toast.success('Invoice generated and sent to customer');
+      },
+      error: (err) => {
+        this.isGeneratingInvoice.set(false);
+        this.toast.error(err?.error?.message || 'Could not generate invoice');
+      },
     });
   }
 }

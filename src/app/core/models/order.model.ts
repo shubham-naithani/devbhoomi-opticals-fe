@@ -42,6 +42,8 @@ export interface Order {
   refundedAt?: string;
   couponCode?: string;
   discountAmount: number;
+  invoiceUrl?: string;
+  invoiceGeneratedAt?: string;
 }
 
 export interface CreateOrderPayload {

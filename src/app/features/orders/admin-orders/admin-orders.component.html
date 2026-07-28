@@ -179,6 +179,26 @@
   </div>
   }
 
+  <div class="detail-section">
+    <div class="detail-label">Invoice</div>
+    @if (order.invoiceUrl) {
+    <div class="detail-item-row">
+      <span>Generated</span>
+      <span>{{ order.invoiceGeneratedAt | date: 'medium' }}</span>
+    </div>
+    <div class="invoice-actions">
+      <a [href]="order.invoiceUrl" target="_blank" class="btn btn-ghost">View invoice</a>
+      <button class="btn btn-ghost" [disabled]="isGeneratingInvoice()" (click)="generateInvoice()">
+        {{ isGeneratingInvoice() ? 'Regenerating…' : 'Regenerate & resend' }}
+      </button>
+    </div>
+    } @else {
+    <button class="btn btn-primary" [disabled]="isGeneratingInvoice()" (click)="generateInvoice()">
+      {{ isGeneratingInvoice() ? 'Generating…' : 'Generate invoice' }}
+    </button>
+    }
+  </div>
+
   @if ($any(order.prescriptionUsed); as rx) {
     @if (rx.rightEye) {
     <div class="detail-section">
