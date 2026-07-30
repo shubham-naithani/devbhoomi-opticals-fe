@@ -459,14 +459,39 @@
 @if (printingArticle(); as p) {
   <div class="overlay" (click)="closePrintLabel()"></div>
   <div class="print-modal card">
-    <div class="print-preview">
-      <div class="label-box" id="printable-label">
-        <div class="label-name">{{ p.product.name }}</div>
-        <div class="label-variant">{{ describeArticle(p.article) }}</div>
-        <svg id="label-barcode-svg"></svg>
-        <div class="label-price">₹{{ p.article.price }}</div>
-      </div>
+    <div class="label-mode-toggle no-print">
+      <button class="btn" [class.btn-primary]="printLabelMode() === 'box'" [class.btn-ghost]="printLabelMode() !== 'box'"
+        (click)="setPrintLabelMode('box')">Box label</button>
+      <button class="btn" [class.btn-primary]="printLabelMode() === 'frame'" [class.btn-ghost]="printLabelMode() !== 'frame'"
+        (click)="setPrintLabelMode('frame')">Frame tag (fold)</button>
     </div>
+
+    <div class="print-preview">
+      @if (printLabelMode() === 'box') {
+        <div class="label-box box-mode" id="printable-label">
+          <div class="label-name">{{ p.product.name }}</div>
+          <div class="label-variant">{{ describeArticle(p.article) }}</div>
+          <svg id="label-barcode-svg"></svg>
+          <div class="label-price">₹{{ p.article.price }}</div>
+        </div>
+      } @else {
+        <div class="label-box frame-mode" id="printable-label">
+          <div class="label-brand-section">
+            <div class="brand-name">Devbhoomi Opticals</div>
+          </div>
+          <div class="fold-guide">
+            <span class="scissors-icon">✂</span>
+          </div>
+          <div class="label-item-section">
+            <div class="label-name">{{ p.product.name }}</div>
+            <div class="label-variant">{{ describeArticle(p.article) }}</div>
+            <svg id="label-barcode-svg"></svg>
+            <div class="label-price">₹{{ p.article.price }}</div>
+          </div>
+        </div>
+      }
+    </div>
+
     <div class="panel-actions no-print">
       <button class="btn btn-ghost" (click)="closePrintLabel()">Close</button>
       <button class="btn btn-primary" (click)="triggerPrint()">Print</button>
