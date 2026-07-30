@@ -18,6 +18,16 @@ export class DashboardComponent {
   auth = inject(AuthService);
   private dashboardService = inject(DashboardService);
 
+  private readonly STATUS_COLORS: Record<string, string> = {
+    confirmed: '#2563eb',      // blue
+    in_progress: '#f97316',    // orange
+    ready_for_pickup: '#7c3aed', // purple
+    delivered: '#16a34a',      // green
+    cancelled: '#dc2626',      // red
+  };
+
+  private readonly DEFAULT_STATUS_COLOR = '#9ca3af';
+
   stats = signal<DashboardStats | null>(null);
   loading = signal(true);
 
@@ -99,7 +109,9 @@ export class DashboardComponent {
       datasets: [
         {
           data: data.statusBreakdown.map((s) => s.count),
-          backgroundColor: ['#c97b4a', '#4a7fc9', '#4ac97b', '#c94a4a'],
+          backgroundColor: data.statusBreakdown.map(
+            (s) => this.STATUS_COLORS[s._id] || this.DEFAULT_STATUS_COLOR
+          ),
         },
       ],
     });
@@ -108,9 +120,10 @@ export class DashboardComponent {
       labels: data.topProducts.map((p) => p._id),
       datasets: [
         {
-          data: data.topProducts.map((p) => p.unitsSold),
-          label: 'Units sold',
-          backgroundColor: '#2e4a4f',
+          data: data.revenueTrend.map((d) => d.revenue),
+          label: 'Revenue',
+          borderColor: '#c97b4a',
+          backgroundColor: 'rgba(201, 123, 74, 0.15)',
         },
       ],
     });

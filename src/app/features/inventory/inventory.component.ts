@@ -63,6 +63,8 @@ export class InventoryComponent {
   originalStock = signal<number | null>(null);
   stockAdjustmentReason = signal('');
 
+  printLabelMode = signal<'box' | 'frame'>('box');
+
   // ---- Product create/edit panel -----------------------------------------
   isProductPanelOpen = signal(false);
   editingProduct = signal<InventoryItem | null>(null); // non-null = editing product-level fields only
@@ -147,6 +149,14 @@ export class InventoryComponent {
         this.articleForm.controls.price.disable({ emitEvent: false });
       }
     });
+  }
+
+  setPrintLabelMode(mode: 'box' | 'frame'): void {
+    this.printLabelMode.set(mode);
+    const article = this.printingArticle()?.article;
+    if (article?.barcode) {
+      setTimeout(() => this.renderBarcode(article.barcode!), 0);
+    }
   }
 
   isStockChanged(): boolean {
