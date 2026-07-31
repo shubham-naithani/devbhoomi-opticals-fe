@@ -51,21 +51,6 @@
         <span class="dot"></span> Error Log
       </a>
     }
-
-    @if (!auth.isStaffOrAdmin()) {
-      <a routerLink="/catalog" routerLinkActive="active" class="nav-link">
-        <span class="dot"></span> Browse frames
-      </a>
-      <a routerLink="/cart" routerLinkActive="active" class="nav-link">
-        <span class="dot"></span> Cart
-        @if (cart.itemCount() > 0) {
-          <span class="cart-count">{{ cart.itemCount() }}</span>
-        }
-      </a>
-      <a routerLink="/orders" routerLinkActive="active" class="nav-link">
-        <span class="dot"></span> My orders
-      </a>
-    }
   </nav>
 
   <div class="sidebar-footer">
