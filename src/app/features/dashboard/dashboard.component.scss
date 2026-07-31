@@ -88,9 +88,17 @@
 .badge {
   padding: 2px 8px;
   border-radius: 4px;
-  background: rgba(74, 127, 201, 0.12);
   font-size: 11px;
-  &.accent { background: rgba(201, 123, 74, 0.15); }
+  font-weight: 500;
+
+  &.status-confirmed        { background: rgba(11, 60, 93, 0.12);   color: #0B3C5D; }
+  &.status-in_progress       { background: rgba(212, 175, 55, 0.18); color: #8a6d1f; }
+  &.status-ready_for_pickup  { background: rgba(166, 118, 61, 0.18); color: #7a5a2e; }
+  &.status-delivered         { background: rgba(46, 139, 139, 0.15); color: #1f6b6b; }
+  &.status-cancelled         { background: rgba(181, 83, 60, 0.15); color: #B5533C; }
+
+  &.stock-low       { background: rgba(212, 175, 55, 0.15); color: #8a6d1f; }
+  &.stock-critical  { background: rgba(181, 83, 60, 0.15); color: #B5533C; }
 }
 
 .empty-note {
@@ -105,4 +113,31 @@
 
 .quick-links {
   padding: 15px;
+}
+
+.staff-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  min-height: 60vh;
+  gap: 16px;
+
+  h2 {
+    font-size: 28px;
+    color: #0B3C5D;
+    margin: 0;
+  }
+
+  p {
+    color: #6b7280;
+    font-size: 15px;
+    margin: 0 0 8px;
+  }
+
+  .btn-lg {
+    padding: 12px 28px;
+    font-size: 15px;
+  }
 }

@@ -6,11 +6,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { DashboardStats } from '../../core/models/dashboard.model';
 import { DecimalPipe } from '@angular/common';
+import { NgClass } from '@angular/common';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, BaseChartDirective, DecimalPipe],
+  imports: [RouterLink, BaseChartDirective, DecimalPipe, NgClass],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
@@ -19,13 +20,12 @@ export class DashboardComponent {
   private dashboardService = inject(DashboardService);
 
   private readonly STATUS_COLORS: Record<string, string> = {
-    confirmed: '#2563eb',      // blue
-    in_progress: '#f97316',    // orange
-    ready_for_pickup: '#7c3aed', // purple
-    delivered: '#16a34a',      // green
-    cancelled: '#dc2626',      // red
+    confirmed: '#0B3C5D',        // navy
+    in_progress: '#D4AF37',      // gold
+    ready_for_pickup: '#A6763D', // bronze/copper
+    delivered: '#2E8B8B',        // teal
+    cancelled: '#B5533C',        // terracotta
   };
-
   private readonly DEFAULT_STATUS_COLOR = '#9ca3af';
 
   stats = signal<DashboardStats | null>(null);
@@ -91,13 +91,13 @@ export class DashboardComponent {
 
   private buildCharts(data: DashboardStats) {
     this.revenueTrendData.set({
-      labels: data.revenueTrend.map((d) => d._id.slice(5)), // MM-DD
+      labels: data.revenueTrend.map((d) => d._id.slice(5)),
       datasets: [
         {
           data: data.revenueTrend.map((d) => d.revenue),
           label: 'Revenue',
-          borderColor: '#c97b4a',
-          backgroundColor: ['#c97b4a', '#4a7fc9', '#4ac97b', '#c94a4a', '#1d4ed8', '#6d28d9'],
+          borderColor: '#0B3C5D',
+          backgroundColor: ['#2E8B8B', '#D4AF37'],
           tension: 0.3,
           fill: true,
         },
@@ -122,8 +122,8 @@ export class DashboardComponent {
         {
           data: data.revenueTrend.map((d) => d.revenue),
           label: 'Revenue',
-          borderColor: '#c97b4a',
-          backgroundColor: 'rgba(201, 123, 74, 0.15)',
+          borderColor: '#0B3C5D',
+          backgroundColor: '#2E8B8B',
         },
       ],
     });

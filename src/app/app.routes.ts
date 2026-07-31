@@ -83,21 +83,6 @@ export const routes: Routes = [
         canActivate: [staffGuard],
         loadComponent: () => import('./features/repairs/repairs.component').then((m) => m.RepairsComponent),
       },
-
-      // Customer-facing
-      {
-        path: 'catalog',
-        loadComponent: () => import('./features/catalog/catalog.component').then((m) => m.CatalogComponent),
-      },
-      {
-        path: 'cart',
-        loadComponent: () => import('./features/cart/cart.component').then((m) => m.CartComponent),
-      },
-      {
-        path: 'orders',
-        loadComponent: () =>
-          import('./features/orders/my-orders/my-orders.component').then((m) => m.MyOrdersComponent),
-      },
     ],
   },
   { path: '**', redirectTo: 'dashboard' },
