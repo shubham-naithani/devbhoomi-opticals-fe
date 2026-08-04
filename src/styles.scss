@@ -1,32 +1,32 @@
 // ---- Design tokens -------------------------------------------------------
 :root {
-  --color-primary: #1F4E5C;      // deep teal — brand
-  --color-primary-light: #3A6B75;
-  --color-primary-dark: #123138;
-  --color-accent: #C97B4A;       // lens-tint copper — CTAs / highlights
-  --color-accent-light: #E3A876;
+  --color-primary: #1a1d1f; // near-black charcoal — matches signage board
+  --color-primary-light: #33383b;
+  --color-primary-dark: #0e1011;
+  --color-accent: #e2231a; // brand red — matches logo exactly
+  --color-accent-light: #ec5548;
 
-  --color-bg: #F6F4EF;
-  --color-surface: #FFFFFF;
-  --color-border: #E3E1D9;
+  --color-bg: #f6f4ef;
+  --color-surface: #ffffff;
+  --color-border: #e3e1d9;
 
-  --color-text: #23302F;
-  --color-text-muted: #6B7A79;
-  --color-text-on-primary: #FFFFFF;
+  --color-text: #23302f;
+  --color-text-muted: #6b7a79;
+  --color-text-on-primary: #ffffff;
 
-  --color-success: #2F7A52;
-  --color-danger: #B3492E;
-  --color-warning: #C08A1E;
+  --color-success: #2f7a52;
+  --color-danger: #b3492e;
+  --color-warning: #c08a1e;
 
-  --font-display: 'Space Grotesk', 'Inter', sans-serif;
-  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-display: "Space Grotesk", "Inter", sans-serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, sans-serif;
 
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 18px;
 
   --shadow-sm: 0 1px 3px rgba(23, 40, 40, 0.06);
-  --shadow-md: 0 8px 24px rgba(23, 40, 40, 0.10);
+  --shadow-md: 0 8px 24px rgba(23, 40, 40, 0.1);
 
   --space-1: 4px;
   --space-2: 8px;
@@ -61,9 +61,12 @@
   box-sizing: border-box;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
-html, body {
+html,
+body {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -76,13 +79,18 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3, h4 {
+h1,
+h2,
+h3,
+h4 {
   font-family: var(--font-display);
   color: var(--color-primary-dark);
   margin: 0;
 }
 
-a { color: inherit; }
+a {
+  color: inherit;
+}
 
 button {
   font-family: var(--font-body);
@@ -99,36 +107,52 @@ button {
   padding: 10px 18px;
   font-size: 14px;
   font-weight: 600;
-  transition: transform 0.12s ease, box-shadow 0.12s ease, opacity 0.12s ease;
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease,
+    opacity 0.12s ease;
 
-  &:active { transform: translateY(1px); }
-  &:disabled { opacity: 0.55; cursor: not-allowed; }
+  &:active {
+    transform: translateY(1px);
+  }
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
 }
 
 .btn-primary {
   background: var(--color-primary);
   color: var(--color-text-on-primary);
-  &:hover:not(:disabled) { background: var(--color-primary-light); }
+  &:hover:not(:disabled) {
+    background: var(--color-primary-light);
+  }
 }
 
 .btn-accent {
   background: var(--color-accent);
   color: #fff;
-  &:hover:not(:disabled) { background: var(--color-accent-light); }
+  &:hover:not(:disabled) {
+    background: var(--color-accent-light);
+  }
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--color-primary);
   border: 1px solid var(--color-border);
-  &:hover:not(:disabled) { background: rgba(31, 78, 92, 0.06); }
+  &:hover:not(:disabled) {
+    background: rgba(31, 78, 92, 0.06);
+  }
 }
 
 .btn-danger {
   background: transparent;
   color: var(--color-danger);
   border: 1px solid rgba(179, 73, 46, 0.35);
-  &:hover:not(:disabled) { background: rgba(179, 73, 46, 0.08); }
+  &:hover:not(:disabled) {
+    background: rgba(179, 73, 46, 0.08);
+  }
 }
 
 .card {
@@ -150,7 +174,9 @@ button {
     color: var(--color-text-muted);
   }
 
-  input, select, textarea {
+  input,
+  select,
+  textarea {
     font-family: var(--font-body);
     font-size: 14px;
     padding: 10px 12px;
@@ -159,7 +185,9 @@ button {
     background: #fff;
     color: var(--color-text);
     outline: none;
-    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+    transition:
+      border-color 0.12s ease,
+      box-shadow 0.12s ease;
 
     &:focus {
       border-color: var(--color-primary);
@@ -180,11 +208,26 @@ button {
   font-size: 12px;
   font-weight: 600;
 
-  &.badge-admin { background: rgba(201, 123, 74, 0.14); color: var(--color-accent); }
-  &.badge-staff { background: rgba(58, 107, 117, 0.14); color: var(--color-primary-light); }
-  &.badge-customer { background: rgba(31, 78, 92, 0.10); color: var(--color-primary); }
-  &.badge-active { background: rgba(47, 122, 82, 0.12); color: var(--color-success); }
-  &.badge-inactive { background: rgba(179, 73, 46, 0.10); color: var(--color-danger); }
+  &.badge-admin {
+    background: rgba(201, 123, 74, 0.14);
+    color: var(--color-accent);
+  }
+  &.badge-staff {
+    background: rgba(58, 107, 117, 0.14);
+    color: var(--color-primary-light);
+  }
+  &.badge-customer {
+    background: rgba(31, 78, 92, 0.1);
+    color: var(--color-primary);
+  }
+  &.badge-active {
+    background: rgba(47, 122, 82, 0.12);
+    color: var(--color-success);
+  }
+  &.badge-inactive {
+    background: rgba(179, 73, 46, 0.1);
+    color: var(--color-danger);
+  }
 }
 
 table {
@@ -207,7 +250,9 @@ table {
     border-bottom: 1px solid var(--color-border);
   }
 
-  tr:hover td { background: rgba(31, 78, 92, 0.03); }
+  tr:hover td {
+    background: rgba(31, 78, 92, 0.03);
+  }
 }
 
 select {
@@ -242,8 +287,13 @@ select {
 // itself when the browser print dialog is actually printing.
 
 @media print {
-  body * { visibility: hidden; }
-  .print-modal, .print-modal * { visibility: visible; }
+  body * {
+    visibility: hidden;
+  }
+  .print-modal,
+  .print-modal * {
+    visibility: visible;
+  }
 
   // Reset the modal's own screen-centering styles during print — a
   // transform on this ancestor was hijacking the label's "fixed"
@@ -259,11 +309,14 @@ select {
     margin: 0 !important;
   }
 
-  .overlay { display: none !important; }
-  .no-print { display: none !important; }
+  .overlay {
+    display: none !important;
+  }
+  .no-print {
+    display: none !important;
+  }
 
   @page {
     margin: 10mm;
   }
 }
-

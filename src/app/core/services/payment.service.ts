@@ -44,7 +44,7 @@ export class PaymentService {
       key: data.keyId,
       amount: data.amount,
       currency: data.currency,
-      name: 'Devbhoomi Opticals',
+      name: 'Devbhoomi Optical',
       description: `Payment for order ${data.orderNumber}`,
       order_id: data.razorpayOrderId,
       prefill: { name: customerName },
