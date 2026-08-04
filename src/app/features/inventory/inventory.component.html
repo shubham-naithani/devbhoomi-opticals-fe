@@ -45,7 +45,7 @@
   </div>
 </div>
 
-@if (selectedIds().size > 0) {
+@if (auth.isAdmin() && selectedIds().size > 0) {
   <div class="bulk-action-bar card">
     <span>{{ selectedIds().size }} selected</span>
     <div class="bulk-actions">
@@ -65,9 +65,11 @@
     <table>
       <thead>
         <tr>
-          <th>
-            <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()" />
-          </th>
+          @if (auth.isAdmin()) {
+            <th>
+              <input type="checkbox" [checked]="isAllSelected()" (change)="toggleSelectAll()" />
+            </th>
+          }
           <th></th>
           <th>Name</th>
           <th>Brand</th>
@@ -83,9 +85,11 @@
       <tbody>
         @for (product of products(); track product._id) {
           <tr>
-            <td>
-              <input type="checkbox" [checked]="isSelected(product._id)" (change)="toggleSelect(product._id)" />
-            </td>
+            @if (auth.isAdmin()) {
+              <td>
+                <input type="checkbox" [checked]="isSelected(product._id)" (change)="toggleSelect(product._id)" />
+              </td>
+            }
             <td class="thumb-cell">
               @if (product.articles.length > 0 && product.articles[0].images.length > 0) {
                 <img [src]="product.articles[0].images[0]" [alt]="product.name" class="row-thumb" />
