@@ -21,6 +21,23 @@
   }
 }
 
+.brand {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.brand-logo {
+  height: 200px;
+  width: auto;
+  object-fit: contain;
+
+  @media (max-width: 860px) {
+    height: 52px;
+  }
+}
+
 .brand-mark {
   display: flex;
   align-items: center;
@@ -35,7 +52,6 @@
   font-size: 42px;
   line-height: 1.15;
   color: #fff;
-  margin-top: 64px;
   max-width: 480px;
 
   @media (max-width: 860px) {

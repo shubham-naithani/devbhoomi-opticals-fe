@@ -17,12 +17,7 @@ import { CartService } from '../../../core/services/cart.service';
         </button>
 
         <div class="mobile-brand">
-          <svg width="26" height="16" viewBox="0 0 52 32" fill="none">
-            <circle cx="14" cy="16" r="12" stroke="currentColor" stroke-width="2.5"/>
-            <circle cx="38" cy="16" r="12" stroke="currentColor" stroke-width="2.5"/>
-            <path d="M22 13c1.5-1.5 2.5-1.5 4 0" stroke="currentColor" stroke-width="2.5" fill="none"/>
-          </svg>
-          <span>Devbhoomi</span>
+          <span>Devbhoomi Optical</span>
         </div>
 
         @if (!auth.isStaffOrAdmin()) {

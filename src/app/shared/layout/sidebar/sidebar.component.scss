@@ -10,6 +10,19 @@
   top: 0;
 }
 
+.brand {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.brand-logo {
+  width: 150px;
+  height: 150px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
 @media (max-width: 860px) {
   :host {
     position: fixed;
@@ -34,12 +47,6 @@
 .brand {
   display: flex;
   align-items: center;
-  gap: 10px;
-  color: #fff;
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 16px;
-  padding: 0 8px 28px;
 }
 
 nav {
