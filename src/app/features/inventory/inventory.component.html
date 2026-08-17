@@ -313,8 +313,8 @@
   <div class="side-panel card variants-panel">
     <div class="panel-head">
       <div>
-        <h2>{{ product.name }}</h2>
-        <div class="panel-sub">{{ product.brand }} &middot; {{ product.articles.length }} variant(s)</div>
+        <h2>{{ product.brand }}</h2>
+        <div class="panel-sub">{{ product.name }} &middot; {{ product.articles.length }} variant(s)</div>
       </div>
       <button class="btn btn-ghost" (click)="closeManagePanel()">Close</button>
     </div>
@@ -463,37 +463,17 @@
 @if (printingArticle(); as p) {
   <div class="overlay" (click)="closePrintLabel()"></div>
   <div class="print-modal card">
-    <div class="label-mode-toggle no-print">
-      <button class="btn" [class.btn-primary]="printLabelMode() === 'box'" [class.btn-ghost]="printLabelMode() !== 'box'"
-        (click)="setPrintLabelMode('box')">Box label</button>
-      <button class="btn" [class.btn-primary]="printLabelMode() === 'frame'" [class.btn-ghost]="printLabelMode() !== 'frame'"
-        (click)="setPrintLabelMode('frame')">Frame tag (fold)</button>
-    </div>
-
     <div class="print-preview">
-      @if (printLabelMode() === 'box') {
-        <div class="label-box box-mode" id="printable-label">
+      <div class="label-box" id="printable-label">
+        <div class="label-desc-zone">
+          <div class="label-brand">Devbhoomi Optical</div>
           <div class="label-name">{{ p.product.name }}</div>
           <div class="label-variant">{{ describeArticle(p.article) }}</div>
+        </div>
+        <div class="label-barcode-zone">
           <svg id="label-barcode-svg"></svg>
-          <div class="label-price">₹{{ p.article.price }}</div>
         </div>
-      } @else {
-        <div class="label-box frame-mode" id="printable-label">
-          <div class="label-brand-section">
-            <div class="brand-name">Devbhoomi Optical</div>
-          </div>
-          <div class="fold-guide">
-            <span class="scissors-icon">✂</span>
-          </div>
-          <div class="label-item-section">
-            <div class="label-name">{{ p.product.name }}</div>
-            <div class="label-variant">{{ describeArticle(p.article) }}</div>
-            <svg id="label-barcode-svg"></svg>
-            <div class="label-price">₹{{ p.article.price }}</div>
-          </div>
-        </div>
-      }
+      </div>
     </div>
 
     <div class="panel-actions no-print">
