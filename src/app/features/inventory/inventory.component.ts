@@ -63,8 +63,6 @@ export class InventoryComponent {
   originalStock = signal<number | null>(null);
   stockAdjustmentReason = signal('');
 
-  printLabelMode = signal<'box' | 'frame'>('box');
-
   // ---- Product create/edit panel -----------------------------------------
   isProductPanelOpen = signal(false);
   editingProduct = signal<InventoryItem | null>(null); // non-null = editing product-level fields only
@@ -149,14 +147,6 @@ export class InventoryComponent {
         this.articleForm.controls.price.disable({ emitEvent: false });
       }
     });
-  }
-
-  setPrintLabelMode(mode: 'box' | 'frame'): void {
-    this.printLabelMode.set(mode);
-    const article = this.printingArticle()?.article;
-    if (article?.barcode) {
-      setTimeout(() => this.renderBarcode(article.barcode!), 0);
-    }
   }
 
   isStockChanged(): boolean {
@@ -605,11 +595,11 @@ export class InventoryComponent {
     if (svg) {
       JsBarcode(svg, value, {
         format: 'CODE128',
-        width: 2,
-        height: 50,
+        width: 1.3,
+        height: 28,
         displayValue: true,
-        fontSize: 12,
-        margin: 4,
+        fontSize: 8,
+        margin: 2,
       });
     }
   }

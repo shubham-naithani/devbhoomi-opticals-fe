@@ -106,137 +106,83 @@
   text-align: center;
 }
 
-// ---- Screen preview container ----
 .print-preview {
   display: flex;
   justify-content: center;
   padding: 16px;
 }
 
-.label-mode-toggle {
+// ---- On-screen preview: 100mm x 14.3mm ratio, scaled up ~4x ----
+.label-box {
+  width: 400px;
+  height: 57px;
   display: flex;
-  gap: 8px;
-  margin-bottom: 16px;
-  justify-content: center;
-}
-
-// ---- Box label mode — landscape, single section, on-screen sizing ----
-.label-box.box-mode {
-  width: 260px;
-  height: 208px; // matches 50mm x 40mm physical ratio
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid #000;
+  flex-direction: row;
+  align-items: stretch;
   box-sizing: border-box;
   background: #fff;
-  padding: 12px;
-  gap: 4px;
-
-  .label-name { font-size: 13px; font-weight: 600; text-align: center; }
-  .label-variant { font-size: 11px; color: #555; }
-  svg { width: 100%; max-width: 220px; max-height: 70px; }
-  .label-price { font-size: 14px; font-weight: 700; }
+  // no border — the physical stock is already die-cut to this shape;
+  // printing our own rectangle around it would just add stray ink
 }
 
-// ---- Frame tag mode — portrait, narrow strip, on-screen sizing ----
-.label-box.frame-mode {
-  width: 150px;
-  height: 300px; // matches 30mm x 60mm physical ratio
+.label-desc-zone {
+  width: 55%;
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid #000;
-  box-sizing: border-box;
-  background: #fff;
-}
-
-.frame-mode .label-brand-section {
-  height: 50%; // exactly half — matches the fold midpoint
-  display: flex;
-  align-items: center;
   justify-content: center;
-  padding: 8px;
   box-sizing: border-box;
   overflow: hidden;
+  // no border-right / divider — nothing is folded here, it's one flat face
 
-  .brand-name {
+  .label-brand {
     font-family: var(--font-display, serif);
     font-weight: 700;
-    font-size: 15px;
-    text-align: center;
+    font-size: 10px;
     color: #1F4E5C;
+    line-height: 1.2;
   }
+
+  .label-name { font-size: 11px; font-weight: 600; line-height: 1.2; }
+  .label-variant { font-size: 9px; color: #555; line-height: 1.2; }
 }
 
-.fold-guide {
-  border-top: 1px dashed #999;
-  position: relative;
-  height: 0;
+.label-barcode-zone {
+  width: 36%;
   flex-shrink: 0;
-
-  .scissors-icon {
-    position: absolute;
-    left: 4px;
-    top: -9px;
-    font-size: 12px;
-    background: #fff;
-    padding: 0 3px;
-  }
-}
-
-.frame-mode .label-item-section {
-  height: 50%; // exactly the other half — matches the fold midpoint
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4px 8px;
+  padding: 0 6px;
   box-sizing: border-box;
   overflow: hidden;
-  gap: 2px;
 
-  .label-name { font-size: 11px; font-weight: 600; text-align: center; }
-  .label-variant { font-size: 9px; color: #555; }
-  svg { width: 100%; max-height: 50px; }
-  .label-price { font-size: 12px; font-weight: 700; }
+  svg {
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+  }
 }
 
-// ---- Print: force TRUE physical sizes, overriding on-screen preview sizes ----
+// ---- Print: true 100mm x 14.3mm physical size ----
 @media print {
-  .label-box.box-mode {
-    width: 50mm;
-    height: 40mm;
-    page-break-inside: avoid;
-    padding: 3mm;
-
-    .label-name { font-size: 7px; }
-    .label-variant { font-size: 6px; }
-    svg { max-height: 16mm; }
-    .label-price { font-size: 8px; }
-  }
-
-  .label-box.frame-mode {
-    width: 30mm;
-    height: 60mm;
+  .label-box {
+    width: 100mm;
+    height: 14.3mm;
     page-break-inside: avoid;
   }
 
-  .frame-mode .label-brand-section {
-    height: 30mm;
-    .brand-name { font-size: 10px; }
-  }
+  .label-desc-zone {
+    padding: 0 2mm;
 
-  .fold-guide .scissors-icon { font-size: 8px; }
-
-  .frame-mode .label-item-section {
-    height: 30mm;
-    padding: 1mm 2mm;
-
+    .label-brand { font-size: 5px; }
     .label-name { font-size: 6px; }
-    .label-variant { font-size: 5.5px; }
-    svg { max-height: 14mm; }
-    .label-price { font-size: 7px; }
+    .label-variant { font-size: 5px; }
+  }
+
+  .label-barcode-zone {
+    padding: 0 1.5mm;
   }
 }
 
