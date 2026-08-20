@@ -253,11 +253,12 @@ export class AdminOrdersComponent {
   }
 
   customerName(order: Order): string {
+    if (!order.customer) return 'Unknown';
     return typeof order.customer === 'object' ? order.customer.name : 'Unknown';
   }
 
   customerContact(order: Order): string {
-    if (typeof order.customer === 'object') {
+    if (order.customer && typeof order.customer === 'object') {
       return order.customer.phone || order.customer.email || '';
     }
     return '';
