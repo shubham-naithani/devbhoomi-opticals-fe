@@ -8,12 +8,14 @@ import { authInterceptor } from './core/interceptors/auth.interceptor';
 
 import { ErrorHandler } from '@angular/core';
 import { GlobalErrorHandler } from './core/services/global-error-handler';
+import { loadingInterceptor } from './core/interceptors/loading.interceptor';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, loadingInterceptor])),
     provideCharts(withDefaultRegisterables()),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
   ],
