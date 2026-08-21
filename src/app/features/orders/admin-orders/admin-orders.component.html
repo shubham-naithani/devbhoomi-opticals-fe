@@ -6,12 +6,17 @@
 </div>
 
 <div class="toolbar">
-  <input type="text" placeholder="Search by order ID, phone, or scan invoice barcode…" [value]="searchTerm()"
-  (input)="onSearchChange($any($event.target).value)" (keyup.enter)="onSearchSubmit($any($event.target).value)" />
+  <div class="search-input-wrapper">
+    <input type="text" placeholder="Search by order ID, phone, or scan invoice barcode…" [value]="searchTerm()"
+      (input)="onSearchChange($any($event.target).value)" (keyup.enter)="onSearchSubmit($any($event.target).value)" />
+    @if (searchTerm()) {
+    <button type="button" class="clear-search-btn" (click)="clearSearch()" aria-label="Clear search">×</button>
+    }
+  </div>
   <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
     <option value="">All statuses</option>
     @for (opt of statusOptions; track opt) {
-      <option [value]="opt">{{ statusLabel(opt) }}</option>
+    <option [value]="opt">{{ statusLabel(opt) }}</option>
     }
   </select>
 </div>
