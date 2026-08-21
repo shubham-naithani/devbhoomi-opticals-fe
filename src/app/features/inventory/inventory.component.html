@@ -52,6 +52,7 @@
       <button class="btn btn-ghost" (click)="bulkActivate(true)">Activate</button>
       <button class="btn btn-ghost" (click)="bulkActivate(false)">Deactivate</button>
       <button class="btn btn-danger" (click)="bulkDeleteSelected()">Delete</button>
+      <button class="btn btn-ghost" (click)="openBulkPrintChooser()">Print Labels</button>
       <button class="btn btn-ghost" (click)="clearSelection()">Clear</button>
     </div>
   </div>
@@ -117,7 +118,7 @@
             <td class="updated-cell">{{ product.updatedAt | date: 'mediumDate' }}</td>
             <td class="actions">
               @if (auth.isAdmin()) {
-                <button class="btn btn-ghost" (click)="openEditProductPanel(product)">Edit</button>
+                <button class="btn btn-ghost" (click)="openEditProductPanel(product)" style="margin-right: 10px;">Edit</button>
                 <button class="btn btn-danger" (click)="deleteProduct(product)">Delete</button>
               } @else {
                 <span class="view-only">View only</span>
@@ -307,6 +308,19 @@
   </div>
 }
 
+<!-- bulk action overlay -->
+@if (bulkPrintChooserOpen()) {
+  <div class="overlay" (click)="closeBulkPrintChooser()"></div>
+  <div class="print-modal card">
+    <h3>Print {{ selectedIds().size }} label(s) as:</h3>
+    <div class="panel-actions">
+      <button class="btn btn-primary" (click)="confirmBulkPrint('box')">Square labels (50×50mm)</button>
+      <button class="btn btn-primary" (click)="confirmBulkPrint('frame')">Horizontal tags (15×100mm)</button>
+      <button class="btn btn-ghost" (click)="closeBulkPrintChooser()">Cancel</button>
+    </div>
+  </div>
+}
+
 <!-- Manage variants panel -->
 @if (managingProduct(); as product) {
   <div class="overlay" (click)="closeManagePanel()"></div>
@@ -463,13 +477,99 @@
 @if (printingArticle(); as p) {
   <div class="overlay" (click)="closePrintLabel()"></div>
   <div class="print-modal card">
+    <div class="label-mode-toggle no-print">
+      <button
+        class="btn"
+        [class.btn-primary]="printLabelMode() === 'box'"
+        [class.btn-ghost]="printLabelMode() !== 'box'"
+        (click)="setPrintLabelMode('box')"
+      >
+        Box label (50×50mm)
+      </button>
+      <button
+        class="btn"
+        [class.btn-primary]="printLabelMode() === 'frame'"
+        [class.btn-ghost]="printLabelMode() !== 'frame'"
+        (click)="setPrintLabelMode('frame')"
+      >
+        Frame tag (15×100mm)
+      </button>
+    </div>
+
+    @if (printLabelMode() === 'frame') {
+      <div class="frame-calibration no-print">
+        <p class="hint calibration-intro">
+          All measurements below are in cm, matching a ruler held against the physical tag.
+          The three zone fields (text, cut gap, barcode) should always add up to the head total —
+          the app won't stop you from getting that wrong, so double check the sum yourself.
+        </p>
+
+        <div class="field">
+          <label>Text zone (cm) — brand / name / variant, before the cut</label>
+          <input type="number" [ngModel]="frameTextZoneLengthMm() / 10" (ngModelChange)="frameTextZoneLengthMm.set($event * 10)" min="0.5" max="6" step="0.1" />
+          <div class="hint">Length from the tag's leading edge reserved for the text side, up to (but not across) the cut.</div>
+        </div>
+
+        <div class="field">
+          <label>Cut gap (cm) — blank buffer straddling the perforation</label>
+          <input type="number" [ngModel]="frameCutGapMm() / 10" (ngModelChange)="frameCutGapMm.set($event * 10)" min="0" max="1" step="0.05" />
+          <div class="hint">Split evenly across the actual scissor cut — half stays blank at the end of the text zone, half at the start of the barcode zone, so nothing prints right on the cut line.</div>
+        </div>
+
+        <div class="field">
+          <label>Barcode zone (cm) — after the cut</label>
+          <input type="number" [ngModel]="frameBarcodeZoneLengthMm() / 10" (ngModelChange)="frameBarcodeZoneLengthMm.set($event * 10)" min="0.5" max="6" step="0.1" />
+          <div class="hint">Length after the cut reserved for the barcode. If a barcode value needs more room than this to stay scannable, it's allowed to spill into the blank tail rather than get squeezed thinner.</div>
+        </div>
+
+        <div class="field">
+          <label>Gap between lanes (cm)</label>
+          <input type="number" [ngModel]="frameLaneGapMm() / 10" (ngModelChange)="frameLaneGapMm.set($event * 10)" min="0" max="1" step="0.01" />
+          <div class="hint">The blank strip between the 3 side-by-side tags on the roll.</div>
+        </div>
+
+        <div class="field">
+          <label>Head total length (cm) — text zone + cut gap + barcode zone</label>
+          <input type="number" [ngModel]="frameHeadTotalLengthMm() / 10" (ngModelChange)="frameHeadTotalLengthMm.set($event * 10)" min="1" max="8" step="0.1" />
+          <div class="hint">The full printable "pill" before the blank string-loop tail starts — should equal the 3 fields above added together.</div>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" [ngModel]="frameHeadAtLeadingEdge()" (ngModelChange)="frameHeadAtLeadingEdge.set($event)" />
+          Content prints first (leading edge)
+        </label>
+        <div class="hint">Leave checked unless your printer feeds the tag backwards — this decides whether the printed pill sits at the start or the end of the physical tag.</div>
+
+        <div class="field">
+          <label>Barcode nudge (cm) — fine manual adjustment</label>
+          <input type="number" [ngModel]="frameBarcodeNudgeMm() / 10" (ngModelChange)="frameBarcodeNudgeMm.set($event * 10)" min="-1" max="1" step="0.05" />
+          <div class="hint">On top of everything above — negative moves the barcode toward the cutout, positive moves it toward the blank tail. Use this to fine-tune after the zone fields already look close.</div>
+        </div>
+
+        <div class="field">
+          <label>Text nudge (cm) — fine manual adjustment</label>
+          <input type="number" [ngModel]="frameTextNudgeMm() / 10" (ngModelChange)="frameTextNudgeMm.set($event * 10)" min="-1" max="1" step="0.05" />
+          <div class="hint">Negative moves the text toward the leading edge, away from the cutout. Positive moves it toward the cutout. Start with -0.2 and reprint to check.</div>
+        </div>
+
+        <div class="field lane-index-field">
+          <label>Single print — which lane? (1, 2, or 3)</label>
+          <input type="number" [ngModel]="frameSingleLaneIndex()" (ngModelChange)="frameSingleLaneIndex.set($event)" min="1" max="3" step="1" />
+          <div class="hint">Bulk printing fills lanes left to right and can leave the last one blank (e.g. 2 items leaves lane 3 empty). Set this to that leftover lane number before a single print, so it lands there instead of wasting a fresh row.</div>
+        </div>
+      </div>
+    }
+
     <div class="print-preview">
-      <div class="label-box" id="printable-label">
+      <div class="label-box" id="printable-label" [class.mode-box]="printLabelMode() === 'box'">
         <div class="label-desc-zone">
           <div class="label-brand">Devbhoomi Optical</div>
           <div class="label-name">{{ p.product.name }}</div>
           <div class="label-variant">{{ describeArticle(p.article) }}</div>
         </div>
+        @if (printLabelMode() === 'frame') {
+          <div class="label-cut-line" title="scissor-cut perforation"></div>
+        }
         <div class="label-barcode-zone">
           <svg id="label-barcode-svg"></svg>
         </div>
@@ -478,7 +578,7 @@
 
     <div class="panel-actions no-print">
       <button class="btn btn-ghost" (click)="closePrintLabel()">Close</button>
-      <button class="btn btn-primary" (click)="triggerPrint()">Print</button>
+      <button class="btn btn-primary" (click)="printLabelDirectly(p)">Print</button>
     </div>
   </div>
 }

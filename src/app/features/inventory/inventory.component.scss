@@ -104,6 +104,35 @@
   z-index: 1000;
   padding: 28px;
   text-align: center;
+  // Fixed width so box mode and frame mode look like the same modal, not
+  // two different sizes — previously this had no width at all, so it just
+  // grew to fit whatever was inside, and the frame calibration fields (5
+  // inputs + hints + intro paragraph) blew it out to nearly full-screen
+  // width. Height is capped and scrolls instead of growing indefinitely
+  // for the same reason.
+  width: 460px;
+  max-width: 92vw;
+  max-height: 88vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+// The calibration fields read better left-aligned than centered (the
+// parent .print-modal centers everything by default, for the simpler
+// buttons-only modals like the bulk-print chooser).
+.frame-calibration {
+  text-align: left;
+  margin-bottom: 12px;
+
+  .calibration-intro {
+    margin-top: 0;
+  }
+
+  .lane-index-field {
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--color-border, #ddd);
+  }
 }
 
 .print-preview {
@@ -112,28 +141,48 @@
   padding: 16px;
 }
 
-// ---- On-screen preview: 100mm x 14.3mm ratio, scaled up ~4x ----
+// ---- On-screen preview -----------------------------------------------------
+// Base = frame/dumbbell shape (100mm x 15mm ratio, scaled up ~4x). Box mode
+// overrides this via .mode-box below so the preview actually looks like a
+// square 50x50mm label instead of always looking like the long dumbbell tag.
 .label-box {
   width: 400px;
-  height: 57px;
+  height: 60px;
   display: flex;
   flex-direction: row;
+  justify-content: center;
   align-items: stretch;
   box-sizing: border-box;
   background: #fff;
   // no border — the physical stock is already die-cut to this shape;
   // printing our own rectangle around it would just add stray ink
+
+  // ---- Box mode: 50x50mm square label, content stacked top-to-bottom
+  // (text lines, then barcode below) — matches how paintBoxLabel actually
+  // composes the canvas that gets sent to the printer.
+  &.mode-box {
+    width: 220px;
+    height: 220px;
+    flex-direction: column;
+    align-items: stretch;
+    justify-content: center;
+  }
 }
 
+// Widths below are proportions of the FULL 100mm tag length, matching the
+// real measured geometry used by paintFrameTextZone/paintFrameBarcodeZone
+// in the .ts file: text zone 31mm (31%), cut gap 2mm (2%), barcode zone
+// 31mm (31%) — 64mm head total — then whatever's left (36%) is the blank
+// string-loop tail, which is why neither zone stretches to fill the box;
+// the remainder is just left empty at the end, same as on the real tag.
 .label-desc-zone {
-  width: 55%;
+  width: 31%;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
   justify-content: center;
   box-sizing: border-box;
   overflow: hidden;
-  // no border-right / divider — nothing is folded here, it's one flat face
 
   .label-brand {
     font-family: var(--font-display, serif);
@@ -147,8 +196,30 @@
   .label-variant { font-size: 9px; color: #555; line-height: 1.2; }
 }
 
+.label-box.mode-box .label-desc-zone {
+  width: 100%;
+  align-items: center;
+  text-align: center;
+  padding: 10px 12px 4px;
+
+  .label-brand { font-size: 12px; }
+  .label-name { font-size: 14px; }
+  .label-variant { font-size: 11px; }
+}
+
+// Visual stand-in for the scissor-cut perforation itself — only rendered
+// in frame mode (see the @if in the template). Purely decorative/spacing;
+// it does not need to be pixel-precise since the actual print geometry
+// comes entirely from the canvas math in the .ts file, not this preview.
+.label-cut-line {
+  width: 2%;
+  flex-shrink: 0;
+  border-left: 1px dashed #999;
+  margin: 6px 0;
+}
+
 .label-barcode-zone {
-  width: 36%;
+  width: 31%;
   flex-shrink: 0;
   display: flex;
   align-items: center;
@@ -165,12 +236,25 @@
   }
 }
 
-// ---- Print: true 100mm x 14.3mm physical size ----
+.label-box.mode-box .label-barcode-zone {
+  width: 100%;
+  padding: 4px 14px 10px;
+}
+
+// ---- Print: true physical size --------------------------------------------
+// Frame/dumbbell tag: 100mm long (feed direction), 15mm wide per lane
+// (measured off the physical stock — was mistakenly 14.3mm before).
 @media print {
   .label-box {
     width: 100mm;
-    height: 14.3mm;
+    height: 15mm;
     page-break-inside: avoid;
+  }
+
+  .label-box.mode-box {
+    width: 50mm;
+    height: 50mm;
+    flex-direction: column;
   }
 
   .label-desc-zone {
@@ -181,8 +265,20 @@
     .label-variant { font-size: 5px; }
   }
 
+  .label-box.mode-box .label-desc-zone {
+    padding: 2mm;
+
+    .label-brand { font-size: 7px; }
+    .label-name { font-size: 8px; }
+    .label-variant { font-size: 6px; }
+  }
+
   .label-barcode-zone {
     padding: 0 1.5mm;
+  }
+
+  .label-box.mode-box .label-barcode-zone {
+    padding: 1mm 3mm;
   }
 }
 
