@@ -7,17 +7,19 @@ import { DashboardService } from '../../core/services/dashboard.service';
 import { DashboardStats } from '../../core/models/dashboard.model';
 import { DecimalPipe } from '@angular/common';
 import { NgClass } from '@angular/common';
+import { PriceCheckComponent } from '../price-check/price-check.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [RouterLink, BaseChartDirective, DecimalPipe, NgClass],
+  imports: [RouterLink, BaseChartDirective, DecimalPipe, NgClass, PriceCheckComponent],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
 export class DashboardComponent {
   auth = inject(AuthService);
   private dashboardService = inject(DashboardService);
+  showPriceCheck = signal(false);
 
   private readonly STATUS_COLORS: Record<string, string> = {
     confirmed: '#0B3C5D',        // navy

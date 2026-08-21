@@ -20,7 +20,7 @@ import { EyeTest } from '../../../core/models/eye-test.model';
 import { PaymentMethod } from '../../../core/models/order.model';
 import { ViewChild, ElementRef } from '@angular/core';
 
-interface OrderLine {
+export interface OrderLine {
   inventoryItem: string;
   articleId: string;
   name: string;
@@ -72,6 +72,7 @@ export class NewOrderComponent {
   describeArticle = describeArticle;
 
   private readonly DRAFT_KEY = 'walkInOrderDraft';
+  private readonly HANDOFF_KEY = 'walkInPriceCheckHandoff';
   private readonly stepOrder: Step[] = [
     'customer',
     'eyeTest',
@@ -144,6 +145,7 @@ export class NewOrderComponent {
 
   constructor() {
     this.restoreDraftIfAny();
+    this.checkPriceCheckHandoff();
 
     // Auto-fill the field with the running total as items are added — but
     // only until the admin/staff actually types into it themselves.
@@ -723,5 +725,54 @@ export class NewOrderComponent {
       return;
     }
     this.prevStep();
+  }
+
+  // If Price Check just handed off a pre-staged item list, that takes
+  // priority over silently resuming an old draft — but if BOTH exist, ask
+  // explicitly rather than discarding either one without confirmation.
+  private checkPriceCheckHandoff(): void {
+    const raw = localStorage.getItem(this.HANDOFF_KEY);
+    if (!raw) {
+      this.restoreDraftIfAny();
+      return;
+    }
+
+    let handoffLines: OrderLine[];
+    try {
+      handoffLines = JSON.parse(raw);
+    } catch {
+      localStorage.removeItem(this.HANDOFF_KEY);
+      this.restoreDraftIfAny();
+      return;
+    }
+    localStorage.removeItem(this.HANDOFF_KEY); // one-time use either way
+
+    const applyHandoff = () => {
+      this.orderLines.set(handoffLines);
+      this.currentStep.set('customer'); // customer must still be picked fresh
+    };
+
+    const hasExistingDraft = !!localStorage.getItem(this.DRAFT_KEY);
+
+    if (hasExistingDraft) {
+      this.confirmDialog
+        .confirm({
+          title: 'Start fresh with Price Check items?',
+          message:
+            'You have an unfinished walk-in order in progress. Starting fresh with the items from Price Check will discard it.',
+          confirmText: 'Start fresh',
+          danger: true,
+        })
+        .then((confirmed) => {
+          if (confirmed) {
+            this.clearDraft();
+            applyHandoff();
+          } else {
+            this.restoreDraftIfAny();
+          }
+        });
+    } else {
+      applyHandoff();
+    }
   }
 }

@@ -1,0 +1,136 @@
+<div class="overlay" (click)="close()"></div>
+<div class="price-check-modal card">
+  <div class="modal-header">
+    <h2>Price Check</h2>
+    <p class="subtitle">Scan items to see pricing — nothing here is saved until you start a real order.</p>
+    <button class="btn btn-ghost close-btn" (click)="close()">Close</button>
+  </div>
+
+  <div class="scan-row">
+    <input
+      #scanInput
+      type="text"
+      placeholder="Scan barcode…"
+      [(ngModel)]="scanBarcode"
+      (keyup.enter)="onScanBarcode()"
+    />
+    <button class="btn btn-primary" [disabled]="isScanning()" (click)="onScanBarcode()">
+      {{ isScanning() ? 'Looking up…' : 'Scan' }}
+    </button>
+  </div>
+
+  @if (lines().length === 0) {
+    <div class="empty-state">Scan an item to check its price.</div>
+  } @else {
+    <div class="list-header">
+      <span class="item-count">{{ itemCount() }} item{{ itemCount() === 1 ? '' : 's' }} scanned</span>
+      <button class="btn btn-ghost clear-all-btn" (click)="clearAll()">Clear all</button>
+    </div>
+
+    @if (itemDiscountDisabled()) {
+      <div class="hint discount-blocked-hint">Per-item discounts are disabled while a coupon is applied below.</div>
+    }
+
+    <div class="line-list">
+      @for (line of lines(); track line.articleId) {
+        <div class="line-card">
+          <div class="line-thumb">
+            @if (line.image) {
+              <img [src]="line.image" [alt]="line.name" />
+            } @else {
+              <div class="thumb-placeholder">📦</div>
+            }
+          </div>
+          <div class="line-body">
+            <div class="line-top-row">
+              <span class="line-name">{{ line.name }}</span>
+              <button class="btn btn-danger remove-btn" (click)="removeLine(line.articleId)">Remove</button>
+            </div>
+            <div class="line-price-row">
+              <span class="price-tag">MRP ₹{{ line.price }}</span>
+              <span class="price-tag msp">MSP ₹{{ line.mspPrice }}</span>
+              @if (line.discountPercent > 0) {
+                <span class="savings-badge">{{ line.discountPercent }}% off</span>
+              }
+              <div class="discount-field">
+                <label>Discount %</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  [ngModel]="line.discountPercent"
+                  (ngModelChange)="setDiscount(line.articleId, $event)"
+                  [disabled]="itemDiscountDisabled()"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+            <div class="line-bottom-row">
+              <div class="qty-control">
+                <button type="button" (click)="setQuantity(line.articleId, line.quantity - 1)">−</button>
+                <span>{{ line.quantity }}</span>
+                <button type="button" [disabled]="line.quantity >= line.stock" (click)="setQuantity(line.articleId, line.quantity + 1)">+</button>
+              </div>
+              @if (line.discountPercent > 0) {
+                <span class="line-discount-note">−₹{{ lineDiscountAmount(line) }}</span>
+              }
+              <span class="line-total">₹{{ lineEffectivePrice(line) * line.quantity }}</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="coupon-row">
+      <input
+        type="text"
+        placeholder="Coupon code (optional)"
+        [(ngModel)]="couponCode"
+        [disabled]="couponDisabled()"
+        (keyup.enter)="checkCoupon()"
+      />
+      <button class="btn btn-ghost" [disabled]="couponDisabled() || isCheckingCoupon()" (click)="checkCoupon()">
+        {{ isCheckingCoupon() ? 'Checking…' : 'Check' }}
+      </button>
+      @if (couponResult()) {
+        <button class="btn btn-ghost" (click)="clearCoupon()">Clear</button>
+      }
+    </div>
+    @if (couponDisabled()) {
+      <div class="hint">Coupon disabled — a per-item discount is already applied.</div>
+    }
+    @if (couponError()) {
+      <div class="hint error-text">{{ couponError() }}</div>
+    }
+    @if (couponResult(); as c) {
+      <div class="hint success-text">Coupon "{{ c.code }}" applies ₹{{ c.discountAmount }} off.</div>
+    }
+
+    <div class="summary">
+      <div class="summary-row">
+        <span>Subtotal (MRP)</span>
+        <span>₹{{ subtotalMrp() }}</span>
+      </div>
+      @if (totalItemDiscount() > 0) {
+        <div class="summary-row muted">
+          <span>Item discounts</span>
+          <span>−₹{{ totalItemDiscount() }}</span>
+        </div>
+      }
+      @if (couponResult(); as c) {
+        <div class="summary-row muted">
+          <span>Coupon ({{ c.code }})</span>
+          <span>−₹{{ c.discountAmount }}</span>
+        </div>
+      }
+      <div class="summary-row total">
+        <span>Total</span>
+        <span>₹{{ grandTotal() }}</span>
+      </div>
+    </div>
+
+    <button class="btn btn-primary start-order-btn" (click)="startWalkInOrder()">
+      Start walk-in order with these items →
+    </button>
+  }
+</div>

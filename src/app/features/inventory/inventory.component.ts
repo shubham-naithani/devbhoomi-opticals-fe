@@ -74,9 +74,9 @@ export class InventoryComponent {
   bulkPrintChooserOpen = signal(false);
 
   // ---- Frame-tag calibration ---------------------------------------------
-  frameTextZoneLengthMm = signal(31); // zone 1: brand/product/variant text
+  frameTextZoneLengthMm = signal(25); // zone 1: brand/product/variant text
   frameCutGapMm = signal(2); // blank buffer straddling the perforation (1mm each side)
-  frameBarcodeZoneLengthMm = signal(31); // zone 2: barcode
+  frameBarcodeZoneLengthMm = signal(37); // zone 2: barcode
   frameHeadTotalLengthMm = signal(64); // total length of the printable head/pill (measured: 6.4cm)
   frameHeadAtLeadingEdge = signal(true); // true = the head sits at the leading edge as the tag feeds through
 
