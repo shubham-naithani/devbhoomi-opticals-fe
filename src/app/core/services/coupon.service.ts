@@ -21,6 +21,13 @@ export class CouponService {
     return this.http.get<CouponListResponse>(this.base, { params: cleaned as any });
   }
 
+  preview(code: string, items: { price: number; mspPrice: number; quantity: number }[]) {
+    return this.http.post<{ valid: boolean; discountAmount: number; code: string | null; message?: string }>(
+      `${this.base}/preview`,
+      { code, items }
+    );
+  }
+
   create(payload: {
     code: string;
     discountType: 'fixed' | 'percentage';

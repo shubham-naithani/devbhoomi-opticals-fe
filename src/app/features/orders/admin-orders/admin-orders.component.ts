@@ -1,5 +1,5 @@
 import { DatePipe, UpperCasePipe } from '@angular/common';
-import { Component, inject, signal } from '@angular/core';
+import { Component, inject, signal, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { OrderService } from '../../../core/services/order.service';
 import { ToastService } from '../../../core/services/toast.service';
@@ -7,7 +7,9 @@ import { AuthService } from '../../../core/services/auth.service';
 import { ConfirmDialogService } from '../../../core/services/confirm-dialog.service';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { Order, OrderStatus, PaymentMethod, RelatedRepair } from '../../../core/models/order.model';
-
+import { InventoryService } from '../../../core/services/inventory.service';
+import { Article, InventoryItem } from '../../../core/models/inventory.model';
+import JsBarcode from 'jsbarcode';
 const PAGE_SIZE = 10;
 
 @Component({
@@ -22,6 +24,7 @@ export class AdminOrdersComponent {
   private toast = inject(ToastService);
   private confirmDialog = inject(ConfirmDialogService);
   auth = inject(AuthService);
+  private inventoryService = inject(InventoryService);
 
   private readonly statusTransitions: Record<OrderStatus, OrderStatus[]> = {
     confirmed: ['in_progress', 'cancelled'],
@@ -57,6 +60,13 @@ export class AdminOrdersComponent {
   isBulkUpdating = signal(false);
   relatedRepairs = signal<RelatedRepair[]>([]);
 
+  // ---- Item lookup popup (read-only — "what is this barcode", nothing editable) ----
+  itemScanBarcode = signal('');
+  isLookingUpItem = signal(false);
+  viewingArticle = signal<{ product: InventoryItem; article: Article } | null>(
+    null,
+  );
+
   statusOptions: OrderStatus[] = [
     'confirmed',
     'in_progress',
@@ -82,6 +92,18 @@ export class AdminOrdersComponent {
 
   constructor() {
     this.fetch();
+
+    // Re-render item barcodes any time the panel's order actually changes and
+    // finishes loading — effect() guarantees this runs after Angular has
+    // committed the new DOM, unlike a bare setTimeout which can fire before
+    // the @for loop has actually painted the SVG elements.
+    effect(() => {
+      const order = this.selectedOrder();
+      const loading = this.isPanelLoading();
+      if (order && !loading) {
+        setTimeout(() => this.renderItemBarcodes(order), 0);
+      }
+    });
   }
 
   fetch(): void {
@@ -247,6 +269,16 @@ export class AdminOrdersComponent {
     this.fetch();
   }
 
+  onSearchSubmit(value: string): void {
+    this.searchTerm.set(value);
+    this.page.set(1);
+    this.fetch();
+    setTimeout(() => {
+      this.searchTerm.set('');
+      this.fetch();
+    }, 300);
+  }
+
   goToPage(page: number): void {
     this.page.set(page);
     this.fetch();
@@ -305,8 +337,8 @@ export class AdminOrdersComponent {
     this.isEditMode.set(false);
     this.showRefundForm.set(false);
     this.paymentAmount.set(null);
-    this.relatedRepairs.set([]); // reset until the fresh fetch resolves
-    this.selectedOrder.set(order); // show cached data immediately
+    this.relatedRepairs.set([]);
+    this.selectedOrder.set(order);
 
     this.orderService.getById(order._id).subscribe({
       next: (res) => {
@@ -524,6 +556,72 @@ export class AdminOrdersComponent {
         this.isGeneratingInvoice.set(false);
         this.toast.error(err?.error?.message || 'Could not generate invoice');
       },
+    });
+  }
+
+  // Read-only lookup for "what is this item" — reuses the same barcode
+  // lookup already proven in the walk-in order / Price Check. Never adds,
+  // edits, or removes anything; purely informational for a staff member
+  // confirming a physical item against what's on file.
+  onLookupItemBarcode(): void {
+    const code = this.itemScanBarcode().trim();
+    if (!code || code.length < 6) {
+      this.toast.error('Enter a complete barcode (or use the scanner)');
+      return;
+    }
+
+    this.isLookingUpItem.set(true);
+    this.inventoryService.lookupByBarcode(code).subscribe({
+      next: (res) => {
+        this.isLookingUpItem.set(false);
+        this.itemScanBarcode.set('');
+        if (!res.article || !res.item) {
+          this.toast.error('No item found for this barcode');
+          return;
+        }
+        this.viewingArticle.set({ product: res.item, article: res.article });
+      },
+      error: (err) => {
+        this.isLookingUpItem.set(false);
+        this.itemScanBarcode.set('');
+        this.toast.error(
+          err?.error?.message || 'No item found for this barcode',
+        );
+      },
+    });
+  }
+
+  closeItemPopup(): void {
+    this.viewingArticle.set(null);
+  }
+
+  articleVariantLabel(article: Article): string {
+    return (
+      [article.color, article.lensTint, article.size]
+        .filter(Boolean)
+        .join(' / ') || 'Standard'
+    );
+  }
+
+  // Renders a real visual barcode (not just the plain number) under each
+  // item, matching how the invoice PDF already shows one via bwip-js.
+  // Purely visual — the actual scan-to-popup lookup still goes through the
+  // text input above, since a screen-rendered barcode still can't be read
+  // by a physical laser scanner.
+  private renderItemBarcodes(order: Order): void {
+    order.items.forEach((item, index) => {
+      if (!item.barcode) return;
+      const svg = document.getElementById(`order-item-barcode-${index}`);
+      if (svg) {
+        JsBarcode(svg, item.barcode, {
+          format: 'CODE128',
+          width: 1.3,
+          height: 30,
+          displayValue: true,
+          fontSize: 9,
+          margin: 2,
+        });
+      }
     });
   }
 }

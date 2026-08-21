@@ -3,6 +3,14 @@
     <h1>Welcome, {{ auth.currentUser()?.name }}</h1>
     <p class="subtitle">Here's what's happening at the store today.</p>
   </div>
+
+  <button class="btn btn-ghost" (click)="showPriceCheck.set(true)">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="11" cy="11" r="7" stroke="black" stroke-width="2" />
+      <line x1="16.65" y1="16.65" x2="21" y2="21" stroke="black" stroke-width="2" stroke-linecap="round" />
+    </svg>
+    Quick Price Check
+  </button>
 </div>
 
 @if (auth.isAdmin()) {
@@ -79,5 +87,9 @@
     <h2>Welcome back, {{ auth.currentUser()?.name }} 👋</h2>
     <p>Ready to help your next customer? Start a new order below.</p>
     <a routerLink="/walk-in-order" class="btn btn-primary btn-lg">+ New Walk-in Order</a>
+    <button class="btn btn-ghost btn-lg" (click)="showPriceCheck.set(true)">🔍 Price Check</button>
   </div>
+}
+@if (showPriceCheck()) {
+  <app-price-check (closed)="showPriceCheck.set(false)" />
 }
