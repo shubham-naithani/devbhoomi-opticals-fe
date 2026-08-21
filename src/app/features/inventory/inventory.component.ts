@@ -118,8 +118,9 @@ export class InventoryComponent {
       [Validators.required, Validators.min(0)],
     ],
     price: [null as number | null], // MRP — EDITABLE
-    mspPrice: [{ value: null as number | null, disabled: true }], // MSP — now always disabled, the fixed floor
-    isMrpManual: [false], // renamed from isMspManual
+    mspPrice: [{ value: null as number | null, disabled: true }],
+    isMrpManual: [false],
+    isMspManual: [false],
     stock: [0, [Validators.required, Validators.min(0)]],
     lowStockThreshold: [null as number | null, [Validators.min(0)]],
     isActive: [true],
@@ -159,11 +160,12 @@ export class InventoryComponent {
     // from `res.item`).
     this.articleForm.controls.costPrice.valueChanges.subscribe((cost) => {
       const numCost = Number(cost) || 0;
-      // MSP always recalculates, no exceptions — it's the fixed floor now.
-      this.articleForm.controls.mspPrice.setValue(
-        this.round2(numCost * this.MSP_MARGIN),
-        { emitEvent: false },
-      );
+      if (!this.articleForm.controls.isMspManual.value) {
+        this.articleForm.controls.mspPrice.setValue(
+          this.round2(numCost * this.MSP_MARGIN),
+          { emitEvent: false },
+        );
+      }
       if (!this.articleForm.controls.isMrpManual.value) {
         this.articleForm.controls.price.setValue(
           this.round2(numCost * this.MRP_MARGIN),
@@ -182,6 +184,19 @@ export class InventoryComponent {
           { emitEvent: false },
         );
         this.articleForm.controls.price.disable({ emitEvent: false });
+      }
+    });
+
+    this.articleForm.controls.isMspManual.valueChanges.subscribe((manual) => {
+      if (manual) {
+        this.articleForm.controls.mspPrice.enable({ emitEvent: false });
+      } else {
+        const cost = Number(this.articleForm.controls.costPrice.value) || 0;
+        this.articleForm.controls.mspPrice.setValue(
+          this.round2(cost * this.MSP_MARGIN),
+          { emitEvent: false },
+        );
+        this.articleForm.controls.mspPrice.disable({ emitEvent: false });
       }
     });
   }
@@ -305,6 +320,7 @@ export class InventoryComponent {
       price: 0,
       mspPrice: null,
       isMrpManual: false,
+      isMspManual: false,
       stock: 0,
       lowStockThreshold: null,
       isActive: true,
@@ -494,6 +510,7 @@ export class InventoryComponent {
       price: 0,
       mspPrice: null,
       isMrpManual: false,
+      isMspManual: false,
       stock: 0,
       lowStockThreshold: null,
       isActive: true,
@@ -514,6 +531,7 @@ export class InventoryComponent {
       price: article.price,
       mspPrice: article.mspPrice ?? null,
       isMrpManual: article.isMrpManual,
+      isMspManual: article.isMspManual,
       stock: article.stock,
       lowStockThreshold: article.lowStockThreshold ?? null,
       isActive: article.isActive,
@@ -553,13 +571,16 @@ export class InventoryComponent {
 
     const proceed = (newUrls: string[]) => {
       this.isUploadingImages.set(false);
-      const { mspPrice, ...rawValue } = this.articleForm.getRawValue();
+
+      const rawValue = this.articleForm.getRawValue();
       const images = [...this.existingImages(), ...newUrls];
       const editing = this.editingArticle();
 
-      const payload: any = rawValue.isMrpManual
-        ? rawValue
-        : { ...rawValue, price: undefined };
+      const payload: any = {
+        ...rawValue,
+        price: rawValue.isMrpManual ? rawValue.price : undefined,
+        mspPrice: rawValue.isMspManual ? rawValue.mspPrice : undefined,
+      };
 
       const request = editing
         ? this.inventoryService.updateArticle(product._id, editing._id, {
