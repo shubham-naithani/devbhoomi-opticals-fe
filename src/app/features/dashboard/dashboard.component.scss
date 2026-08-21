@@ -68,8 +68,12 @@
 
 .chart-card {
   padding: 20px;
+  overflow: hidden;
   h3 { font-size: 15px; margin-bottom: 14px; }
-  canvas { max-height: 220px; }
+  canvas {
+    max-height: 220px;
+    max-width: 100% !important;
+  }
 }
 
 .grid-2 {

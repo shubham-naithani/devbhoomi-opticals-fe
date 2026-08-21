@@ -37,6 +37,7 @@ export class DashboardComponent {
   revenueTrendData = signal<ChartData<'line'>>({ labels: [], datasets: [] });
   revenueTrendOptions: ChartConfiguration<'line'>['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: { legend: { display: false } },
     scales: { y: { beginAtZero: true } },
   };
@@ -45,6 +46,7 @@ export class DashboardComponent {
   statusChartData = signal<ChartData<'doughnut'>>({ labels: [], datasets: [] });
   statusChartOptions: ChartConfiguration<'doughnut'>['options'] = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: { legend: { position: 'bottom' } },
   };
 
