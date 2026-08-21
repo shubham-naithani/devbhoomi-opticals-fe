@@ -124,7 +124,20 @@
   margin-left: auto;
 
   label { font-size: 12px; color: var(--color-text-muted, #888); }
-  input { width: 64px; padding: 5px 7px; }
+
+  input {
+    width: 60px;
+    padding: 4px 6px;
+    box-sizing: border-box;
+    border: 1px solid var(--color-border, #ddd);
+    border-radius: 4px;
+    font-size: 13px;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary, #1F4E5C);
+    }
+  }
 }
 
 .line-bottom-row {
