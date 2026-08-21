@@ -6,8 +6,8 @@
 </div>
 
 <div class="toolbar">
-  <input type="text" placeholder="Search by order ID or phone…" [value]="searchTerm()"
-    (input)="onSearchChange($any($event.target).value)" />
+  <input type="text" placeholder="Search by order ID, phone, or scan invoice barcode…" [value]="searchTerm()"
+  (input)="onSearchChange($any($event.target).value)" (keyup.enter)="onSearchSubmit($any($event.target).value)" />
   <select [(ngModel)]="statusFilter" (ngModelChange)="onFilterChange()">
     <option value="">All statuses</option>
     @for (opt of statusOptions; track opt) {
@@ -154,14 +154,28 @@
 
   <div class="detail-section">
     <div class="detail-label">Items</div>
+
+    <div class="item-scan-row">
+      <input type="text" placeholder="Scan an item's barcode to view its details…" [(ngModel)]="itemScanBarcode"
+        (keyup.enter)="onLookupItemBarcode()" />
+      <button class="btn btn-ghost" [disabled]="isLookingUpItem()" (click)="onLookupItemBarcode()">
+        {{ isLookingUpItem() ? 'Looking up…' : 'Scan' }}
+      </button>
+    </div>
+
     @for (item of order.items; track $index) {
-    <div class="detail-item-row">
-      <span>
-        {{ item.name }} &times; {{ item.quantity }}
-        @if (item.itemDiscountPercent && item.itemDiscountPercent > 0) {
-        <span class="item-discount-tag">−{{ item.itemDiscountPercent }}%</span>
+    <div class="detail-item-row item-row-with-barcode">
+      <div>
+        <div>
+          {{ item.name }} &times; {{ item.quantity }}
+          @if (item.itemDiscountPercent && item.itemDiscountPercent > 0) {
+          <span class="item-discount-tag">−{{ item.itemDiscountPercent }}%</span>
+          }
+        </div>
+        @if (item.barcode) {
+        <svg [id]="'order-item-barcode-' + $index" class="item-barcode-svg"></svg>
         }
-      </span>
+      </div>
       <span>₹{{ item.price * item.quantity }}</span>
     </div>
     }
@@ -387,5 +401,30 @@
     }
   </div>
   }
+</div>
+}
+@if (viewingArticle(); as v) {
+<div class="overlay" (click)="closeItemPopup()"></div>
+<div class="item-popup card">
+  <div class="item-popup-head">
+    <h3>{{ v.product.name }}</h3>
+    <button class="btn btn-ghost" (click)="closeItemPopup()">Close</button>
+  </div>
+
+  @if (v.article.images && v.article.images.length > 0) {
+  <img [src]="v.article.images[0]" [alt]="v.product.name" class="item-popup-image" />
+  }
+
+  <div class="item-popup-variant">{{ articleVariantLabel(v.article) }}</div>
+
+  <div class="item-popup-details">
+    <div class="item-popup-row"><span>SKU</span><span>{{ v.article.sku }}</span></div>
+    <div class="item-popup-row"><span>Barcode</span><span>{{ v.article.barcode }}</span></div>
+    <div class="item-popup-row"><span>Price (MRP)</span><span>₹{{ v.article.price }}</span></div>
+    @if (v.article.mspPrice) {
+    <div class="item-popup-row"><span>MSP</span><span>₹{{ v.article.mspPrice }}</span></div>
+    }
+    <div class="item-popup-row"><span>Current stock</span><span>{{ v.article.stock }}</span></div>
+  </div>
 </div>
 }

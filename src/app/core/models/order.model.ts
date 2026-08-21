@@ -7,12 +7,15 @@ export type PaymentStatus = 'unpaid' | 'partial' | 'paid';
 
 export interface OrderItem {
   inventoryItem: string;
+  articleId: string;
   name: string;
   price: number;
+  costPrice?: number;
   mspPrice?: number;
-  itemDiscountPercent?: number;
-  itemDiscountAmount?: number;
-  warrantyMonths?: number;
+  barcode?: string;
+  itemDiscountPercent: number;
+  itemDiscountAmount: number;
+  warrantyMonths: number;
   quantity: number;
 }
 
