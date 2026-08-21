@@ -409,3 +409,29 @@ table td {
   span:first-child { color: var(--color-text-muted); }
   span:last-child { font-weight: 600; }
 }
+
+.search-input-wrapper {
+  position: relative;
+  flex: 1;
+
+  input {
+    width: 100%;
+    padding-right: 36px; // room for the clear button
+  }
+}
+
+.clear-search-btn {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  color: var(--color-text-muted, #888);
+  cursor: pointer;
+  padding: 4px 6px;
+
+  &:hover { color: var(--color-danger, #b3492e); }
+}

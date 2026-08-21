@@ -106,7 +106,7 @@ export class AdminOrdersComponent {
     });
   }
 
-  fetch(): void {
+  fetch(onComplete?: (result: { total: number }) => void): void {
     this.isLoading.set(true);
     this.orderService
       .all({
@@ -121,6 +121,7 @@ export class AdminOrdersComponent {
           this.totalOrders.set(res.total);
           this.totalPages.set(res.pages || 1);
           this.isLoading.set(false);
+          onComplete?.({ total: res.total });
         },
         error: () => {
           this.isLoading.set(false);
@@ -272,11 +273,18 @@ export class AdminOrdersComponent {
   onSearchSubmit(value: string): void {
     this.searchTerm.set(value);
     this.page.set(1);
+    this.fetch(({ total }) => {
+      if (total === 0) {
+        this.searchTerm.set('');
+        this.fetch();
+      }
+    });
+  }
+
+  clearSearch(): void {
+    this.searchTerm.set('');
+    this.page.set(1);
     this.fetch();
-    setTimeout(() => {
-      this.searchTerm.set('');
-      this.fetch();
-    }, 300);
   }
 
   goToPage(page: number): void {
