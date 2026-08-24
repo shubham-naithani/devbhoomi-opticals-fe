@@ -1,0 +1,46 @@
+<div class="overlay" (click)="close()"></div>
+<div class="side-panel card">
+  <div class="panel-head">
+    <h2>Send Coupon</h2>
+    <button class="btn btn-ghost" (click)="close()">Close</button>
+  </div>
+
+  <p class="hint">
+    Sending to {{ recipients.length }} recipient{{ recipients.length === 1 ? '' : 's' }}. Each person gets their own
+    one-time code with the same rules as the coupon you pick below — not the same shared code.
+  </p>
+
+  <div class="field">
+    <label>Coupon</label>
+    @if (isLoadingTemplates()) {
+      <div class="state-msg">Loading coupons…</div>
+    } @else if (templates().length === 0) {
+      <div class="state-msg">No active coupons yet. Create one first with "Generate Coupon".</div>
+    } @else {
+      <select [ngModel]="selectedTemplateId()" (ngModelChange)="selectedTemplateId.set($event)">
+        <option value="" disabled>Choose a coupon…</option>
+        @for (coupon of templates(); track coupon._id) {
+          <option [value]="coupon._id">
+            {{ coupon.code }} — {{ coupon.discountType === 'fixed' ? '₹' + coupon.value + ' off' : coupon.value + '% off' }}
+          </option>
+        }
+      </select>
+    }
+  </div>
+
+  @if (selectedTemplate(); as t) {
+    <div class="hint">
+      Each recipient will get a unique code like {{ t.code }}-A1B2, usable once.
+      @if (t.expiresAt) {
+        Expires {{ t.expiresAt | date: 'mediumDate' }}.
+      }
+    </div>
+  }
+
+  <div class="panel-actions">
+    <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
+    <button type="button" class="btn btn-primary" [disabled]="isSending() || !selectedTemplateId()" (click)="send()">
+      {{ isSending() ? 'Sending…' : 'Send Coupon' }}
+    </button>
+  </div>
+</div>

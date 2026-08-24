@@ -1,0 +1,78 @@
+<div class="overlay" (click)="close()"></div>
+<div class="side-panel card">
+  <div class="panel-head">
+    <h2>Give Referral Coupon</h2>
+    <button class="btn btn-ghost" (click)="close()">Close</button>
+  </div>
+
+  @if (result(); as r) {
+    <div class="success-block">
+      <p class="hint">Code generated for <strong>{{ referrer.name }}</strong>:</p>
+      <div class="code-display">{{ r.code }}</div>
+      <p class="hint">
+        @if (r.whatsappSent) {
+          Sent to {{ referrer.phone }} over WhatsApp — they can hand this code to a friend.
+        } @else {
+          WhatsApp delivery failed — write this code down or share it with {{ referrer.name }} directly.
+        }
+      </p>
+      <div class="panel-actions">
+        <button type="button" class="btn btn-primary" (click)="close()">Done</button>
+      </div>
+    </div>
+  } @else {
+    <p class="hint">
+      Generating this on behalf of <strong>{{ referrer.name }}</strong> ({{ referrer.phone }}). They'll get the code to
+      pass along to a friend; when the friend's order uses it, {{ referrer.name }} earns points worth a percentage of
+      that order — spendable like a coupon on a future visit.
+    </p>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Discount type</label>
+        <select [ngModel]="discountType()" (ngModelChange)="discountType.set($event)">
+          <option value="fixed">Flat amount (₹)</option>
+          <option value="percentage">Percentage (%)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>{{ discountType() === 'fixed' ? 'Amount off (₹)' : 'Percent off (%)' }}</label>
+        <input type="number" min="1" [ngModel]="value()" (ngModelChange)="value.set($event)" />
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Minimum order value (₹)</label>
+        <input type="number" min="0" [ngModel]="minOrderValue()" (ngModelChange)="minOrderValue.set($event)" />
+      </div>
+      <div class="field">
+        <label>Expires on</label>
+        <input type="date" [ngModel]="expiresAt()" (ngModelChange)="expiresAt.set($event)" />
+      </div>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Referrer's reward (% of friend's order, credited as points)</label>
+        <input type="number" min="1" max="100" [ngModel]="referralPercent()" (ngModelChange)="referralPercent.set($event)" />
+      </div>
+      <div class="field">
+        <label>Max redemptions</label>
+        <input type="number" min="1" [ngModel]="usageLimit()" (ngModelChange)="usageLimit.set($event)" />
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Custom code (optional)</label>
+      <input type="text" placeholder="Leave blank to auto-generate, e.g. REF-4F2A9C" [ngModel]="customCode()" (ngModelChange)="customCode.set($event)" />
+    </div>
+
+    <div class="panel-actions">
+      <button type="button" class="btn btn-ghost" (click)="close()">Cancel</button>
+      <button type="button" class="btn btn-primary" [disabled]="isSubmitting()" (click)="generate()">
+        {{ isSubmitting() ? 'Generating…' : 'Generate Referral Coupon' }}
+      </button>
+    </div>
+  }
+</div>

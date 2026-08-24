@@ -1,0 +1,85 @@
+<div class="toolbar">
+  <input
+    type="text"
+    placeholder="Search by name, phone, or email…"
+    [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)"
+  />
+</div>
+
+@if (selectedCount() > 0) {
+  <div class="selection-bar">
+    <span>{{ selectedCount() }} selected</span>
+    <div class="selection-actions">
+      <button class="btn btn-ghost" (click)="clearSelection()">Clear</button>
+      <button class="btn btn-accent" (click)="openSendModal()">Send Coupon</button>
+    </div>
+  </div>
+}
+
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading customers…</div>
+  } @else if (customers().length === 0) {
+    <div class="state-msg">No customers with orders yet.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" [checked]="allOnPageSelected()" (change)="toggleAllOnPage()" /></th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Orders</th>
+          <th>Last order</th>
+          <th>Points</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (customer of customers(); track customer.userId) {
+          <tr>
+            <td>
+              <input type="checkbox" [checked]="selectedIds().has(customer.userId)" (change)="toggle(customer.userId)" />
+            </td>
+            <td>{{ customer.name }}</td>
+            <td class="mono">{{ customer.phone }}</td>
+            <td>{{ customer.email || '—' }}</td>
+            <td>
+              {{ customer.orderCount }}
+              <span
+                class="badge"
+                [class.badge-frequent]="customer.tier === 'frequent'"
+                [class.badge-regular]="customer.tier === 'regular'"
+                [class.badge-new]="customer.tier === 'new'"
+              >
+                {{ customer.tier === 'frequent' ? 'Frequent' : customer.tier === 'regular' ? 'Regular' : 'New' }}
+              </span>
+            </td>
+            <td>{{ customer.lastOrderAt | date: 'mediumDate' }}</td>
+            <td>
+              @if (customer.pointsBalance > 0) {
+                <span class="badge badge-points">{{ customer.pointsBalance }} pts</span>
+              } @else {
+                <span class="mono-muted">—</span>
+              }
+            </td>
+            <td>
+              <button class="btn btn-ghost btn-sm" (click)="openReferralModal(customer)">Give Referral Coupon</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="total()" (pageChange)="goToPage($event)" />
+
+@if (isSendModalOpen()) {
+  <app-send-coupon-modal [recipients]="selectedRecipients" (closed)="closeSendModal()" (sent)="onSent()" />
+}
+
+@if (referralTarget(); as target) {
+  <app-referral-coupon-modal [referrer]="target" (closed)="closeReferralModal()" (generated)="onReferralGenerated()" />
+}

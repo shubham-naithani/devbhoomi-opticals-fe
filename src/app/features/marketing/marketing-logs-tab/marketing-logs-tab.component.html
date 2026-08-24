@@ -1,0 +1,53 @@
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading logs…</div>
+  } @else if (logs().length === 0) {
+    <div class="state-msg">No coupons sent yet.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Type</th>
+          <th>Recipient</th>
+          <th>Phone</th>
+          <th>Sent</th>
+          <th>Delivery</th>
+          <th>Redeemed</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (log of logs(); track log.code) {
+          <tr>
+            <td class="mono">{{ log.code }}</td>
+            <td>
+              <span class="badge" [class.badge-referral]="log.recipientType === 'referral'">
+                {{ log.recipientType === 'referral' ? 'Referral' : 'Campaign' }}
+              </span>
+            </td>
+            <td>{{ log.recipientName }}</td>
+            <td class="mono">{{ log.recipientPhone }}</td>
+            <td>{{ log.sentAt | date: 'medium' }}</td>
+            <td>
+              <span
+                class="badge"
+                [class.badge-sent]="log.whatsappStatus === 'sent'"
+                [class.badge-failed]="log.whatsappStatus === 'failed'"
+                [class.badge-queued]="log.whatsappStatus === 'queued'"
+              >
+                {{ log.whatsappStatus }}
+              </span>
+            </td>
+            <td>
+              <span class="badge" [class.badge-active]="log.redeemed" [class.badge-inactive]="!log.redeemed">
+                {{ log.redeemed ? 'Redeemed' : 'Not yet' }}
+              </span>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="total()" (pageChange)="goToPage($event)" />

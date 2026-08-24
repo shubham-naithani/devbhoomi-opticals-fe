@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, Input, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CouponService } from '../../core/services/coupon.service';
@@ -20,6 +20,10 @@ export class CouponsComponent {
   private couponService = inject(CouponService);
   private toast = inject(ToastService);
   private confirmDialog = inject(ConfirmDialogService);
+
+  // Set to true when rendered inside the Marketing shell's Coupons tab, which already shows
+  // its own page header — hides this component's own duplicate header/button in that case.
+  @Input() embedded = false;
 
   coupons = signal<Coupon[]>([]);
   totalCoupons = signal(0);

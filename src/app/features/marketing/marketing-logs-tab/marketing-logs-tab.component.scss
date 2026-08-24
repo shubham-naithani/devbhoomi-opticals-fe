@@ -1,0 +1,28 @@
+.state-msg {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+.mono {
+  font-family: monospace;
+  font-weight: 600;
+}
+// Reuses the global .badge base; .badge-active/.badge-inactive already exist for the
+// "Redeemed" column. These are new modifiers for delivery status — placeholder colors,
+// swap for your brand palette if you have semantic tokens defined elsewhere.
+.badge-sent {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge-failed {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.badge-queued {
+  background: #e5e7eb;
+  color: #374151;
+}
+.badge-referral {
+  background: #ede9fe;
+  color: #5b21b6;
+}

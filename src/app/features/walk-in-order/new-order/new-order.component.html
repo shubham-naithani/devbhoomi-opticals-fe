@@ -85,6 +85,7 @@
           <div class="meta">
             {{ selectedCustomer()!.phone }}
             @if (selectedCustomer()!.email) { &middot; {{ selectedCustomer()!.email }} }
+            @if (availablePoints > 0) { &middot; {{ availablePoints }} points available }
           </div>
         </div>
         <button class="btn btn-ghost" (click)="changeCustomer()">Change</button>
@@ -314,12 +315,58 @@
         <span>Applied at confirmation</span>
       </div>
       }
+      @if (pointsToRedeem()) {
+      <div class="summary-row muted">
+        <span>Points redeemed ({{ pointsToRedeem() }} pts)</span>
+        <span>−₹{{ pointsToRedeem() }} at confirmation</span>
+      </div>
+      }
     </div>
 
     <div class="total-row">
       <span>Total</span>
       <span class="total-amount">₹{{ orderTotal | number: '1.0-2' }}</span>
     </div>
+
+    @if (availablePoints > 0) {
+    <div class="points-redeem-block">
+      <button
+        type="button"
+        class="points-chip"
+        [class.active]="pointsRedemptionEnabled()"
+        (click)="togglePointsRedemption()"
+      >
+        @if (pointsRedemptionEnabled()) {
+          <span class="chip-check">✓</span>
+          Redeeming {{ pointsToRedeem() ?? 0 }} pts — save ₹{{ pointsToRedeem() ?? 0 }}
+        } @else {
+          Redeem points — save up to ₹{{ maxRedeemablePoints }}
+        }
+      </button>
+      <span class="points-chip-hint">
+        {{ selectedCustomer()!.name }} has {{ availablePoints }} pts from referrals (1 pt = ₹1)
+      </span>
+
+      @if (pointsRedemptionEnabled()) {
+        @if (!showCustomPointsInput()) {
+          <button type="button" class="link-btn" (click)="showCustomPointsInput.set(true)">Use a different amount</button>
+        } @else {
+          <div class="field custom-points-field">
+            <label>Points to redeem</label>
+            <input
+              type="number"
+              min="0"
+              [max]="maxRedeemablePoints"
+              [ngModel]="pointsToRedeem()"
+              (ngModelChange)="onPointsToRedeemChange($event)"
+              placeholder="0"
+            />
+            <div class="hint">Final amount is confirmed against their live balance (and any coupon above) when you submit.</div>
+          </div>
+        }
+      }
+    </div>
+    }
 
     <div class="field">
       <label>Payment method</label>

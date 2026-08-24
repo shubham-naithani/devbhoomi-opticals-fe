@@ -1,0 +1,28 @@
+<div class="page-header">
+  <div>
+    <h1>Marketing</h1>
+    <p class="subtitle">Grow repeat business — target new leads and existing customers with coupons.</p>
+  </div>
+  <button class="btn btn-accent" (click)="openGenerateCoupon()">+ Generate Coupon</button>
+</div>
+
+<div class="tabs">
+  @for (tab of tabs; track tab.id) {
+    <button class="tab-btn" [class.active]="activeTab() === tab.id" (click)="selectTab(tab.id)">
+      {{ tab.label }}
+    </button>
+  }
+</div>
+
+<div [class.hidden]="activeTab() !== 'new-customers'">
+  <app-new-customers-tab />
+</div>
+<div [class.hidden]="activeTab() !== 'existing-customers'">
+  <app-existing-customers-tab />
+</div>
+<div [class.hidden]="activeTab() !== 'coupons'">
+  <app-coupons [embedded]="true" />
+</div>
+<div [class.hidden]="activeTab() !== 'logs'">
+  <app-marketing-logs-tab />
+</div>

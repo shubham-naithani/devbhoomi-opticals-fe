@@ -485,3 +485,65 @@
     &.muted { color: var(--color-text-muted); }
   }
 }
+
+.points-redeem-block {
+  margin: 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.points-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1.5px solid var(--color-border);
+  background: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover {
+    border-color: #a78bfa;
+  }
+
+  &.active {
+    background: #ede9fe;
+    border-color: #a78bfa;
+    color: #5b21b6;
+  }
+}
+
+.chip-check {
+  font-size: 13px;
+}
+
+.points-chip-hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.points-redeem-block .link-btn {
+  flex-basis: 100%;
+}
+
+.link-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #5b21b6;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  text-align: left;
+}
+
+.custom-points-field {
+  flex-basis: 100%;
+  max-width: 260px;
+}

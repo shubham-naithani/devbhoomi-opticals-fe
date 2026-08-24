@@ -13,6 +13,7 @@ export interface User {
   createdAt?: string;
   updatedAt?: string;
   orderCount?: number;
+  pointsBalance?: number;
 }
 
 export interface UserFormValue {

@@ -1,0 +1,73 @@
+<div class="card upload-card">
+  <div class="upload-row">
+    <div>
+      <h3>Upload new customers</h3>
+      <p class="hint">
+        Excel file with columns: First Name, Last Name, Mobile, Email. Rows with an invalid phone, a phone already
+        uploaded, or a phone that matches an existing customer are skipped automatically.
+      </p>
+    </div>
+    <div>
+      <input #fileInput type="file" accept=".xlsx,.xls,.csv" class="hidden-input" (change)="onFileSelected($event)" />
+      <button class="btn btn-primary" [disabled]="isUploading()" (click)="triggerFilePicker()">
+        {{ isUploading() ? 'Uploading…' : 'Upload Excel file' }}
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toolbar">
+  <input
+    type="text"
+    placeholder="Search by name, phone, or email…"
+    [value]="searchTerm()"
+    (input)="onSearchChange($any($event.target).value)"
+  />
+</div>
+
+@if (selectedCount() > 0) {
+  <div class="selection-bar">
+    <span>{{ selectedCount() }} selected</span>
+    <div class="selection-actions">
+      <button class="btn btn-ghost" (click)="clearSelection()">Clear</button>
+      <button class="btn btn-accent" (click)="openSendModal()">Send Coupon</button>
+    </div>
+  </div>
+}
+
+<div class="card table-card">
+  @if (isLoading()) {
+    <div class="state-msg">Loading leads…</div>
+  } @else if (leads().length === 0) {
+    <div class="state-msg">No new customers yet. Upload an Excel file to get started.</div>
+  } @else {
+    <table>
+      <thead>
+        <tr>
+          <th><input type="checkbox" [checked]="allOnPageSelected()" (change)="toggleAllOnPage()" /></th>
+          <th>Name</th>
+          <th>Phone</th>
+          <th>Email</th>
+          <th>Added</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (lead of leads(); track lead._id) {
+          <tr>
+            <td><input type="checkbox" [checked]="selectedIds().has(lead._id)" (change)="toggle(lead._id)" /></td>
+            <td>{{ lead.firstName }} {{ lead.lastName }}</td>
+            <td class="mono">{{ lead.phone }}</td>
+            <td>{{ lead.email || '—' }}</td>
+            <td>{{ lead.createdAt | date: 'mediumDate' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  }
+</div>
+
+<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="total()" (pageChange)="goToPage($event)" />
+
+@if (isSendModalOpen()) {
+  <app-send-coupon-modal [recipients]="selectedRecipients" (closed)="closeSendModal()" (sent)="onSent()" />
+}
