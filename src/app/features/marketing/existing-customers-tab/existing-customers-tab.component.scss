@@ -1,0 +1,64 @@
+.toolbar {
+  margin-bottom: 16px;
+}
+.toolbar input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.selection-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.selection-actions {
+  display: flex;
+  gap: 8px;
+}
+.mono {
+  font-family: monospace;
+  font-weight: 600;
+}
+.state-msg {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+// Tier badge colors are placeholders — swap for your actual brand palette if you have
+// semantic color tokens defined elsewhere (only --color-border/--color-text-muted were visible
+// from coupons.component.scss).
+.badge {
+  margin-left: 6px;
+}
+.badge-new {
+  background: #e5e7eb;
+  color: #374151;
+}
+.badge-regular {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+.badge-frequent {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge-points {
+  background: #ede9fe;
+  color: #5b21b6;
+  margin-left: 0;
+}
+.mono-muted {
+  font-family: monospace;
+  color: var(--color-text-muted);
+}
+.btn-sm {
+  padding: 6px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+}

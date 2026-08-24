@@ -45,6 +45,7 @@ export interface Order {
   refundedAt?: string;
   couponCode?: string;
   discountAmount: number;
+  pointsRedeemed?: number;
   invoiceUrl?: string;
   invoiceGeneratedAt?: string;
 }
@@ -64,6 +65,7 @@ export interface CreateWalkInOrderPayload {
   prescriptionUsed?: string;
   notes?: string;
   couponCode?: string;
+  pointsToRedeem?: number;
 }
 
 export interface UpdateOrderPayload {

@@ -55,6 +55,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/coupons/coupons.component').then((m) => m.CouponsComponent),
       },
       {
+        // New: Marketing screen (New Customers / Existing Customers / Coupons / Logs tabs).
+        // The old 'coupons' route above is left in place on purpose — nothing links to it
+        // from the sidebar anymore, but it still works standalone if you ever need it.
+        path: 'marketing',
+        canActivate: [adminGuard],
+        loadComponent: () => import('./features/marketing/marketing.component').then((m) => m.MarketingComponent),
+      },
+      {
         path: 'error-log',
         canActivate: [adminGuard],
         loadComponent: () => import('./features/error-log/error-log.component').then((m) => m.ErrorLogComponent),

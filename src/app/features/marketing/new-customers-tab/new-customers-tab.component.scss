@@ -1,0 +1,55 @@
+.upload-card {
+  padding: 18px 20px;
+  margin-bottom: 16px;
+}
+.upload-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  h3 {
+    margin: 0 0 4px;
+  }
+}
+.hidden-input {
+  display: none;
+}
+.hint {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  margin: 0;
+  line-height: 1.5;
+  max-width: 520px;
+}
+.toolbar {
+  margin-bottom: 16px;
+}
+.toolbar input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.selection-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px;
+  margin-bottom: 12px;
+  background: var(--color-border);
+  border-radius: var(--radius-sm);
+}
+.selection-actions {
+  display: flex;
+  gap: 8px;
+}
+.mono {
+  font-family: monospace;
+  font-weight: 600;
+}
+.state-msg {
+  padding: 40px;
+  text-align: center;
+  color: var(--color-text-muted);
+}

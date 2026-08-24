@@ -48,6 +48,7 @@ interface WalkInDraft {
   hasEditedAmount: boolean;
   orderNotes: string;
   couponCode: string;
+  pointsToRedeem: number | null;
 }
 
 @Component({
@@ -143,6 +144,14 @@ export class NewOrderComponent {
   isScanning = signal(false);
   couponCode = signal('');
 
+  // --- Points redemption (referral rewards) ------------------------------
+  // Independent of the coupon field above — points are the customer's own
+  // earned balance (from referrals), not a promotional code, so redeeming
+  // them is allowed alongside a coupon or per-item discounts. The backend
+  // is the real authority on the clamp (against the live balance and
+  // whatever's still owed after other discounts); this is just the input.
+  pointsToRedeem = signal<number | null>(null);
+
   constructor() {
     this.restoreDraftIfAny();
     this.checkPriceCheckHandoff();
@@ -179,6 +188,7 @@ export class NewOrderComponent {
         hasEditedAmount: this.hasEditedAmount(),
         orderNotes: this.orderNotes(),
         couponCode: this.couponCode(),
+        pointsToRedeem: this.pointsToRedeem(),
       };
       if (draft.customer || draft.orderLines.length > 0) {
         localStorage.setItem(this.DRAFT_KEY, JSON.stringify(draft));
@@ -250,6 +260,62 @@ export class NewOrderComponent {
     return this.orderTotal - paid;
   }
 
+  // ---- Points redemption --------------------------------------------
+
+  // Points are earned in rupees already (creditReferralPoints stores a
+  // percentage of a rupee order total), so 1 point = ₹1 — no conversion
+  // needed here.
+  get availablePoints(): number {
+    return this.selectedCustomer()?.pointsBalance ?? 0;
+  }
+
+  // Client-side cap is a convenience for the input's max — the backend
+  // re-clamps against the customer's real-time balance and whatever the
+  // order comes to after any coupon is applied, since neither of those is
+  // previewed live here (same limitation the coupon field already has —
+  // its own discount amount is only known "at confirmation" too).
+  get maxRedeemablePoints(): number {
+    return Math.max(Math.min(this.availablePoints, Math.floor(this.orderTotal)), 0);
+  }
+
+  onPointsToRedeemChange(value: number | null): void {
+    if (value == null || Number.isNaN(value)) {
+      this.pointsToRedeem.set(null);
+      return;
+    }
+    const clamped = Math.min(Math.max(Math.round(value), 0), this.maxRedeemablePoints);
+    this.pointsToRedeem.set(clamped);
+  }
+
+  // Whether the redeem-points chip is currently "on". Deliberately its OWN
+  // signal rather than derived from pointsToRedeem > 0 — an earlier version
+  // derived it, which meant clearing the custom-amount input to type a new
+  // value (a normal mid-edit state where pointsToRedeem briefly becomes
+  // null) instantly collapsed the whole block, including the input the
+  // person was still typing into. Keeping "is this feature on" separate
+  // from "what's the current amount" fixes that.
+  pointsRedemptionEnabled = signal(false);
+
+  // Whether the "use a different amount" input is expanded. Purely a UI
+  // convenience — not persisted in the draft, so it just starts collapsed
+  // again on reload, which is a fine default.
+  showCustomPointsInput = signal(false);
+
+  // One click: turning the chip on applies the full redeemable amount
+  // (covers the vast majority of real counter transactions — points can
+  // never exceed the order total anyway); turning it off clears everything,
+  // including whatever custom amount was being edited.
+  togglePointsRedemption(): void {
+    if (this.pointsRedemptionEnabled()) {
+      this.pointsRedemptionEnabled.set(false);
+      this.pointsToRedeem.set(null);
+      this.showCustomPointsInput.set(false);
+    } else {
+      this.pointsRedemptionEnabled.set(true);
+      this.pointsToRedeem.set(this.maxRedeemablePoints);
+    }
+  }
+
   // ---- Draft persistence -------------------------------------------------
 
   private restoreDraftIfAny(): void {
@@ -298,6 +364,8 @@ export class NewOrderComponent {
           this.hasEditedAmount.set(draft.hasEditedAmount || false);
           this.orderNotes.set(draft.orderNotes || '');
           this.couponCode.set(draft.couponCode || '');
+          this.pointsToRedeem.set(draft.pointsToRedeem ?? null);
+          this.pointsRedemptionEnabled.set(draft.pointsToRedeem != null);
           if (draft.customer) this.fetchLatestEyeTest(draft.customer._id);
         } else {
           localStorage.removeItem(this.DRAFT_KEY);
@@ -400,6 +468,9 @@ export class NewOrderComponent {
     this.hasEditedAmount.set(false);
     this.orderNotes.set('');
     this.couponCode.set('');
+    this.pointsToRedeem.set(null);
+    this.pointsRedemptionEnabled.set(false);
+    this.showCustomPointsInput.set(false);
     this.currentStep.set('customer');
   }
 
@@ -508,6 +579,12 @@ export class NewOrderComponent {
     this.showNewCustomerForm.set(false);
     this.latestEyeTest.set(null);
     this.linkedEyeTestId.set(null);
+    // The points balance belongs to whichever customer is picked — clear
+    // out any in-progress redemption so it can't accidentally carry over
+    // and get applied against a different customer's balance.
+    this.pointsToRedeem.set(null);
+    this.pointsRedemptionEnabled.set(false);
+    this.showCustomPointsInput.set(false);
     this.currentStep.set('customer');
   }
 
@@ -693,6 +770,7 @@ export class NewOrderComponent {
         prescriptionUsed: this.linkedEyeTestId() || undefined,
         notes: this.orderNotes() || undefined,
         couponCode: this.couponDisabled ? undefined : (this.couponCode() || undefined),
+        pointsToRedeem: this.pointsToRedeem() || undefined,
       })
       .subscribe({
         next: (res) => {
@@ -702,10 +780,14 @@ export class NewOrderComponent {
             res.order.discountAmount > 0
               ? ` — ₹${res.order.discountAmount} discount applied`
               : '';
+          const pointsNote =
+          (res.order.pointsRedeemed ?? 0) > 0
+            ? ` — ${res.order.pointsRedeemed} points redeemed`
+            : '';
           this.toast.success(
             res.changeDue > 0
-              ? `Order ${res.order.orderId} created — give ₹${res.changeDue} change to the customer${discountNote}`
-              : `Order ${res.order.orderId} created${discountNote}`,
+              ? `Order ${res.order.orderId} created — give ₹${res.changeDue} change to the customer${discountNote}${pointsNote}`
+              : `Order ${res.order.orderId} created${discountNote}${pointsNote}`,
           );
           this.router.navigate(['/admin-orders']);
         },

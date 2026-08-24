@@ -1,10 +1,12 @@
-<div class="page-header">
-  <div>
-    <h1>Coupons</h1>
-    <p class="subtitle">Discount codes for online and walk-in orders.</p>
+@if (!embedded) {
+  <div class="page-header">
+    <div>
+      <h1>Coupons</h1>
+      <p class="subtitle">Discount codes for online and walk-in orders.</p>
+    </div>
+    <button class="btn btn-accent" (click)="openCreatePanel()">+ New coupon</button>
   </div>
-  <button class="btn btn-accent" (click)="openCreatePanel()">+ New coupon</button>
-</div>
+}
 
 <div class="toolbar">
   <input
