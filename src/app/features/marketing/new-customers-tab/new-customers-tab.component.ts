@@ -1,5 +1,6 @@
 import { Component, ElementRef, ViewChild, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { Subscription } from 'rxjs';
 import { MarketingService, SendRecipient } from '../../../core/services/marketing.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { Lead } from '../../../core/models/lead.model';
@@ -38,13 +39,23 @@ export class NewCustomersTabComponent {
     return leads.length > 0 && leads.every((l) => this.selectedIds().has(l._id));
   });
 
+  // NEW — this tab is never destroyed (Marketing's tab strip toggles visibility with
+  // CSS, not @if), and fetch() is called on every tab-switch-in, search keystroke, and
+  // page change with no cancellation. Without tracking the in-flight request, an older,
+  // slower-to-resolve fetch can resolve AFTER a newer one and silently overwrite fresher
+  // data with stale data — no visible cause, looks exactly like a random flicker. Calling
+  // .unsubscribe() on a pending HttpClient request actually aborts it client-side, so the
+  // stale response's next() callback never fires once a newer fetch has started.
+  private fetchSub?: Subscription;
+
   constructor() {
     this.fetch();
   }
 
   fetch(): void {
     this.isLoading.set(true);
-    this.marketingService
+    this.fetchSub?.unsubscribe();
+    this.fetchSub = this.marketingService
       .listLeads({ search: this.searchTerm() || undefined, page: this.page(), limit: PAGE_SIZE })
       .subscribe({
         next: (res) => {
@@ -141,5 +152,9 @@ export class NewCustomersTabComponent {
   onSent(): void {
     this.closeSendModal();
     this.clearSelection();
+    // NEW — a successful send changes the very "Contacted"/converted status this tab
+    // just added, so refetch immediately instead of waiting for the next tab-switch to
+    // (accidentally) show the right thing.
+    this.fetch();
   }
 }
