@@ -48,6 +48,7 @@
           <th>Name</th>
           <th>Phone</th>
           <th>Email</th>
+          <th>Status</th>
           <th>Added</th>
         </tr>
       </thead>
@@ -58,6 +59,15 @@
             <td>{{ lead.firstName }} {{ lead.lastName }}</td>
             <td class="mono">{{ lead.phone }}</td>
             <td>{{ lead.email || '—' }}</td>
+            <td>
+              @if (lead.converted) {
+                <span class="badge badge-converted">Converted → customer</span>
+              } @else if (lead.lastCouponSentAt) {
+                <span class="badge badge-contacted">Contacted {{ lead.lastCouponSentAt | date: 'mediumDate' }}</span>
+              } @else {
+                <span class="badge badge-new">Not contacted</span>
+              }
+            </td>
             <td>{{ lead.createdAt | date: 'mediumDate' }}</td>
           </tr>
         }
