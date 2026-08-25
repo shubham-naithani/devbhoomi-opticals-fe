@@ -273,6 +273,12 @@
       <span>−₹{{ order.discountAmount }}</span>
     </div>
     }
+    @if (order.pointsRedeemed && order.pointsRedeemed > 0) {
+    <div class="summary-row muted">
+      <span>Points redeemed</span>
+      <span>−₹{{ order.pointsRedeemed }}</span>
+    </div>
+    }
     @if (order.shippingCharge > 0) {
     <div class="summary-row muted">
       <span>Shipping</span>

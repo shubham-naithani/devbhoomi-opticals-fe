@@ -6,4 +6,6 @@ export interface Lead {
   email: string;
   uploadBatchId: string;
   createdAt: string;
+  lastCouponSentAt?: string | null;
+  converted?: boolean;
 }

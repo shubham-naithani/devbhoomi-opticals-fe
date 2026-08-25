@@ -53,3 +53,25 @@
   text-align: center;
   color: var(--color-text-muted);
 }
+
+.badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.badge-converted {
+  background: #dcfce7;
+  color: #15803d;
+}
+.badge-contacted {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge-new {
+  background: var(--color-border);
+  color: var(--color-text-muted);
+  font-weight: 500;
+}
