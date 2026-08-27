@@ -43,12 +43,13 @@
   top: 0;
   right: 0;
   height: 100vh;
-  width: 480px;
+  width: 560px;
   max-width: 92vw;
   z-index: 50;
   padding: 28px 26px;
   overflow-y: auto;
   border-radius: 0;
+  animation: slide-in-panel 0.2s ease-out;
 }
 .overlay {
   position: fixed;

@@ -21,8 +21,6 @@
   cursor: pointer;
 
   &.active {
-    // TODO: swap for your accent/primary color token if one exists beyond --color-border/
-    // --color-text-muted (those were the only two visible from coupons.component.scss).
     color: var(--color-text, #123138);
     border-bottom-color: currentColor;
   }

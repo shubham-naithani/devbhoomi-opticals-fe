@@ -1,18 +1,15 @@
-// Reproduces the side-panel/overlay/field styling from coupons.component.scss — Angular's
-// per-component style encapsulation means it isn't inherited automatically, so it's copied
-// here to keep the same look. Worth promoting to a shared "slide-in panel" class later if a
-// third panel like this shows up.
 .side-panel {
   position: fixed;
   top: 0;
   right: 0;
   height: 100vh;
-  width: 480px;
+  width: 560px;
   max-width: 92vw;
   z-index: 50;
   padding: 28px 26px;
   overflow-y: auto;
   border-radius: 0;
+  animation: slide-in-panel 0.2s ease-out;
 }
 .overlay {
   position: fixed;

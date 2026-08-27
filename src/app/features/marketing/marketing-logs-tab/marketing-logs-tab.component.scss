@@ -7,9 +7,7 @@
   font-family: monospace;
   font-weight: 600;
 }
-// Reuses the global .badge base; .badge-active/.badge-inactive already exist for the
-// "Redeemed" column. These are new modifiers for delivery status — placeholder colors,
-// swap for your brand palette if you have semantic tokens defined elsewhere.
+
 .badge-sent {
   background: #dcfce7;
   color: #166534;

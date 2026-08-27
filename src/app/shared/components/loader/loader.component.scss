@@ -6,7 +6,7 @@
   height: 3px;
   z-index: 9999;
   overflow: hidden;
-  background: rgba(226, 35, 26, 0.15); // faint accent-red track
+  background: rgba(226, 35, 26, 0.15);
 
   &::after {
     content: '';
