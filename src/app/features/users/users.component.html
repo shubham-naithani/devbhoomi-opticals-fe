@@ -25,7 +25,6 @@
       <thead>
         <tr>
           <th>Name</th>
-          <th>Email</th>
           <th>Phone</th>
           <th>Role</th>
           <th>Orders</th>
@@ -37,13 +36,18 @@
         @for (user of users(); track user._id) {
           <tr>
             <td>{{ user.name }}</td>
-            <td>{{ user.email || '—'}}</td>
             <td>{{ user.phone || '—' }}</td>
             <td><span class="badge" [class.badge-admin]="user.role === 'admin'" [class.badge-staff]="user.role === 'staff'"
                 [class.badge-customer]="user.role === 'customer'">{{ user.role }}</span></td>
             <td>
               @if (user.orderCount) {
-              <span class="badge order-count-badge">{{ user.orderCount }}</span>
+              <button
+                type="button"
+                class="badge order-count-badge order-count-link"
+                style="cursor: pointer; border: none; font: inherit;"
+                title="View {{ user.name }}'s orders"
+                (click)="viewOrdersFor(user)"
+              >{{ user.orderCount }}</button>
               } @else {
               <span class="muted">—</span>
               }
@@ -52,7 +56,9 @@
                 'Active' : 'Inactive' }}</span></td>
             <td class="actions">
               <button class="btn btn-ghost" (click)="openEditPanel(user)">Edit</button>
+              @if (deleteEnabled) {
               <button class="btn btn-danger" (click)="remove(user)">Delete</button>
+              }
             </td>
           </tr>
         }
@@ -65,7 +71,9 @@
   [page]="page()"
   [totalPages]="totalPages()"
   [totalItems]="totalUsers()"
+  [pageSize]="pageSize()"
   (pageChange)="goToPage($event)"
+  (pageSizeChange)="onPageSizeChange($event)"
 />
 
 @if (isPanelOpen()) {
@@ -77,11 +85,6 @@
       <div class="field">
         <label for="name">Full name</label>
         <input id="name" type="text" formControlName="name" />
-      </div>
-
-      <div class="field">
-        <label for="email">Email</label>
-        <input id="email" type="email" formControlName="email" />
       </div>
 
       <div class="field">
@@ -98,15 +101,24 @@
         </select>
       </div>
 
-      <div class="field">
-        <label for="password">{{ editingUser() ? 'New password (optional)' : 'Password' }}</label>
-        <input id="password" type="password" formControlName="password" placeholder="At least 6 characters" />
-      </div>
+      @if (isLoginRole(form.controls.role.value)) {
+        <div class="hint">Staff and admin accounts log into this app, so they need an email and password.</div>
 
-      <label class="checkbox-field">
-        <input type="checkbox" formControlName="isActive" />
-        Account active
-      </label>
+        <div class="field">
+          <label for="email">Email</label>
+          <input id="email" type="email" formControlName="email" />
+        </div>
+
+        <div class="field">
+          <label for="password">{{ editingUser() ? 'New password (optional)' : 'Password' }}</label>
+          <input id="password" type="password" formControlName="password" placeholder="At least 6 characters" />
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="isActive" />
+          Account active
+        </label>
+      }
 
       <div class="panel-actions">
         <button type="button" class="btn btn-ghost" (click)="closePanel()">Cancel</button>

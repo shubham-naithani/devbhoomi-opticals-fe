@@ -1,59 +1,64 @@
 <div class="page-header">
   <div>
-    <h2>Repair</h2>
-    <p class="subtitle">Scan the barcode from the customer's original invoice to pull up their purchase and check warranty.</p>
+    <h1>Walk-in Repair</h1>
+    <p class="subtitle">Scan the invoice barcode to pull up the order, then pick the item that needs work.</p>
   </div>
+  <button type="button" class="btn btn-ghost start-over-btn" (click)="startOver()">Start over</button>
 </div>
 
-<!-- Customer -->
 <div class="card step-card">
-  <div class="step-title">Customer</div>
+  <div class="step-title">1. Customer</div>
 
   @if (!selectedCustomer()) {
     <div class="search-row">
       <input
         type="tel"
-        placeholder="Search by phone number…"
-        [(ngModel)]="phoneQuery"
+        placeholder="Search by phone…"
+        [ngModel]="phoneQuery()"
+        (ngModelChange)="phoneQuery.set($event)"
         (keyup.enter)="searchCustomer()"
       />
-      <button class="btn btn-primary" [disabled]="isSearching()" (click)="searchCustomer()">
+      <button type="button" class="btn btn-primary" [disabled]="isSearching()" (click)="searchCustomer()">
         {{ isSearching() ? 'Searching…' : 'Search' }}
       </button>
     </div>
 
     @if (searchResults().length > 0) {
-      <div class="result-list">
-        @for (c of searchResults(); track c._id) {
-          <div class="result-row" (click)="selectCustomer(c)">
-            <div>
-              <div class="name">{{ c.name }}</div>
-              <div class="meta">{{ c.phone }} @if (c.email) { &middot; {{ c.email }} }</div>
+      <ul class="result-list">
+        @for (customer of searchResults(); track customer._id) {
+          <li class="result-row" (click)="selectCustomer(customer)">
+            <div class="item-result-info">
+              <div class="name">{{ customer.name }}</div>
+              <div class="meta">{{ customer.phone }}</div>
             </div>
-            <button class="btn btn-ghost">Use this customer</button>
-          </div>
+            <button type="button" class="btn btn-ghost">Use this customer</button>
+          </li>
         }
-      </div>
+      </ul>
     }
 
     @if (showNewCustomerForm()) {
       <div class="new-customer-form">
-        <div class="hint">No match found — create a new customer record:</div>
-        <div class="two-col">
-          <div class="field">
-            <label>Full name</label>
-            <input type="text" [(ngModel)]="newCustomerName" placeholder="Customer name" />
-          </div>
-          <div class="field">
-            <label>Phone</label>
-            <input type="tel" [(ngModel)]="newCustomerPhone" placeholder="98765 43210" />
-          </div>
+        <div class="hint">No account found for this number — create one to continue.</div>
+        <div class="field">
+          <label for="newCustomerName">Full name</label>
+          <input
+            id="newCustomerName"
+            type="text"
+            [ngModel]="newCustomerName()"
+            (ngModelChange)="newCustomerName.set($event)"
+          />
         </div>
         <div class="field">
-          <label>Email (optional)</label>
-          <input type="email" [(ngModel)]="newCustomerEmail" placeholder="Leave blank if not given" />
+          <label for="newCustomerPhone">Phone</label>
+          <input
+            id="newCustomerPhone"
+            type="tel"
+            [ngModel]="newCustomerPhone()"
+            (ngModelChange)="newCustomerPhone.set($event)"
+          />
         </div>
-        <button class="btn btn-accent" [disabled]="isCreatingCustomer()" (click)="createNewCustomer()">
+        <button type="button" class="btn btn-accent" [disabled]="isCreatingCustomer()" (click)="createNewCustomer()">
           {{ isCreatingCustomer() ? 'Creating…' : 'Create customer' }}
         </button>
       </div>
@@ -62,122 +67,170 @@
     <div class="selected-customer">
       <div>
         <div class="name">{{ selectedCustomer()!.name }}</div>
-        <div class="meta">
-          {{ selectedCustomer()!.phone }}
-          @if (selectedCustomer()!.email) { &middot; {{ selectedCustomer()!.email }} }
-        </div>
+        <div class="meta">{{ selectedCustomer()!.phone }}</div>
       </div>
-      <button class="btn btn-ghost" (click)="changeCustomer()">Change</button>
+      <button type="button" class="btn btn-ghost" (click)="changeCustomer()">Change customer</button>
     </div>
   }
 </div>
 
-<!-- Barcode scan -->
 @if (selectedCustomer()) {
   <div class="card step-card">
-    <div class="step-title">Item</div>
+    <div class="step-title">2. Item</div>
 
-    @if (!lookupResult()) {
-      <div class="scan-row">
+    @if (!scannedOrder() && !selectedItem() && !isManualItem()) {
+      <div class="search-row scan-row">
         <input
-            #barcodeInputEl
-            type="text"
-            placeholder="Scan barcode from invoice…"
-            [ngModel]="barcodeInput()"
-            (ngModelChange)="barcodeInput.set($event)"
-            (keyup.enter)="onLookupBarcode()"
-          />
-        <button class="btn btn-primary" [disabled]="isLookingUp()" (click)="onLookupBarcode()">
-          {{ isLookingUp() ? 'Looking up…' : 'Scan' }}
+          #barcodeInputEl
+          type="text"
+          placeholder="Scan or type the invoice barcode…"
+          [ngModel]="barcodeInput()"
+          (ngModelChange)="barcodeInput.set($event)"
+          (keyup.enter)="onLookupBarcode()"
+        />
+        <button type="button" class="btn btn-primary" [disabled]="isLookingUp()" (click)="onLookupBarcode()">
+          {{ isLookingUp() ? 'Looking up…' : 'Look up' }}
         </button>
       </div>
-      <div class="hint">Scan the barcode printed on the customer's invoice for this item.</div>
-    } @else {
-      <div class="scanned-item">
-        <div class="name">{{ lookupResult()!.itemName }}</div>
-        <div class="meta">SKU {{ lookupResult()!.article.sku }}</div>
-        <button class="btn btn-ghost" (click)="scanAnotherItem()">Scan a different item</button>
+      <div class="hint">
+        Scan the barcode printed on the customer's invoice — it identifies the whole order.
+        Wasn't bought here?
+        <button type="button" class="link-btn" (click)="isManualItem.set(true)">Add the item without an invoice</button>.
       </div>
+    }
 
-      @if (lookupResult()!.candidates.length > 1 && !selectedCandidate()) {
-        <div class="hint">This customer bought this item more than once — pick the right purchase:</div>
-        <div class="result-list">
-          @for (c of lookupResult()!.candidates; track c.orderId) {
-            <div class="result-row" (click)="pickCandidate(c)">
-              <div>
-                <div class="name">{{ c.orderNumber }}</div>
-                <div class="meta">Purchased {{ c.purchaseDate | date: 'mediumDate' }} &middot; {{ c.warrantyMonths }} month warranty</div>
-              </div>
-              <button class="btn btn-ghost">Use this purchase</button>
-            </div>
+    @if (isManualItem()) {
+      <div class="field">
+        <label for="manualItemName">Item description</label>
+        <input
+          id="manualItemName"
+          type="text"
+          placeholder="e.g. Ray-Ban Aviator, black frame"
+          [ngModel]="manualItemName()"
+          (ngModelChange)="manualItemName.set($event)"
+          (keyup.enter)="useManualItem()"
+        />
+      </div>
+      <div class="hint">No purchase on file — this ticket will be marked unverified and won't have warranty coverage.</div>
+      <div class="step-nav-buttons">
+        <button type="button" class="btn btn-ghost" (click)="cancelManualItem()">← Back</button>
+        <button type="button" class="btn btn-primary" (click)="useManualItem()">Continue</button>
+      </div>
+    }
+
+    @if (scannedOrder() && !selectedItem()) {
+      <div class="hint">Order {{ scannedOrder()!.orderId }} — pick the item that needs a repair.</div>
+      <ul class="result-list">
+        @for (item of scannedOrder()!.items; track item.articleId) {
+          <li class="result-row" (click)="pickItem(item)">
+            <span class="name">{{ item.name }}</span>
+            <span class="meta">Qty {{ item.quantity }} · Warranty {{ item.warrantyMonths }} mo</span>
+          </li>
+        }
+      </ul>
+      <button style="margin-top: 12px;" type="button" class="btn btn-ghost" (click)="scanAnotherItem()">Scan a different invoice</button>
+    }
+
+    @if (selectedItem()) {
+      <div class="match-block">
+        <div class="match-row">
+          <span class="label">Item</span>
+          <span class="value">{{ selectedItem()!.name }}</span>
+        </div>
+        @if (scannedOrder()) {
+          <div class="match-row">
+            <span class="label">Order</span>
+            <span class="value">{{ scannedOrder()!.orderId }}</span>
+          </div>
+          <div class="match-row">
+            <span class="label">Purchased</span>
+            <span class="value">{{ scannedOrder()!.createdAt | date: 'mediumDate' }}</span>
+          </div>
+          <div class="match-row">
+            <span class="label">Warranty</span>
+            <span class="value">
+              {{ selectedItem()!.warrantyMonths }} month{{ selectedItem()!.warrantyMonths === 1 ? '' : 's' }}
+              @if (isUnderWarranty) {
+                <span class="warranty-badge ok">Under warranty</span>
+              } @else {
+                <span class="warranty-badge expired">Expired</span>
+              }
+            </span>
+          </div>
+        } @else {
+          <div class="match-row">
+            <span class="label">Purchase</span>
+            <span class="value">
+              <span class="warranty-badge expired">Not purchased here — unverified</span>
+            </span>
+          </div>
+        }
+        <div class="step-nav-buttons">
+          <button type="button" class="btn btn-ghost" (click)="backToItemPicker()">Change item</button>
+          @if (scannedOrder()) {
+          <button type="button" class="btn btn-ghost" (click)="scanAnotherItem()">Scan a different invoice</button>
           }
         </div>
-      }
-
-      @if (lookupResult()!.candidates.length === 0 && !proceedUnverified()) {
-        <div class="unverified-warning">
-          <div class="hint">No matching purchase found for this customer — the fee will need to be set manually.</div>
-          <button class="btn btn-ghost" (click)="useWithoutMatch()">Proceed without a verified purchase</button>
-        </div>
-      }
-
-      @if (selectedCandidate(); as candidate) {
-        <div class="purchase-match">
-          <div class="detail-item-row">
-            <span>Order</span>
-            <span>{{ candidate.orderNumber }}</span>
-          </div>
-          <div class="detail-item-row">
-            <span>Purchased</span>
-            <span>{{ candidate.purchaseDate | date: 'mediumDate' }}</span>
-          </div>
-          <div class="detail-item-row">
-            <span>Warranty</span>
-            <span>{{ candidate.warrantyMonths }} month(s)</span>
-          </div>
-          @if (isUnderWarranty) {
-            <div class="warranty-badge covered">✓ Under warranty until {{ warrantyCutoff | date: 'mediumDate' }} — free repair</div>
-          } @else {
-            <div class="warranty-badge expired">Warranty expired{{ warrantyCutoff ? ' on ' + (warrantyCutoff | date: 'mediumDate') : '' }} — fee required</div>
-          }
-        </div>
-      }
-
-      @if (proceedUnverified()) {
-        <div class="warranty-badge unverified">Unverified purchase — no warranty auto-detected, set fee manually below</div>
-      }
+      </div>
     }
   </div>
 }
 
-<!-- Issue + fee + confirm -->
-@if (selectedCustomer() && lookupResult() && (selectedCandidate() || proceedUnverified())) {
+@if (selectedItem()) {
   <div class="card step-card">
-    <div class="step-title">Issue &amp; fee</div>
+    <div class="step-title">3. Issue &amp; fee</div>
 
     <div class="field">
-      <label>What's wrong with it?</label>
-      <textarea rows="2" [ngModel]="issueDescription()" (ngModelChange)="issueDescription.set($event)" placeholder="e.g. Loose hinge, scratched lens…"></textarea>
+      <label for="issueDescription">Issue description</label>
+      <textarea
+        id="issueDescription"
+        rows="3"
+        [ngModel]="issueDescription()"
+        (ngModelChange)="issueDescription.set($event)"
+      ></textarea>
+    </div>
+
+    <div class="field">
+      <label for="staffNotes">Staff notes (optional)</label>
+      <textarea
+        id="staffNotes"
+        rows="2"
+        [ngModel]="staffNotes()"
+        (ngModelChange)="staffNotes.set($event)"
+      ></textarea>
     </div>
 
     @if (showFeeSection) {
-      <div class="two-col">
-        <div class="field">
-          <label>Repair fee (₹)</label>
-          <input type="number" min="0" [ngModel]="feeAmount()" (ngModelChange)="feeAmount.set($event)" placeholder="0" />
-        </div>
-        <div class="field">
-          <label class="checkbox-field fee-collected-toggle">
-            <input type="checkbox" [ngModel]="feeCollected()" (ngModelChange)="feeCollected.set($event)" />
-            Fee collected now
-          </label>
-        </div>
+      <div class="hint">This item is out of warranty — a repair fee may apply.</div>
+
+      <div class="field">
+        <label for="feeAmount">Fee amount</label>
+        <input
+          id="feeAmount"
+          type="number"
+          min="0"
+          [ngModel]="feeAmount()"
+          (ngModelChange)="feeAmount.set($event)"
+        />
       </div>
+
+      <label class="checkbox-field">
+        <input
+          type="checkbox"
+          [ngModel]="feeCollected()"
+          (ngModelChange)="feeCollected.set($event)"
+        />
+        Fee collected now
+      </label>
 
       @if (feeCollected()) {
         <div class="field">
-          <label>Payment method</label>
-          <select [ngModel]="paymentMethod()" (ngModelChange)="paymentMethod.set($event)">
+          <label for="paymentMethod">Payment method</label>
+          <select
+            id="paymentMethod"
+            [ngModel]="paymentMethod()"
+            (ngModelChange)="paymentMethod.set($event)"
+          >
             <option value="cash">Cash</option>
             <option value="card">Card</option>
             <option value="upi">UPI</option>
@@ -186,15 +239,10 @@
       }
     }
 
-    <div class="field">
-      <label>Staff notes (optional)</label>
-      <textarea rows="2" [ngModel]="staffNotes()" (ngModelChange)="staffNotes.set($event)" placeholder="Anything worth noting…"></textarea>
-    </div>
-
     <div class="step-nav-buttons">
-      <span></span>
-      <button class="btn btn-primary confirm-btn" [disabled]="isCreatingTicket()" (click)="createTicket()">
-        {{ isCreatingTicket() ? 'Creating ticket…' : 'Create repair ticket' }}
+      <button type="button" class="btn btn-ghost" (click)="backToItemPicker()">← Back</button>
+      <button type="button" class="btn btn-primary confirm-btn" [disabled]="isCreatingTicket()" (click)="createTicket()">
+        {{ isCreatingTicket() ? 'Creating…' : 'Create repair ticket' }}
       </button>
     </div>
   </div>

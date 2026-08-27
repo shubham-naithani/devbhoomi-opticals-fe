@@ -76,7 +76,14 @@
   }
 </div>
 
-<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="total()" (pageChange)="goToPage($event)" />
+<app-pagination
+  [page]="page()"
+  [totalPages]="totalPages()"
+  [totalItems]="total()"
+  [pageSize]="pageSize()"
+  (pageChange)="goToPage($event)"
+  (pageSizeChange)="onPageSizeChange($event)"
+/>
 
 @if (isSendModalOpen()) {
   <app-send-coupon-modal [recipients]="selectedRecipients" (closed)="closeSendModal()" (sent)="onSent()" />

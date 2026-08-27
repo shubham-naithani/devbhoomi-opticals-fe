@@ -20,8 +20,6 @@ import {
 } from '../../core/models/inventory.model';
 import { DatePipe } from '@angular/common';
 
-const PAGE_SIZE = 10;
-
 import * as qz from 'qz-tray';
 type PrintableArticle = { product: any; article: any };
 @Component({
@@ -37,6 +35,19 @@ export class InventoryComponent {
   private confirmDialog = inject(ConfirmDialogService);
   private fb = inject(FormBuilder);
   auth = inject(AuthService);
+
+  // TEMP (Aug 2026) — Delete is hidden from the Inventory UI per the owner's request:
+  // the account will be used day-to-day by a non-technical staff member and an
+  // accidental delete (which here can wipe an entire product and ALL of its
+  // variants at once) is unrecoverable. deleteProduct(), deleteArticle(),
+  // bulkDeleteSelected() and the backend endpoints are left completely intact —
+  // flip this back to true to restore the buttons. Active/Inactive ("Visible in
+  // catalog") already exists as the safe day-to-day alternative — see the
+  // isActive checkbox in the product/variant forms and the bulkActivate() bar
+  // above — so removing a listing no longer needs Delete at all in normal use.
+  // Same switch used in users.component.ts, admin-orders.component.ts, and
+  // repairs.component.ts.
+  readonly deleteEnabled = false;
 
   private readonly MRP_MARGIN = 1.4;
   private readonly MSP_MARGIN = 1.25;
@@ -54,6 +65,7 @@ export class InventoryComponent {
   totalItems = signal(0);
   page = signal(1);
   totalPages = signal(1);
+  pageSize = signal(10);
   isLoading = signal(true);
   searchTerm = signal('');
 
@@ -217,7 +229,7 @@ export class InventoryComponent {
         gender: this.genderFilter() || undefined,
         frameShape: this.frameShapeFilter() || undefined,
         page: this.page(),
-        limit: PAGE_SIZE,
+        limit: this.pageSize(),
       })
       .subscribe({
         next: (res) => {
@@ -294,6 +306,12 @@ export class InventoryComponent {
   goToPage(page: number): void {
     this.clearSelection();
     this.page.set(page);
+    this.fetchProducts();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
     this.fetchProducts();
   }
 
@@ -679,14 +697,21 @@ export class InventoryComponent {
 
     try {
       if (mode === 'frame') {
-        const laneIndex = Math.min(
-          Math.max(1, Math.round(this.frameSingleLaneIndex())),
-          this.FRAME_LANES,
-        ) - 1;
-        const row: (PrintableArticle | null)[] = Array(this.FRAME_LANES).fill(null);
+        const laneIndex =
+          Math.min(
+            Math.max(1, Math.round(this.frameSingleLaneIndex())),
+            this.FRAME_LANES,
+          ) - 1;
+        const row: (PrintableArticle | null)[] = Array(this.FRAME_LANES).fill(
+          null,
+        );
         row[laneIndex] = { product: p.product, article: p.article };
         await qz.print(this.getFramePrinterConfig(), [
-          { type: 'pixel', format: 'image', data: this.drawFrameRowCanvas(row) },
+          {
+            type: 'pixel',
+            format: 'image',
+            data: this.drawFrameRowCanvas(row),
+          },
         ]);
       } else {
         const imageDataUrl = this.drawBoxLabelCanvas(
@@ -1058,9 +1083,33 @@ export class InventoryComponent {
   ): void {
     ctx.fillStyle = '#000000';
     const maxTextWidth = width * 0.9;
-    this.fitText(ctx, store, width / 2, height * 0.14, maxTextWidth, Math.round(width * 0.045), true);
-    this.fitText(ctx, name, width / 2, height * 0.24, maxTextWidth, Math.round(width * 0.05), true);
-    this.fitText(ctx, variant, width / 2, height * 0.32, maxTextWidth, Math.round(width * 0.04), false);
+    this.fitText(
+      ctx,
+      store,
+      width / 2,
+      height * 0.14,
+      maxTextWidth,
+      Math.round(width * 0.045),
+      true,
+    );
+    this.fitText(
+      ctx,
+      name,
+      width / 2,
+      height * 0.24,
+      maxTextWidth,
+      Math.round(width * 0.05),
+      true,
+    );
+    this.fitText(
+      ctx,
+      variant,
+      width / 2,
+      height * 0.32,
+      maxTextWidth,
+      Math.round(width * 0.04),
+      false,
+    );
 
     const bcTargetWidth = width * 0.85;
     const bcTargetHeight = Math.round(height * 0.28);
@@ -1118,9 +1167,33 @@ export class InventoryComponent {
 
     ctx.fillStyle = '#000000';
     ctx.textAlign = 'center';
-    this.fitText(ctx, store, textX, marginY + usableHeight * 0.2, maxWidth, Math.round(usableHeight * 0.22), true);
-    this.fitText(ctx, name, textX, marginY + usableHeight * 0.52, maxWidth, Math.round(usableHeight * 0.26), true);
-    this.fitText(ctx, variant, textX, marginY + usableHeight * 0.82, maxWidth, Math.round(usableHeight * 0.2), false);
+    this.fitText(
+      ctx,
+      store,
+      textX,
+      marginY + usableHeight * 0.2,
+      maxWidth,
+      Math.round(usableHeight * 0.22),
+      true,
+    );
+    this.fitText(
+      ctx,
+      name,
+      textX,
+      marginY + usableHeight * 0.52,
+      maxWidth,
+      Math.round(usableHeight * 0.26),
+      true,
+    );
+    this.fitText(
+      ctx,
+      variant,
+      textX,
+      marginY + usableHeight * 0.82,
+      maxWidth,
+      Math.round(usableHeight * 0.2),
+      false,
+    );
   }
 
   private buildFrameBarcodeZoneCanvas(
@@ -1169,5 +1242,38 @@ export class InventoryComponent {
       size: { width, height: 100 },
       units: 'mm',
     });
+  }
+
+  toggleArticleActive(article: Article): void {
+    const product = this.managingProduct();
+    if (!product) return;
+
+    const nextActive = !article.isActive;
+    this.inventoryService
+      .updateArticle(product._id, article._id, {
+        color: article.color,
+        lensTint: article.lensTint,
+        size: article.size,
+        costPrice: article.costPrice,
+        price: article.isMrpManual ? article.price : undefined,
+        mspPrice: article.isMspManual ? article.mspPrice : undefined,
+        isMrpManual: article.isMrpManual,
+        isMspManual: article.isMspManual,
+        stock: article.stock,
+        lowStockThreshold: article.lowStockThreshold,
+        images: article.images,
+        isActive: nextActive,
+      } as any)
+      .subscribe({
+        next: (res) => {
+          this.toast.success(
+            nextActive ? 'Variant activated' : 'Variant deactivated',
+          );
+          this.managingProduct.set(res.item);
+          this.fetchProducts();
+        },
+        error: (err) =>
+          this.toast.error(err?.error?.message || 'Could not update variant'),
+      });
   }
 }

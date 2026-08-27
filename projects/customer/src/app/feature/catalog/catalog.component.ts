@@ -6,7 +6,7 @@ import { InventoryService, InventoryItem, priceRange, activeArticles, totalStock
 import { FormsModule } from '@angular/forms';
 import { NgOptimizedImage } from '@angular/common';
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-catalog',

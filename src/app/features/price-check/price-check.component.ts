@@ -27,6 +27,7 @@ interface CheckLine {
   quantity: number;
   discountPercent: number;
   warrantyMonths: number;
+  isActive: boolean;   // false if the product or this variant is deactivated
 }
 
 const HANDOFF_KEY = 'walkInPriceCheckHandoff';
@@ -56,13 +57,21 @@ export class PriceCheckComponent implements AfterViewInit {
   couponResult = signal<{ code: string; discountAmount: number } | null>(null);
   couponError = signal<string | null>(null);
 
-  hasAnyItemDiscount = computed(() => this.lines().some((l) => l.discountPercent > 0));
+  hasAnyItemDiscount = computed(() =>
+    this.lines().some((l) => l.discountPercent > 0),
+  );
   couponDisabled = computed(() => this.hasAnyItemDiscount());
   itemDiscountDisabled = computed(() => !!this.couponResult());
 
-  itemCount = computed(() => this.lines().reduce((sum, l) => sum + l.quantity, 0));
+  itemCount = computed(() =>
+    this.lines().reduce((sum, l) => sum + l.quantity, 0),
+  );
 
-  subtotalMrp = computed(() => this.lines().reduce((sum, l) => sum + l.price * l.quantity, 0));
+  subtotalMrp = computed(() =>
+    this.lines().reduce((sum, l) => sum + l.price * l.quantity, 0),
+  );
+
+  hasSellableLine = computed(() => this.lines().some((l) => l.isActive));
 
   ngAfterViewInit(): void {
     setTimeout(() => this.scanInputRef?.nativeElement?.focus(), 50);
@@ -99,13 +108,13 @@ export class PriceCheckComponent implements AfterViewInit {
   }
 
   totalItemDiscount = computed(() =>
-    this.lines().reduce((sum, l) => sum + this.lineDiscountAmount(l), 0)
+    this.lines().reduce((sum, l) => sum + this.lineDiscountAmount(l), 0),
   );
 
   grandTotal = computed(() => {
     const afterItemDiscounts = this.lines().reduce(
       (sum, l) => sum + this.lineEffectivePrice(l) * l.quantity,
-      0
+      0,
     );
     const couponOff = this.couponResult()?.discountAmount ?? 0;
     return Math.max(afterItemDiscounts - couponOff, 0);
@@ -134,7 +143,9 @@ export class PriceCheckComponent implements AfterViewInit {
         this.isScanning.set(false);
         this.scanBarcode.set('');
         this.scanInputRef?.nativeElement?.focus();
-        this.toast.error(err?.error?.message || 'No item found for this barcode');
+        this.toast.error(
+          err?.error?.message || 'No item found for this barcode',
+        );
       },
     });
   }
@@ -159,6 +170,7 @@ export class PriceCheckComponent implements AfterViewInit {
         quantity: 1,
         discountPercent: 0,
         warrantyMonths: 0,
+        isActive: product.isActive && article.isActive,
       },
     ]);
     this.couponResult.set(null);
@@ -171,7 +183,11 @@ export class PriceCheckComponent implements AfterViewInit {
       return;
     }
     this.lines.update((list) =>
-      list.map((l) => (l.articleId === articleId ? { ...l, quantity: Math.min(quantity, l.stock) } : l))
+      list.map((l) =>
+        l.articleId === articleId
+          ? { ...l, quantity: Math.min(quantity, l.stock) }
+          : l,
+      ),
     );
     this.couponResult.set(null);
   }
@@ -191,7 +207,9 @@ export class PriceCheckComponent implements AfterViewInit {
   setDiscount(articleId: string, rawValue: number | null): void {
     const clamped = Math.min(Math.max(Number(rawValue) || 0, 0), 100);
     this.lines.update((list) =>
-      list.map((l) => (l.articleId === articleId ? { ...l, discountPercent: clamped } : l))
+      list.map((l) =>
+        l.articleId === articleId ? { ...l, discountPercent: clamped } : l,
+      ),
     );
   }
 
@@ -208,12 +226,19 @@ export class PriceCheckComponent implements AfterViewInit {
     this.couponService
       .preview(
         code,
-        this.lines().map((l) => ({ price: l.price, mspPrice: l.mspPrice, quantity: l.quantity }))
+        this.lines().map((l) => ({
+          price: l.price,
+          mspPrice: l.mspPrice,
+          quantity: l.quantity,
+        })),
       )
       .subscribe({
         next: (res) => {
           this.isCheckingCoupon.set(false);
-          this.couponResult.set({ code: res.code!, discountAmount: res.discountAmount });
+          this.couponResult.set({
+            code: res.code!,
+            discountAmount: res.discountAmount,
+          });
         },
         error: (err) => {
           this.isCheckingCoupon.set(false);
@@ -235,7 +260,20 @@ export class PriceCheckComponent implements AfterViewInit {
       return;
     }
 
-    const handoffLines = this.lines().map((l) => ({
+    const sellableLines = this.lines().filter((l) => l.isActive);
+    if (sellableLines.length === 0) {
+      this.toast.error('None of the scanned items are available for sale');
+      return;
+    }
+
+    const skippedCount = this.lines().length - sellableLines.length;
+    if (skippedCount > 0) {
+      this.toast.error(
+        `${skippedCount} discontinued item${skippedCount === 1 ? '' : 's'} won't carry over — only available items are added to the order`,
+      );
+    }
+
+    const handoffLines = sellableLines.map((l) => ({
       inventoryItem: l.inventoryItem,
       articleId: l.articleId,
       name: l.name,

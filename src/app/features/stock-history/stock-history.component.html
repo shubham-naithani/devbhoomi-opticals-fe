@@ -77,5 +77,7 @@
   [page]="page()"
   [totalPages]="totalPages()"
   [totalItems]="totalMovements()"
+  [pageSize]="pageSize()"
   (pageChange)="goToPage($event)"
+  (pageSizeChange)="onPageSizeChange($event)"
 />

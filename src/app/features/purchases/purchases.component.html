@@ -60,7 +60,9 @@
   [page]="page()"
   [totalPages]="totalPages()"
   [totalItems]="totalRecords()"
+  [pageSize]="pageSize()"
   (pageChange)="goToPage($event)"
+  (pageSizeChange)="onPageSizeChange($event)"
 />
 
 <!-- Create panel -->

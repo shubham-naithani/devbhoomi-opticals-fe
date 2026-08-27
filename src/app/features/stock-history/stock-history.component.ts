@@ -5,8 +5,6 @@ import { StockMovementService } from '../../core/services/stock-movement.service
 import { StockMovement } from '../../core/models/stock-movement.model';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
-const PAGE_SIZE = 30;
-
 @Component({
   selector: 'app-stock-history',
   standalone: true,
@@ -21,6 +19,7 @@ export class StockHistoryComponent {
   totalMovements = signal(0);
   page = signal(1);
   totalPages = signal(1);
+  pageSize = signal(10);
   isLoading = signal(true);
 
   searchTerm = signal('');
@@ -36,7 +35,7 @@ export class StockHistoryComponent {
   ];
 
   private readonly typeLabelMap: Record<string, string> = Object.fromEntries(
-    this.typeOptions.map((o) => [o.value, o.label])
+    this.typeOptions.map((o) => [o.value, o.label]),
   );
 
   constructor() {
@@ -52,7 +51,7 @@ export class StockHistoryComponent {
         from: this.fromDate() || undefined,
         to: this.toDate() || undefined,
         page: this.page(),
-        limit: PAGE_SIZE,
+        limit: this.pageSize(),
       })
       .subscribe({
         next: (res) => {
@@ -83,5 +82,11 @@ export class StockHistoryComponent {
 
   typeLabel(type: string): string {
     return this.typeLabelMap[type] || type;
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    this.fetch();
   }
 }

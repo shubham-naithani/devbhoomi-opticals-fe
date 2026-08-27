@@ -8,8 +8,6 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { RepairStatus, RepairTicket } from '../../core/models/repair.model';
 
-const PAGE_SIZE = 10;
-
 @Component({
   selector: 'app-repairs',
   standalone: true,
@@ -22,6 +20,14 @@ export class RepairsComponent {
   private toast = inject(ToastService);
   private confirmDialog = inject(ConfirmDialogService);
   auth = inject(AuthService);
+
+  // TEMP (Aug 2026) — Delete is hidden from the Repairs UI per the owner's request:
+  // the account will be used day-to-day by a non-technical staff member and an
+  // accidental delete is unrecoverable. deleteTicket() and the backend endpoint are
+  // left completely intact, and the existing auth.isAdmin() check still applies
+  // underneath this — flip this back to true to restore the button (for admins).
+  // Same switch used in users.component.ts and admin-orders.component.ts.
+  readonly deleteEnabled = false;
 
   private readonly statusTransitions: Record<RepairStatus, RepairStatus[]> = {
     received: ['in_progress', 'cancelled'],
@@ -39,12 +45,19 @@ export class RepairsComponent {
     cancelled: 'Cancelled',
   };
 
-  statusOptions: RepairStatus[] = ['received', 'in_progress', 'ready_for_pickup', 'collected', 'cancelled'];
+  statusOptions: RepairStatus[] = [
+    'received',
+    'in_progress',
+    'ready_for_pickup',
+    'collected',
+    'cancelled',
+  ];
 
   tickets = signal<RepairTicket[]>([]);
   totalTickets = signal(0);
   page = signal(1);
   totalPages = signal(1);
+  pageSize = signal(10);
   isLoading = signal(true);
   statusFilter = signal('');
   searchTerm = signal('');
@@ -64,7 +77,7 @@ export class RepairsComponent {
         status: this.statusFilter() || undefined,
         search: this.searchTerm() || undefined,
         page: this.page(),
-        limit: PAGE_SIZE,
+        limit: this.pageSize(),
       })
       .subscribe({
         next: (res) => {
@@ -109,20 +122,34 @@ export class RepairsComponent {
     this.fetch();
   }
 
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    this.fetch();
+  }
+
   customerName(ticket: RepairTicket): string {
-    return typeof ticket.customer === 'object' ? ticket.customer.name : 'Unknown';
+    return typeof ticket.customer === 'object'
+      ? ticket.customer.name
+      : 'Unknown';
   }
 
   customerContact(ticket: RepairTicket): string {
-    return typeof ticket.customer === 'object' ? ticket.customer.phone || '' : '';
+    return typeof ticket.customer === 'object'
+      ? ticket.customer.phone || ''
+      : '';
   }
 
   createdByName(ticket: RepairTicket): string {
-    return ticket.createdBy && typeof ticket.createdBy === 'object' ? ticket.createdBy.name : '';
+    return ticket.createdBy && typeof ticket.createdBy === 'object'
+      ? ticket.createdBy.name
+      : '';
   }
 
   linkedOrderNumber(ticket: RepairTicket): string {
-    return ticket.linkedOrderId && typeof ticket.linkedOrderId === 'object' ? ticket.linkedOrderId.orderId : '';
+    return ticket.linkedOrderId && typeof ticket.linkedOrderId === 'object'
+      ? ticket.linkedOrderId.orderId
+      : '';
   }
 
   changeStatus(ticket: RepairTicket, status: RepairStatus): void {
@@ -131,7 +158,9 @@ export class RepairsComponent {
 
     this.repairService.updateStatus(ticket._id, status).subscribe({
       next: (res) => {
-        this.tickets.update((list) => list.map((t) => (t._id === ticket._id ? res.ticket : t)));
+        this.tickets.update((list) =>
+          list.map((t) => (t._id === ticket._id ? res.ticket : t)),
+        );
         this.updatingId.set(null);
         this.toast.success('Repair status updated');
       },
@@ -177,7 +206,8 @@ export class RepairsComponent {
         this.tickets.update((list) => list.filter((t) => t._id !== ticket._id));
         if (this.selectedTicket()?._id === ticket._id) this.closeDetail();
       },
-      error: (err) => this.toast.error(err?.error?.message || 'Could not delete ticket'),
+      error: (err) =>
+        this.toast.error(err?.error?.message || 'Could not delete ticket'),
     });
   }
 }

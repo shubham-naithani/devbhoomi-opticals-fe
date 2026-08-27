@@ -48,5 +48,8 @@
   [page]="page()"
   [totalPages]="totalPages()"
   [totalItems]="totalLogs()"
+  [pageSize]="pageSize()"
   (pageChange)="goToPage($event)"
+  (pageSizeChange)="onPageSizeChange($event)"
 />
+

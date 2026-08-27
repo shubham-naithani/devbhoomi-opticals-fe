@@ -7,8 +7,6 @@ import { Lead } from '../../../core/models/lead.model';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 import { SendCouponModalComponent } from '../send-coupon-modal/send-coupon-modal.component';
 
-const PAGE_SIZE = 50;
-
 @Component({
   selector: 'app-new-customers-tab',
   standalone: true,
@@ -25,6 +23,7 @@ export class NewCustomersTabComponent {
   leads = signal<Lead[]>([]);
   total = signal(0);
   page = signal(1);
+  pageSize = signal(10);
   totalPages = signal(1);
   isLoading = signal(true);
   isUploading = signal(false);
@@ -36,7 +35,9 @@ export class NewCustomersTabComponent {
   selectedCount = computed(() => this.selectedIds().size);
   allOnPageSelected = computed(() => {
     const leads = this.leads();
-    return leads.length > 0 && leads.every((l) => this.selectedIds().has(l._id));
+    return (
+      leads.length > 0 && leads.every((l) => this.selectedIds().has(l._id))
+    );
   });
 
   // NEW — this tab is never destroyed (Marketing's tab strip toggles visibility with
@@ -56,7 +57,11 @@ export class NewCustomersTabComponent {
     this.isLoading.set(true);
     this.fetchSub?.unsubscribe();
     this.fetchSub = this.marketingService
-      .listLeads({ search: this.searchTerm() || undefined, page: this.page(), limit: PAGE_SIZE })
+      .listLeads({
+        search: this.searchTerm() || undefined,
+        page: this.page(),
+        limit: this.pageSize(),
+      })
       .subscribe({
         next: (res) => {
           this.leads.set(res.leads || []);
@@ -98,9 +103,13 @@ export class NewCustomersTabComponent {
         const createdCount = res.created?.length || 0;
         const skippedCount = res.skipped?.length || 0;
         if (skippedCount === 0) {
-          this.toast.success(`${createdCount} lead${createdCount === 1 ? '' : 's'} added`);
+          this.toast.success(
+            `${createdCount} lead${createdCount === 1 ? '' : 's'} added`,
+          );
         } else {
-          this.toast.success(`${createdCount} added, ${skippedCount} skipped — see browser console for reasons`);
+          this.toast.success(
+            `${createdCount} added, ${skippedCount} skipped — see browser console for reasons`,
+          );
           console.table(res.skipped);
         }
         this.page.set(1);
@@ -146,7 +155,12 @@ export class NewCustomersTabComponent {
     const ids = this.selectedIds();
     return this.leads()
       .filter((l) => ids.has(l._id))
-      .map((l) => ({ type: 'lead' as const, name: `${l.firstName} ${l.lastName}`.trim(), phone: l.phone, email: l.email }));
+      .map((l) => ({
+        type: 'lead' as const,
+        name: `${l.firstName} ${l.lastName}`.trim(),
+        phone: l.phone,
+        email: l.email,
+      }));
   }
 
   onSent(): void {
@@ -155,6 +169,12 @@ export class NewCustomersTabComponent {
     // NEW — a successful send changes the very "Contacted"/converted status this tab
     // just added, so refetch immediately instead of waiting for the next tab-switch to
     // (accidentally) show the right thing.
+    this.fetch();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
     this.fetch();
   }
 }
