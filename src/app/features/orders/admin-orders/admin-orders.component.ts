@@ -1,6 +1,7 @@
 import { DatePipe, UpperCasePipe } from '@angular/common';
 import { Component, inject, signal, effect } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, Router } from '@angular/router';
 import { OrderService } from '../../../core/services/order.service';
 import { ToastService } from '../../../core/services/toast.service';
 import { AuthService } from '../../../core/services/auth.service';
@@ -10,7 +11,6 @@ import { Order, OrderStatus, PaymentMethod, RelatedRepair } from '../../../core/
 import { InventoryService } from '../../../core/services/inventory.service';
 import { Article, InventoryItem } from '../../../core/models/inventory.model';
 import JsBarcode from 'jsbarcode';
-const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-admin-orders',
@@ -25,6 +25,17 @@ export class AdminOrdersComponent {
   private confirmDialog = inject(ConfirmDialogService);
   auth = inject(AuthService);
   private inventoryService = inject(InventoryService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
+
+  // TEMP (Aug 2026) — Delete is hidden from the Orders UI per the owner's request:
+  // the account will be used day-to-day by a non-technical staff member and an
+  // accidental delete is unrecoverable. deleteOrder()/bulkDeleteSelected() and the
+  // backend endpoints are left completely intact, and the existing auth.isAdmin()
+  // check still applies underneath this — flip this back to true to restore the
+  // buttons (for admins). If/when an Active/Deactivate toggle ships, this switch
+  // (and its Users/Repairs equivalents) can likely go away entirely in favour of that.
+  readonly deleteEnabled = false;
 
   private readonly statusTransitions: Record<OrderStatus, OrderStatus[]> = {
     confirmed: ['in_progress', 'cancelled'],
@@ -46,6 +57,7 @@ export class AdminOrdersComponent {
   totalOrders = signal(0);
   page = signal(1);
   totalPages = signal(1);
+  pageSize = signal(10);
   isLoading = signal(true);
   statusFilter = signal('');
   searchTerm = signal('');
@@ -91,6 +103,16 @@ export class AdminOrdersComponent {
   isGeneratingInvoice = signal(false);
 
   constructor() {
+    // A "?search=<phone>" query param means we were sent here from another
+    // screen (e.g. clicking a customer's order-count badge on Users) that
+    // wants this list pre-filtered and searched immediately — snapshot is
+    // fine here since navigating in from a different route always creates a
+    // fresh instance of this component.
+    const incomingSearch = this.route.snapshot.queryParamMap.get('search');
+    if (incomingSearch) {
+      this.searchTerm.set(incomingSearch);
+    }
+
     this.fetch();
 
     // Re-render item barcodes any time the panel's order actually changes and
@@ -113,7 +135,7 @@ export class AdminOrdersComponent {
         status: this.statusFilter() || undefined,
         search: this.searchTerm() || undefined,
         page: this.page(),
-        limit: PAGE_SIZE,
+        limit: this.pageSize(),
       })
       .subscribe({
         next: (res) => {
@@ -603,12 +625,46 @@ export class AdminOrdersComponent {
     this.viewingArticle.set(null);
   }
 
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    this.fetch();
+  }
+
   articleVariantLabel(article: Article): string {
     return (
       [article.color, article.lensTint, article.size]
         .filter(Boolean)
         .join(' / ') || 'Standard'
     );
+  }
+
+  // Sends staff straight to the Repair tab with this item pre-loaded — the
+  // customer, order barcode, and article are all already known here, so
+  // there's no reason to make them re-search the customer or re-scan the
+  // invoice they're already looking at. repair-order.component reads these
+  // via checkIncomingRepairRequest() on init.
+  repairItem(order: Order, item: Order['items'][number]): void {
+    const customer = order.customer;
+    const customerId =
+      customer && typeof customer === 'object' ? customer._id : null;
+    const customerPhone =
+      customer && typeof customer === 'object' ? customer.phone : null;
+    if (!customerId || !customerPhone) {
+      this.toast.error(
+        'This order has no linked customer phone — start the repair manually from the Repair tab',
+      );
+      return;
+    }
+    this.router.navigate(['/walk-in-order'], {
+      queryParams: {
+        tab: 'repair',
+        customerId,
+        customerPhone,
+        orderBarcode: order.orderId,
+        articleId: (item as any).articleId || undefined,
+      },
+    });
   }
 
   // Renders a real visual barcode (not just the plain number) under each

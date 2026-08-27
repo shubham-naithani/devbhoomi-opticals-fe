@@ -61,6 +61,10 @@ export function activeArticles(item: InventoryItem): Article[] {
   return (item.articles || []).filter((a) => a.isActive);
 }
 
+export function sellableArticles(item: InventoryItem): Article[] {
+  return item.isActive ? activeArticles(item) : [];
+}
+
 export function inStockArticles(item: InventoryItem): Article[] {
   return activeArticles(item).filter((a) => a.stock > 0);
 }

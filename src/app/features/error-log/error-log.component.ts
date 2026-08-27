@@ -5,8 +5,6 @@ import { ErrorLogService } from '../../core/services/error-log.service';
 import { ErrorLog } from '../../core/models/error-log.model';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
-const PAGE_SIZE = 30;
-
 @Component({
   selector: 'app-error-log',
   standalone: true,
@@ -22,6 +20,7 @@ export class ErrorLogComponent {
   page = signal(1);
   totalPages = signal(1);
   isLoading = signal(true);
+  pageSize = signal(10);
 
   searchTerm = signal('');
   sourceFilter = signal('');
@@ -34,7 +33,7 @@ export class ErrorLogComponent {
   fetch(): void {
     this.isLoading.set(true);
     this.errorLogService
-      .list({ search: this.searchTerm() || undefined, source: this.sourceFilter() || undefined, page: this.page(), limit: PAGE_SIZE })
+      .list({ search: this.searchTerm() || undefined, source: this.sourceFilter() || undefined, page: this.page(), limit: this.pageSize() })
       .subscribe({
         next: (res) => {
           this.logs.set(res.logs || []);
@@ -65,4 +64,10 @@ export class ErrorLogComponent {
   toggleExpand(id: string): void {
     this.expandedId.set(this.expandedId() === id ? null : id);
   }
+
+    onPageSizeChange(size: number): void {
+     this.pageSize.set(size);
+     this.page.set(1);
+     this.fetch();
+   }
 }

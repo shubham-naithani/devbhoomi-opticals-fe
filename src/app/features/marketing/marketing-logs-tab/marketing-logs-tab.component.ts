@@ -5,8 +5,6 @@ import { ToastService } from '../../../core/services/toast.service';
 import { MarketingLogEntry } from '../../../core/models/marketing-log.model';
 import { PaginationComponent } from '../../../shared/components/pagination/pagination.component';
 
-const PAGE_SIZE = 50;
-
 @Component({
   selector: 'app-marketing-logs-tab',
   standalone: true,
@@ -22,6 +20,7 @@ export class MarketingLogsTabComponent {
   total = signal(0);
   page = signal(1);
   totalPages = signal(1);
+  pageSize = signal(10);
   isLoading = signal(true);
 
   constructor() {
@@ -30,22 +29,30 @@ export class MarketingLogsTabComponent {
 
   fetch(): void {
     this.isLoading.set(true);
-    this.marketingService.getLogs({ page: this.page(), limit: PAGE_SIZE }).subscribe({
-      next: (res) => {
-        this.logs.set(res.logs || []);
-        this.total.set(res.total);
-        this.totalPages.set(res.pages || 1);
-        this.isLoading.set(false);
-      },
-      error: () => {
-        this.isLoading.set(false);
-        this.toast.error('Could not load marketing logs');
-      },
-    });
+    this.marketingService
+      .getLogs({ page: this.page(), limit: this.pageSize() })
+      .subscribe({
+        next: (res) => {
+          this.logs.set(res.logs || []);
+          this.total.set(res.total);
+          this.totalPages.set(res.pages || 1);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
+          this.toast.error('Could not load marketing logs');
+        },
+      });
   }
 
   goToPage(page: number): void {
     this.page.set(page);
+    this.fetch();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
     this.fetch();
   }
 }

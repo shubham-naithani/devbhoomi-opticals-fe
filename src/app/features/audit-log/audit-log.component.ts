@@ -6,8 +6,6 @@ import { ToastService } from '../../core/services/toast.service';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 import { AuditLogEntry } from '../../core/models/audit-log.model';
 
-const PAGE_SIZE = 10;
-
 @Component({
   selector: 'app-audit-log',
   standalone: true,
@@ -22,6 +20,7 @@ export class AuditLogComponent {
   logs = signal<AuditLogEntry[]>([]);
   totalLogs = signal(0);
   page = signal(1);
+  pageSize = signal(10);
   totalPages = signal(1);
   isLoading = signal(true);
   entityFilter = signal('');
@@ -33,7 +32,11 @@ export class AuditLogComponent {
   fetch(): void {
     this.isLoading.set(true);
     this.auditLogService
-      .list({ entityType: this.entityFilter() || undefined, page: this.page(), limit: PAGE_SIZE })
+      .list({
+        entityType: this.entityFilter() || undefined,
+        page: this.page(),
+        limit: this.pageSize(),
+      })
       .subscribe({
         next: (res) => {
           this.logs.set(res.logs);
@@ -55,6 +58,12 @@ export class AuditLogComponent {
 
   goToPage(page: number): void {
     this.page.set(page);
+    this.fetch();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
     this.fetch();
   }
 }

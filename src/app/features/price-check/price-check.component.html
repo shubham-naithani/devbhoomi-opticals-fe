@@ -43,7 +43,12 @@
           </div>
           <div class="line-body">
             <div class="line-top-row">
-              <span class="line-name">{{ line.name }}</span>
+              <span class="line-name">
+                {{ line.name }}
+                @if (!line.isActive) {
+                <span class="inactive-badge">Discontinued</span>
+                }
+              </span>
               <button class="btn btn-danger remove-btn" (click)="removeLine(line.articleId)">Remove</button>
             </div>
             <div class="line-price-row">
@@ -129,7 +134,7 @@
       </div>
     </div>
 
-    <button class="btn btn-primary start-order-btn" (click)="startWalkInOrder()">
+    <button class="btn btn-primary start-order-btn" [disabled]="!hasSellableLine()" (click)="startWalkInOrder()">
       Start walk-in order with these items →
     </button>
   }

@@ -1,6 +1,6 @@
 <div class="page-header">
   <div>
-    <h1>New walk-in order</h1>
+    <h1>New Walk-In Order</h1>
     <p class="subtitle">For a customer at the counter — find or create them, record an eye test if needed, then build the order.</p>
   </div>
   <button type="button" class="btn btn-ghost start-over-btn" (click)="startOver()">Start over</button>
@@ -48,7 +48,7 @@
             <div class="result-row" (click)="selectCustomer(c)">
               <div>
                 <div class="name">{{ c.name }}</div>
-                <div class="meta">{{ c.phone }} @if (c.email) { &middot; {{ c.email }} }</div>
+                <div class="meta">{{ c.phone }}</div>
               </div>
               <button class="btn btn-ghost">Use this customer</button>
             </div>
@@ -69,10 +69,6 @@
               <input type="tel" [(ngModel)]="newCustomerPhone" placeholder="98765 43210" />
             </div>
           </div>
-          <div class="field">
-            <label>Email (optional)</label>
-            <input type="email" [(ngModel)]="newCustomerEmail" placeholder="Leave blank if not given" />
-          </div>
           <button class="btn btn-accent" [disabled]="isCreatingCustomer()" (click)="createNewCustomer()">
             {{ isCreatingCustomer() ? 'Creating…' : 'Create customer' }}
           </button>
@@ -84,7 +80,6 @@
           <div class="name">{{ selectedCustomer()!.name }}</div>
           <div class="meta">
             {{ selectedCustomer()!.phone }}
-            @if (selectedCustomer()!.email) { &middot; {{ selectedCustomer()!.email }} }
             @if (availablePoints > 0) { &middot; {{ availablePoints }} points available }
           </div>
         </div>
@@ -195,32 +190,36 @@
     </div>
 
     @if (itemResults().length > 0) {
-      <div class="item-result-list">
-        @for (item of itemResults(); track item._id) {
-          @if (selectedArticleFor(item); as article) {
-            <div class="item-result-row">
-              <div class="item-result-info">
-                <div class="name">{{ item.name }} <span class="sku">{{ article.sku }}</span></div>
-                <div class="meta">{{ item.brand }} &middot; ₹{{ article.price }} &middot; {{ article.stock }} in stock</div>
-                @if (activeArticles(item).length > 1) {
-                  <select
-                    class="variant-select"
-                    [ngModel]="article._id"
-                    (ngModelChange)="onArticleSelect(item._id, $event)"
-                  >
-                    @for (a of activeArticles(item); track a._id) {
-                      <option [value]="a._id" [disabled]="a.stock <= 0">
-                        {{ describeArticle(a) }} @if (a.stock <= 0) { (out of stock) }
-                      </option>
-                    }
-                  </select>
+    <div class="item-result-list">
+      @for (item of itemResults(); track item._id) {
+      @if (selectedArticleFor(item); as article) {
+      <div class="item-result-row">
+        <div class="item-result-info">
+          <div class="name">{{ item.name }} <span class="sku">{{ article.sku }}</span></div>
+          <div class="meta">{{ item.brand }} &middot; ₹{{ article.price }} &middot; {{ article.stock }} in stock</div>
+          @if (sellableArticles(item).length > 1) {
+          <select class="variant-select" [ngModel]="article._id" (ngModelChange)="onArticleSelect(item._id, $event)">
+            @for (a of sellableArticles(item); track a._id) {
+            <option [value]="a._id" [disabled]="a.stock <= 0">
+              {{ describeArticle(a) }} @if (a.stock <= 0) { (out of stock) } </option>
                 }
-              </div>
-              <button class="btn btn-ghost" [disabled]="article.stock <= 0" (click)="addItem(item)">Add</button>
-            </div>
+          </select>
           }
-        }
+        </div>
+        <button class="btn btn-ghost" [disabled]="article.stock <= 0" (click)="addItem(item)">Add</button>
       </div>
+      }
+      @if (!selectedArticleFor(item) && item.articles[0]; as article) {
+      <div class="item-result-row">
+        <div class="item-result-info">
+          <div class="name">{{ item.name }} <span class="sku">{{ article.sku }}</span></div>
+          <div class="meta">{{ item.brand }} &middot; No longer available for sale</div>
+        </div>
+        <button class="btn btn-ghost" (click)="addItem(item)">Add</button>
+      </div>
+      }
+      }
+    </div>
     }
 
     @if (orderLines().length > 0) {

@@ -12,9 +12,8 @@ import { User } from '../../../core/models/user.model';
 import {
   Article,
   InventoryItem,
-  activeArticles,
+  sellableArticles,
   describeArticle,
-  inStockArticles,
 } from '../../../core/models/inventory.model';
 import { EyeTest } from '../../../core/models/eye-test.model';
 import { PaymentMethod } from '../../../core/models/order.model';
@@ -69,7 +68,7 @@ export class NewOrderComponent {
   private router = inject(Router);
 
   // expose helpers to the template
-  activeArticles = activeArticles;
+  sellableArticles = sellableArticles;
   describeArticle = describeArticle;
 
   private readonly DRAFT_KEY = 'walkInOrderDraft';
@@ -101,7 +100,6 @@ export class NewOrderComponent {
   showNewCustomerForm = signal(false);
   newCustomerName = signal('');
   newCustomerPhone = signal('');
-  newCustomerEmail = signal('');
   isCreatingCustomer = signal(false);
 
   // --- Step 2: eye test -------------------------------------------------
@@ -199,7 +197,9 @@ export class NewOrderComponent {
   setWarrantyMonths(articleId: string, rawValue: number | null): void {
     const months = Math.max(Number(rawValue) || 0, 0);
     this.orderLines.update((lines) =>
-      lines.map((l) => (l.articleId === articleId ? { ...l, warrantyMonths: months } : l)),
+      lines.map((l) =>
+        l.articleId === articleId ? { ...l, warrantyMonths: months } : l,
+      ),
     );
   }
 
@@ -217,7 +217,9 @@ export class NewOrderComponent {
   setItemDiscount(articleId: string, rawValue: number | null): void {
     const clamped = Math.min(Math.max(Number(rawValue) || 0, 0), 100);
     this.orderLines.update((lines) =>
-      lines.map((l) => (l.articleId === articleId ? { ...l, discountPercent: clamped } : l)),
+      lines.map((l) =>
+        l.articleId === articleId ? { ...l, discountPercent: clamped } : l,
+      ),
     );
   }
 
@@ -226,7 +228,10 @@ export class NewOrderComponent {
   }
 
   get totalItemDiscount(): number {
-    return this.orderLines().reduce((sum, l) => sum + this.lineDiscountAmount(l), 0);
+    return this.orderLines().reduce(
+      (sum, l) => sum + this.lineDiscountAmount(l),
+      0,
+    );
   }
 
   get subtotalMrp(): number {
@@ -244,7 +249,10 @@ export class NewOrderComponent {
   }
 
   get orderTotal(): number {
-    return this.orderLines().reduce((sum, l) => sum + this.lineEffectivePrice(l) * l.quantity, 0);
+    return this.orderLines().reduce(
+      (sum, l) => sum + this.lineEffectivePrice(l) * l.quantity,
+      0,
+    );
   }
 
   onAmountReceivedChange(value: number | null): void {
@@ -275,7 +283,10 @@ export class NewOrderComponent {
   // previewed live here (same limitation the coupon field already has —
   // its own discount amount is only known "at confirmation" too).
   get maxRedeemablePoints(): number {
-    return Math.max(Math.min(this.availablePoints, Math.floor(this.orderTotal)), 0);
+    return Math.max(
+      Math.min(this.availablePoints, Math.floor(this.orderTotal)),
+      0,
+    );
   }
 
   onPointsToRedeemChange(value: number | null): void {
@@ -283,7 +294,10 @@ export class NewOrderComponent {
       this.pointsToRedeem.set(null);
       return;
     }
-    const clamped = Math.min(Math.max(Math.round(value), 0), this.maxRedeemablePoints);
+    const clamped = Math.min(
+      Math.max(Math.round(value), 0),
+      this.maxRedeemablePoints,
+    );
     this.pointsToRedeem.set(clamped);
   }
 
@@ -408,6 +422,22 @@ export class NewOrderComponent {
   }
 
   private addScannedItem(product: InventoryItem, article: Article): void {
+    if (!product.isActive || !article.isActive) {
+      this.toast.error('This item is no longer available for sale');
+      return;
+    }
+    if (this.remainingStock(article) <= 0) {
+      this.toast.error('No more of this variant available to add');
+      return;
+    }
+    if (this.remainingStock(article) <= 0) {
+      this.toast.error('No more of this variant available to add');
+      return;
+    }
+    if (!product.isActive || !article.isActive) {
+      this.toast.error('This item is no longer available for sale');
+      return;
+    }
     if (this.remainingStock(article) <= 0) {
       this.toast.error('No more of this variant available to add');
       return;
@@ -558,7 +588,6 @@ export class NewOrderComponent {
       .quickCreate({
         name: this.newCustomerName(),
         phone: this.newCustomerPhone(),
-        email: this.newCustomerEmail() || undefined,
       })
       .subscribe({
         next: (res) => {
@@ -666,11 +695,10 @@ export class NewOrderComponent {
 
   selectedArticleFor(product: InventoryItem): Article | undefined {
     const id = this.selectedArticleIds()[product._id];
-    const inStock = inStockArticles(product);
+    const sellable = sellableArticles(product);
+    const inStock = sellable.filter((a) => a.stock > 0);
     return (
-      (id && inStock.find((a) => a._id === id)) ||
-      inStock[0] ||
-      activeArticles(product)[0]
+      (id && inStock.find((a) => a._id === id)) || inStock[0] || sellable[0]
     );
   }
 
@@ -693,7 +721,11 @@ export class NewOrderComponent {
 
   addItem(product: InventoryItem): void {
     const article = this.selectedArticleFor(product);
-    if (!article || this.remainingStock(article) <= 0) {
+    if (!article) {
+      this.toast.error('This item is no longer available for sale');
+      return;
+    }
+    if (this.remainingStock(article) <= 0) {
       this.toast.error('No more of this variant available to add');
       return;
     }
@@ -769,7 +801,9 @@ export class NewOrderComponent {
           : undefined,
         prescriptionUsed: this.linkedEyeTestId() || undefined,
         notes: this.orderNotes() || undefined,
-        couponCode: this.couponDisabled ? undefined : (this.couponCode() || undefined),
+        couponCode: this.couponDisabled
+          ? undefined
+          : this.couponCode() || undefined,
         pointsToRedeem: this.pointsToRedeem() || undefined,
       })
       .subscribe({
@@ -781,9 +815,9 @@ export class NewOrderComponent {
               ? ` — ₹${res.order.discountAmount} discount applied`
               : '';
           const pointsNote =
-          (res.order.pointsRedeemed ?? 0) > 0
-            ? ` — ${res.order.pointsRedeemed} points redeemed`
-            : '';
+            (res.order.pointsRedeemed ?? 0) > 0
+              ? ` — ${res.order.pointsRedeemed} points redeemed`
+              : '';
           this.toast.success(
             res.changeDue > 0
               ? `Order ${res.order.orderId} created — give ₹${res.changeDue} change to the customer${discountNote}${pointsNote}`

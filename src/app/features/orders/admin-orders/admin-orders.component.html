@@ -34,7 +34,7 @@
       <button class="btn btn-primary" [disabled]="!bulkStatus() || isBulkUpdating()" (click)="applyBulkStatus()">
         Apply
       </button>
-      @if (auth.isAdmin()) {
+      @if (deleteEnabled && auth.isAdmin()) {
         <button class="btn btn-danger" (click)="bulkDeleteSelected()">Delete</button>
       }
       <button class="btn btn-ghost" (click)="clearSelection()">Clear</button>
@@ -119,7 +119,7 @@
         <td>
           <div class="actions">
             <button class="btn btn-ghost" (click)="openDetail(order)">View</button>
-            @if (auth.isAdmin()) {
+            @if (deleteEnabled && auth.isAdmin()) {
             <button class="btn btn-danger" (click)="deleteOrder(order)">Delete</button>
             }
           </div>
@@ -131,8 +131,14 @@
   }
 </div>
 
-<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="totalOrders()"
-  (pageChange)="goToPage($event)" />
+  <app-pagination
+  [page]="page()"
+  [totalPages]="totalPages()"
+  [totalItems]="totalOrders()"
+  [pageSize]="pageSize()"
+  (pageChange)="goToPage($event)"
+  (pageSizeChange)="onPageSizeChange($event)"
+/>
 
 @if (selectedOrder(); as order) {
 <div class="overlay" (click)="closeDetail()"></div>
@@ -181,7 +187,13 @@
         <svg [id]="'order-item-barcode-' + $index" class="item-barcode-svg"></svg>
         }
       </div>
-      <span>₹{{ item.price * item.quantity }}</span>
+      <div class="actions">
+        <span>₹{{ item.price * item.quantity }}</span>
+        <button type="button" class="btn btn-ghost" title="Create a repair ticket for this item"
+          (click)="repairItem(order, item)">
+          Repair
+        </button>
+      </div>
     </div>
     }
   </div>

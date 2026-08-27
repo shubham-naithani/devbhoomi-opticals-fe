@@ -7,12 +7,15 @@ import { PaginationComponent } from '../../../shared/components/pagination/pagin
 import { SendCouponModalComponent } from '../send-coupon-modal/send-coupon-modal.component';
 import { ReferralCouponModalComponent } from '../referral-coupon-modal/referral-coupon-modal.component';
 
-const PAGE_SIZE = 50;
-
 @Component({
   selector: 'app-existing-customers-tab',
   standalone: true,
-  imports: [DatePipe, PaginationComponent, SendCouponModalComponent, ReferralCouponModalComponent],
+  imports: [
+    DatePipe,
+    PaginationComponent,
+    SendCouponModalComponent,
+    ReferralCouponModalComponent,
+  ],
   templateUrl: './existing-customers-tab.component.html',
   styleUrl: './existing-customers-tab.component.scss',
 })
@@ -23,6 +26,7 @@ export class ExistingCustomersTabComponent {
   customers = signal<ExistingCustomer[]>([]);
   total = signal(0);
   page = signal(1);
+  pageSize = signal(10);
   totalPages = signal(1);
   isLoading = signal(true);
   searchTerm = signal('');
@@ -38,7 +42,10 @@ export class ExistingCustomersTabComponent {
   selectedCount = computed(() => this.selectedIds().size);
   allOnPageSelected = computed(() => {
     const customers = this.customers();
-    return customers.length > 0 && customers.every((c) => this.selectedIds().has(c.userId));
+    return (
+      customers.length > 0 &&
+      customers.every((c) => this.selectedIds().has(c.userId))
+    );
   });
 
   constructor() {
@@ -48,7 +55,11 @@ export class ExistingCustomersTabComponent {
   fetch(): void {
     this.isLoading.set(true);
     this.marketingService
-      .listExistingCustomers({ search: this.searchTerm() || undefined, page: this.page(), limit: PAGE_SIZE })
+      .listExistingCustomers({
+        search: this.searchTerm() || undefined,
+        page: this.page(),
+        limit: this.pageSize(),
+      })
       .subscribe({
         next: (res) => {
           this.customers.set(res.customers || []);
@@ -122,11 +133,22 @@ export class ExistingCustomersTabComponent {
     const ids = this.selectedIds();
     return this.customers()
       .filter((c) => ids.has(c.userId))
-      .map((c) => ({ type: 'customer' as const, name: c.name, phone: c.phone, email: c.email }));
+      .map((c) => ({
+        type: 'customer' as const,
+        name: c.name,
+        phone: c.phone,
+        email: c.email,
+      }));
   }
 
   onSent(): void {
     this.closeSendModal();
     this.clearSelection();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    this.fetch();
   }
 }

@@ -5,8 +5,6 @@ import { TransactionService } from '../../core/services/transaction.service';
 import { Transaction, PnlSummary } from '../../core/models/transaction.model';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
-const PAGE_SIZE = 20;
-
 type RangePreset = 'today' | 'week' | 'month' | 'custom';
 
 @Component({
@@ -37,6 +35,7 @@ export class PnlComponent {
   totalTransactions = signal(0);
   page = signal(1);
   totalPages = signal(1);
+  pageSize = signal(10);
   isLoadingList = signal(true);
   typeFilter = signal('');
 
@@ -100,7 +99,7 @@ export class PnlComponent {
         type: this.typeFilter() || undefined,
         search: this.searchTerm() || undefined,
         page: this.page(),
-        limit: PAGE_SIZE,
+        limit: this.pageSize(),
       })
       .subscribe({
         next: (res) => {
@@ -120,6 +119,12 @@ export class PnlComponent {
 
   goToPage(page: number): void {
     this.page.set(page);
+    this.fetchTransactions();
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
     this.fetchTransactions();
   }
 }

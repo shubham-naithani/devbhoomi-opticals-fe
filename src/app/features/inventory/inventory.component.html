@@ -51,7 +51,9 @@
     <div class="bulk-actions">
       <button class="btn btn-ghost" (click)="bulkActivate(true)">Activate</button>
       <button class="btn btn-ghost" (click)="bulkActivate(false)">Deactivate</button>
+      @if (deleteEnabled) {
       <button class="btn btn-danger" (click)="bulkDeleteSelected()">Delete</button>
+      }
       <button class="btn btn-ghost" (click)="openBulkPrintChooser()">Print Labels</button>
       <button class="btn btn-ghost" (click)="clearSelection()">Clear</button>
     </div>
@@ -119,7 +121,9 @@
             <td class="actions">
               @if (auth.isAdmin()) {
                 <button class="btn btn-ghost" (click)="openEditProductPanel(product)" style="margin-right: 10px;">Edit</button>
+                @if (deleteEnabled) {
                 <button class="btn btn-danger" (click)="deleteProduct(product)">Delete</button>
+                }
               } @else {
                 <span class="view-only">View only</span>
               }
@@ -135,7 +139,9 @@
   [page]="page()"
   [totalPages]="totalPages()"
   [totalItems]="totalItems()"
+  [pageSize]="pageSize()"
   (pageChange)="goToPage($event)"
+  (pageSizeChange)="onPageSizeChange($event)"
 />
 
 <!-- Product create / edit panel -->
@@ -363,10 +369,15 @@
             @if (auth.isAdmin()) {
             <div class="article-actions">
               <button class="btn btn-ghost" (click)="openEditArticleForm(article)">Edit</button>
+              <button class="btn btn-ghost" (click)="toggleArticleActive(article)">
+                {{ article.isActive ? 'Deactivate' : 'Activate' }}
+              </button>
               @if (article.barcode) {
               <button class="btn btn-ghost" (click)="openPrintLabel(product, article)">Print label</button>
               }
+              @if (deleteEnabled) {
               <button class="btn btn-danger" (click)="deleteArticle(article)">Delete</button>
+              }
             </div>
             }
           </div>

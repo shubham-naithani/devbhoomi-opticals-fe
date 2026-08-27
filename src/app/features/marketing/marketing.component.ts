@@ -14,13 +14,6 @@ type MarketingTab = 'new-customers' | 'existing-customers' | 'coupons' | 'logs';
   styleUrl: './marketing.component.scss',
 })
 export class MarketingComponent {
-  // All four tabs stay mounted (visibility toggled via CSS, not @if) so switching tabs
-  // doesn't lose upload progress, list state, or the current search term. The tradeoff:
-  // a tab you're not looking at won't notice that something you did elsewhere (sent a
-  // coupon, redeemed one, uploaded leads) changed its data — each ViewChild's own
-  // fetch() only ran once, when the page first loaded. selectTab() below re-fetches
-  // whichever tab you're switching INTO, so it's never showing stale data without
-  // needing a full page refresh.
   @ViewChild(NewCustomersTabComponent) newCustomersTab!: NewCustomersTabComponent;
   @ViewChild(ExistingCustomersTabComponent) existingCustomersTab!: ExistingCustomersTabComponent;
   @ViewChild(CouponsComponent) couponsTab!: CouponsComponent;

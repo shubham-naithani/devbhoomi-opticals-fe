@@ -13,8 +13,6 @@ import {
 } from '../../core/models/inventory.model';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
-const PAGE_SIZE = 20;
-
 interface DraftLine {
   inventoryItem: string;
   articleId: string;
@@ -43,6 +41,7 @@ export class PurchasesComponent {
   totalRecords = signal(0);
   page = signal(1);
   totalPages = signal(1);
+  pageSize = signal(10);
   isLoading = signal(true);
   searchTerm = signal('');
   fromDate = signal('');
@@ -72,7 +71,10 @@ export class PurchasesComponent {
   }
 
   get draftTotal(): number {
-    return this.draftLines().reduce((sum, l) => sum + l.quantity * l.unitCost, 0);
+    return this.draftLines().reduce(
+      (sum, l) => sum + l.quantity * l.unitCost,
+      0,
+    );
   }
 
   // ---- List fetch / filters -----------------------------------------
@@ -85,7 +87,7 @@ export class PurchasesComponent {
         from: this.fromDate() || undefined,
         to: this.toDate() || undefined,
         page: this.page(),
-        limit: PAGE_SIZE,
+        limit: this.pageSize(),
       })
       .subscribe({
         next: (res) => {
@@ -117,6 +119,12 @@ export class PurchasesComponent {
     this.fetchRecords();
   }
 
+  onPageSizeChange(size: number): void {
+    this.pageSize.set(size);
+    this.page.set(1);
+    this.fetchRecords();
+  }
+
   // ---- Create panel ----------------------------------------------------
 
   openCreatePanel(): void {
@@ -136,13 +144,15 @@ export class PurchasesComponent {
 
   searchItems(): void {
     this.isSearchingItems.set(true);
-    this.inventoryService.list({ search: this.itemQuery() || undefined, limit: 12 }).subscribe({
-      next: (res) => {
-        this.itemResults.set(res.items || []);
-        this.isSearchingItems.set(false);
-      },
-      error: () => this.isSearchingItems.set(false),
-    });
+    this.inventoryService
+      .list({ search: this.itemQuery() || undefined, limit: 12 })
+      .subscribe({
+        next: (res) => {
+          this.itemResults.set(res.items || []);
+          this.isSearchingItems.set(false);
+        },
+        error: () => this.isSearchingItems.set(false),
+      });
   }
 
   selectedArticleFor(product: InventoryItem): Article | undefined {
@@ -152,7 +162,10 @@ export class PurchasesComponent {
   }
 
   onArticleSelect(productId: string, articleId: string): void {
-    this.selectedArticleIds.update((map) => ({ ...map, [productId]: articleId }));
+    this.selectedArticleIds.update((map) => ({
+      ...map,
+      [productId]: articleId,
+    }));
   }
 
   addDraftLine(product: InventoryItem): void {
@@ -161,7 +174,9 @@ export class PurchasesComponent {
 
     const existing = this.draftLines().find((l) => l.articleId === article._id);
     if (existing) {
-      this.toast.error('This variant is already in the list — adjust its quantity below instead');
+      this.toast.error(
+        'This variant is already in the list — adjust its quantity below instead',
+      );
       return;
     }
 
@@ -179,18 +194,28 @@ export class PurchasesComponent {
 
   updateDraftQuantity(articleId: string, quantity: number): void {
     this.draftLines.update((lines) =>
-      lines.map((l) => (l.articleId === articleId ? { ...l, quantity: Math.max(1, quantity) } : l))
+      lines.map((l) =>
+        l.articleId === articleId
+          ? { ...l, quantity: Math.max(1, quantity) }
+          : l,
+      ),
     );
   }
 
   updateDraftCost(articleId: string, unitCost: number): void {
     this.draftLines.update((lines) =>
-      lines.map((l) => (l.articleId === articleId ? { ...l, unitCost: Math.max(0, unitCost) } : l))
+      lines.map((l) =>
+        l.articleId === articleId
+          ? { ...l, unitCost: Math.max(0, unitCost) }
+          : l,
+      ),
     );
   }
 
   removeDraftLine(articleId: string): void {
-    this.draftLines.update((lines) => lines.filter((l) => l.articleId !== articleId));
+    this.draftLines.update((lines) =>
+      lines.filter((l) => l.articleId !== articleId),
+    );
   }
 
   savePurchase(): void {
@@ -224,13 +249,17 @@ export class PurchasesComponent {
       .subscribe({
         next: (res) => {
           this.isSaving.set(false);
-          this.toast.success(`Purchase ${res.purchaseRecord.purchaseId} recorded — stock and cost updated`);
+          this.toast.success(
+            `Purchase ${res.purchaseRecord.purchaseId} recorded — stock and cost updated`,
+          );
           this.isCreatePanelOpen.set(false);
           this.fetchRecords();
         },
         error: (err) => {
           this.isSaving.set(false);
-          this.toast.error(err?.error?.message || 'Could not save purchase record');
+          this.toast.error(
+            err?.error?.message || 'Could not save purchase record',
+          );
         },
       });
   }

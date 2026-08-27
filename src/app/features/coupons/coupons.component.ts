@@ -7,7 +7,7 @@ import { ConfirmDialogService } from '../../core/services/confirm-dialog.service
 import { Coupon } from '../../core/models/coupon.model';
 import { PaginationComponent } from '../../shared/components/pagination/pagination.component';
 
-const PAGE_SIZE = 20;
+const PAGE_SIZE = 10;
 
 @Component({
   selector: 'app-coupons',

@@ -56,4 +56,4 @@
   }
 </div>
 
-<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="totalLogs()" (pageChange)="goToPage($event)" />
+<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="totalLogs()" (pageChange)="goToPage($event)" (pageSizeChange)="onPageSizeChange($event)"/>

@@ -80,7 +80,7 @@
         <td>
           <div class="actions">
             <button class="btn btn-ghost" (click)="openDetail(ticket)">View</button>
-            @if (auth.isAdmin()) {
+            @if (deleteEnabled && auth.isAdmin()) {
             <button class="btn btn-danger" (click)="deleteTicket(ticket)">Delete</button>
             }
           </div>
@@ -92,8 +92,14 @@
   }
 </div>
 
-<app-pagination [page]="page()" [totalPages]="totalPages()" [totalItems]="totalTickets()"
-  (pageChange)="goToPage($event)" />
+<app-pagination
+  [page]="page()"
+  [totalPages]="totalPages()"
+  [totalItems]="totalTickets()"
+  [pageSize]="pageSize()"
+  (pageChange)="goToPage($event)"
+  (pageSizeChange)="onPageSizeChange($event)"
+/>
 
 @if (selectedTicket(); as ticket) {
 <div class="overlay" (click)="closeDetail()"></div>
